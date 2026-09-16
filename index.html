@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DSA Interactive Study Hub | Course Visualizers &amp; Labs</title>
+  <meta name="description" content="A curated, interactive study hub hosting Data Structures & Algorithms visualizers and conceptual lab widgets with sidebar category navigation and instant search.">
+
+  <!-- Google Fonts: Spectral (Editorial Serif), Outfit (Modern Sans), IBM Plex Mono (Code/Specs) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Outfit:wght@300;400;500;600;700&family=Spectral:ital,wght@0,500;0,600;0,700;1,400;1,600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="hub-style.css">
+</head>
+<body>
+
+  <!-- Top Announcement / Guide Drawer -->
+  <div class="container-fluid">
+    <section class="guide-card" id="guideCard" aria-label="Quick Guide on Adding New Widgets">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 6px;">
+        <h3 style="font-family:var(--font-serif); font-size:19px; color:#fff;">⚡ How to Add New Widgets from Dr. Binayak Dutta</h3>
+        <button class="btn-ghost" id="closeGuideBtn" style="padding:3px 8px; font-size:11px;" onclick="document.getElementById('guideCard').classList.remove('open')">✕ Close</button>
+      </div>
+      <p style="color:var(--ink-dim); font-size:13.5px; max-width:850px;">
+        Whenever Dr. Binayak Dutta shares a new visualizer or algorithm widget, follow these 3 effortless steps:
+      </p>
+
+      <div class="guide-steps">
+        <div class="guide-step">
+          <div class="step-num">STEP 1</div>
+          <div class="step-desc">Save or drop the new <code>.html</code> visualizers into the <code>widgets/</code> subfolder.</div>
+        </div>
+
+        <div class="guide-step">
+          <div class="step-num">STEP 2</div>
+          <div class="step-desc">Double-click <strong>update-widgets.bat</strong> (or run <code class="step-code">python update_widgets.py</code>).</div>
+        </div>
+
+        <div class="guide-step">
+          <div class="step-num">STEP 3</div>
+          <div class="step-desc">The script automatically categorizes the widget, extracts tags &amp; descriptions, and updates this dashboard!</div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Hub Header Bar -->
+  <header class="hub-header">
+    <div class="container-fluid">
+      <div class="header-content">
+        <div class="header-left">
+          <div class="brand-badge">
+            <span class="pulse-dot"></span>
+            <span>DSA Course • Curated by Dr. Binayak Dutta</span>
+          </div>
+          <h1 class="hub-title">Data Structures &amp; <span>Algorithms</span></h1>
+          <p class="hub-subtitle">
+            Interactive visual laboratory widgets curated by Dr. Binayak Dutta for conceptual mastery of pointers, memory layout, time complexity, and data structures.
+          </p>
+        </div>
+
+        <div class="header-right">
+          <button class="btn-compact" id="guideToggleBtn" title="How to drop new widgets">
+            <span>⚡ Add Widget Guide</span>
+          </button>
+          <button class="btn-compact" onclick="window.location.reload()" title="Refresh catalog">
+            <span>🔄 Refresh</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Workspace: Left Sidebar + Right Content -->
+  <div class="container-fluid hub-layout">
+    <!-- LEFT SIDEBAR: Categories & Navigation -->
+    <aside class="hub-sidebar" id="hubSidebar" aria-label="Course Topics & Categories">
+      <div class="sidebar-section">
+        <div class="sidebar-heading">
+          <span>📁 TOPICS &amp; CATEGORIES</span>
+          <span class="sidebar-badge" id="categoryTotalCount">0</span>
+        </div>
+        <nav class="sidebar-menu" id="categorySidebarList">
+          <!-- Injected dynamically by hub-app.js -->
+        </nav>
+      </div>
+
+      <div class="sidebar-section" id="popularTagsSection">
+        <div class="sidebar-heading">
+          <span>🏷️ CONCEPT TAGS</span>
+        </div>
+        <div class="sidebar-tags" id="sidebarTagsList">
+          <!-- Injected dynamically by hub-app.js -->
+        </div>
+      </div>
+    </aside>
+
+    <!-- RIGHT MAIN AREA: Search toolbar & Compact Cards Grid -->
+    <main class="hub-main" id="hubMain">
+      <!-- Toolbar: Search + Sort -->
+      <div class="main-toolbar">
+        <div class="search-wrapper">
+          <span class="search-icon" aria-hidden="true">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+          </span>
+          <input 
+            type="search" 
+            id="searchInput" 
+            class="search-input" 
+            placeholder="Search widgets, code concepts (e.g. two-pointer, malloc, big-o)..." 
+            autocomplete="off"
+            aria-label="Search visualizers"
+          >
+          <span class="search-shortcut" title="Press / anywhere to search">/</span>
+          <button id="searchClear" class="search-clear" title="Clear search query" aria-label="Clear search">✕</button>
+        </div>
+
+        <div class="toolbar-actions">
+          <span class="results-indicator" id="resultsIndicator">0 visualizers</span>
+
+          <div class="select-wrapper">
+            <select id="sortSelect" class="custom-select" aria-label="Sort visualizers">
+              <option value="recent">⚡ Recently Added</option>
+              <option value="title">🔤 Title (A → Z)</option>
+              <option value="time">⏱️ Estimated Time</option>
+              <option value="category">📁 Category</option>
+            </select>
+            <span class="select-arrow" aria-hidden="true">▾</span>
+          </div>
+
+          <!-- View Mode Toggle -->
+          <div class="view-toggle-btns" role="group" aria-label="View Mode">
+            <button class="view-btn active" id="viewGridBtn" title="Grid View">⊞</button>
+            <button class="view-btn" id="viewListBtn" title="List View">☰</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Active Filters Pill Banner -->
+      <div class="active-filter-bar" id="activeFilterBar" style="display:none;">
+        <span class="filter-desc" id="filterDescText">Filtered by:</span>
+        <button class="clear-filter-link" id="clearAllFiltersBtn">Clear filters ✕</button>
+      </div>
+
+      <!-- Compact Widgets Grid -->
+      <section class="widgets-grid" id="widgetsGrid" aria-label="Visualizer Cards">
+        <!-- Compact cards rendered dynamically from widgets-data.js -->
+      </section>
+    </main>
+  </div>
+
+  <!-- Quick Preview Interactive Modal -->
+  <div class="modal-backdrop" id="previewModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-window">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <span class="modal-badge" id="modalBadge">Visualizer</span>
+          <h2 class="modal-title" id="modalTitle">Widget Preview</h2>
+        </div>
+
+        <div class="modal-controls">
+          <button class="modal-ctrl-btn" id="modalMaximizeBtn" title="Toggle Fullscreen">
+            ⛶ Maximize
+          </button>
+          <a href="#" class="modal-ctrl-btn" id="modalExternalLink" target="_blank" rel="noopener" title="Open in new tab">
+            <span>Open in Tab ↗</span>
+          </a>
+          <button class="modal-close-btn" id="modalCloseBtn" title="Close Preview (Esc)" aria-label="Close modal">
+            ✕
+          </button>
+        </div>
+      </div>
+
+      <div class="modal-body">
+        <iframe class="modal-iframe" id="modalIframe" src="about:blank" title="Widget Live Interactive Preview"></iframe>
+      </div>
+    </div>
+  </div>
+
+  <!-- Manifest Data & Application Scripts -->
+  <script src="widgets-data.js"></script>
+  <script src="hub-app.js"></script>
+</body>
+</html>

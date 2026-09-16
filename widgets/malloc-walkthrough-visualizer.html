@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Building a Node — malloc Walkthrough</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Spectral:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#12100c; --panel:#1c1812; --panel-2:#221d15; --rule:#3a3226;
+    --ink:#ede3c8; --ink-dim:#b8ac8c; --gold:#c89b3c;
+    --rust:#c1502e; --teal:#3f8f84;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; padding:26px 16px 60px; background:var(--bg); color:var(--ink);
+    font-family:'Spectral', Georgia, serif;
+  }
+  .wrap{max-width:940px; margin:0 auto;}
+  header{border-bottom:1px solid var(--rule); padding-bottom:14px; margin-bottom:18px;}
+  .stamp{
+    font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.1em;
+    color:var(--gold); border:1px solid var(--rule); padding:3px 8px; border-radius:2px;
+    display:inline-block; margin-bottom:10px;
+  }
+  h1{font-size:24px; margin:0; font-weight:600;}
+
+  main{display:grid; grid-template-columns:290px 1fr; gap:14px;}
+  @media (max-width:760px){ main{grid-template-columns:1fr;} }
+
+  .code-panel{
+    background:var(--panel); border:1px solid var(--rule); border-radius:5px;
+    padding:14px; height:fit-content;
+  }
+  .code-line{
+    font-family:'IBM Plex Mono',monospace; font-size:12.5px; color:var(--ink-dim);
+    white-space:pre; padding:3px 8px; margin-bottom:1px; border-left:3px solid transparent; border-radius:3px;
+    transition:background .25s ease, color .25s ease, border-color .25s ease;
+  }
+  .code-line .ln{display:inline-block; width:20px; color:var(--rule); user-select:none;}
+  .code-line.current{background:var(--panel-2); border-color:var(--gold); color:var(--ink); font-weight:600;}
+  .code-line.done{color:var(--teal);}
+
+  .stage{
+    background:var(--panel); border:1px solid var(--rule); border-radius:5px;
+    padding:16px; overflow-x:auto;
+  }
+  .canvas{position:relative; width:700px; height:360px;}
+  .zone{
+    position:absolute; border:1px solid var(--rule); border-radius:6px;
+  }
+  .zone.zone-stack{background:rgba(200,155,60,0.035);}
+  .zone.zone-heap{background:rgba(63,143,132,0.035);}
+  .zone-label{
+    position:absolute; top:-11px; left:14px; background:var(--panel);
+    font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:var(--gold);
+    letter-spacing:.1em; padding:2px 8px; border:1px solid var(--rule); border-radius:3px;
+  }
+
+  .pbox{
+    position:absolute; width:74px; height:54px; border-radius:6px;
+    background:var(--panel-2); border:1.5px solid var(--gold); color:var(--ink);
+    font-family:'IBM Plex Mono',monospace; font-size:14px; font-weight:700;
+    display:flex; align-items:center; justify-content:center;
+    box-shadow:0 2px 6px rgba(0,0,0,.35);
+    transition:opacity .3s ease, transform .3s ease;
+  }
+  .pbox.hidden{opacity:0; transform:scale(.7); pointer-events:none;}
+  .pbox.pulse{transform:scale(1.1);}
+
+  .node{
+    position:absolute; width:74px; height:54px; border-radius:6px;
+    display:flex; background:var(--panel-2); border:1.5px dashed var(--rule); color:var(--ink);
+    font-family:'IBM Plex Mono',monospace; overflow:hidden;
+    box-shadow:0 2px 6px rgba(0,0,0,.35);
+    transition:opacity .3s ease, transform .3s ease, border-color .3s ease, border-style .1s;
+  }
+  .node.hidden{opacity:0; transform:scale(.7); pointer-events:none;}
+  .node.ready{border-style:solid; border-color:var(--gold);}
+  .node .val{flex:1; display:flex; align-items:center; justify-content:center; font-size:17px; font-weight:700;}
+  .node .ptr{width:26px; border-left:1px solid var(--rule); display:flex; align-items:center; justify-content:center; color:var(--gold); font-size:11px;}
+  .node.pulse{transform:scale(1.08);}
+
+  .nullbox{
+    position:absolute; width:56px; height:40px; border-radius:6px;
+    border:1.5px dashed var(--rule); color:var(--ink-dim); display:flex; align-items:center; justify-content:center;
+    font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.05em;
+  }
+
+  .edge{stroke:var(--rule); stroke-width:1.6px; marker-end:url(#arrowhead2); transition:stroke .2s ease;}
+  .edge.hidden{opacity:0;}
+  .edge.flash{stroke:var(--gold); stroke-width:2.4px;}
+
+  .readout{
+    font-family:'IBM Plex Mono',monospace; font-size:14.5px; color:var(--gold);
+    min-height:22px; margin-top:12px; letter-spacing:.02em;
+  }
+  .controls{display:flex; align-items:center; gap:8px; margin-top:10px; flex-wrap:wrap;}
+  input[type=number]{
+    width:80px; background:var(--panel-2); border:1px solid var(--rule); color:var(--ink);
+    font-family:'IBM Plex Mono',monospace; font-size:13px; padding:7px 8px; border-radius:3px;
+  }
+  input:disabled{opacity:.4;}
+  button{
+    font-family:'IBM Plex Mono',monospace; font-size:12.5px; background:var(--panel-2);
+    color:var(--ink); border:1px solid var(--gold); padding:8px 14px; border-radius:3px; cursor:pointer;
+  }
+  button:hover{background:#2a2418;}
+  button:disabled{opacity:.35; cursor:not-allowed;}
+  .reset-btn{border-color:var(--rule); color:var(--ink-dim);}
+  .step-counter{
+    font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--ink-dim);
+    margin-left:auto;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <span class="stamp">UNIT 1 · LINKED LISTS</span>
+    <h1>Building a Node — malloc, field by field</h1>
+  </header>
+
+  <main>
+    <div class="code-panel" id="codePanel"></div>
+
+    <div class="stage">
+      <div class="canvas" id="canvas">
+        <svg id="edgeLayer" width="700" height="360" style="position:absolute; top:0; left:0;">
+          <defs>
+            <marker id="arrowhead2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+              <path d="M0,0 L6,3 L0,6 Z" fill="#c89b3c"></path>
+            </marker>
+          </defs>
+        </svg>
+
+        <div class="zone zone-stack" id="stackZone" style="left:20px; top:24px; width:660px; height:100px;">
+          <span class="zone-label">STACK</span>
+        </div>
+        <div class="zone zone-heap" id="heapZone" style="left:20px; top:150px; width:660px; height:190px;">
+          <span class="zone-label">HEAP</span>
+        </div>
+
+        <div class="pbox" id="stackList" style="left:56px; top:48px;">list</div>
+        <div class="pbox hidden" id="stackN" style="left:200px; top:48px;">n</div>
+
+        <div class="node hidden" id="heapNodeN" style="left:56px; top:180px;">
+          <div class="val">?</div><div class="ptr">?</div>
+        </div>
+        <div class="node ready" id="heapNode23" style="left:290px; top:264px;">
+          <div class="val">23</div><div class="ptr">\u2022</div>
+        </div>
+        <div class="node ready" id="heapNode89" style="left:420px; top:264px;">
+          <div class="val">89</div><div class="ptr">\u2022</div>
+        </div>
+        <div class="nullbox" id="heapNull" style="left:550px; top:271px;">NULL</div>
+      </div>
+
+      <div class="readout" id="readout">READY \u2014 press Next to begin</div>
+      <div class="controls">
+        <input id="insertValue" type="number" value="5" placeholder="val">
+        <button id="btnPrev">\u2190 Prev</button>
+        <button id="btnNext">Next \u2192</button>
+        <button id="btnPlay">Play</button>
+        <button class="reset-btn" id="btnReset">Reset</button>
+        <span class="step-counter" id="stepCounter">STEP 0/6</span>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+(function(){
+  var codeLines = [
+    {n:1,  t:'typedef struct node',              step:null},
+    {n:2,  t:'{',                                 step:null},
+    {n:3,  t:'    int number;',                   step:null},
+    {n:4,  t:'    struct node *next;',             step:null},
+    {n:5,  t:'}',                                 step:null},
+    {n:6,  t:'node;',                             step:null},
+    {n:7,  t:'',                                  step:null},
+    {n:8,  t:'node *list = NULL;',                step:null},
+    {n:9,  t:'',                                  step:null},
+    {n:10, t:'void insert(int number)',           step:null},
+    {n:11, t:'{',                                 step:null},
+    {n:12, t:'    node *n = malloc(sizeof(node));', step:0},
+    {n:13, t:'    if (n == NULL)',                step:1},
+    {n:14, t:'    {',                             step:null},
+    {n:15, t:'        return;',                   step:null},
+    {n:16, t:'    }',                             step:null},
+    {n:17, t:'    n->number = number;',           step:2},
+    {n:18, t:'    n->next = NULL;',               step:3},
+    {n:19, t:'',                                  step:null},
+    {n:20, t:'    n->next = list;',               step:4},
+    {n:21, t:'    list = n;',                     step:5},
+    {n:22, t:'}',                                 step:null}
+  ];
+
+  var codePanel = document.getElementById('codePanel');
+  var readout = document.getElementById('readout');
+  var stepCounter = document.getElementById('stepCounter');
+  var insertValueInput = document.getElementById('insertValue');
+  var canvas = document.getElementById('canvas');
+  var edgeLayer = document.getElementById('edgeLayer');
+
+  var stackList = document.getElementById('stackList');
+  var stackN = document.getElementById('stackN');
+  var heapNodeN = document.getElementById('heapNodeN');
+  var heapNode23 = document.getElementById('heapNode23');
+  var heapNode89 = document.getElementById('heapNode89');
+  var heapNull = document.getElementById('heapNull');
+
+  var STEPS = [
+    {readout:'n = malloc(sizeof(node)) \u2014 a fresh, uninitialized block appears somewhere on the heap'},
+    {readout:'if (n == NULL) \u2014 false here; assume malloc succeeded, keep going'},
+    {readout:'n->number = VAL \u2014 the value field is filled in'},
+    {readout:'n->next = NULL \u2014 the pointer field is set, temporarily, to NULL'},
+    {readout:'n->next = list \u2014 n now points at the old head of the list'},
+    {readout:'list = n \u2014 n becomes the new head'}
+  ];
+
+  var currentStep = -1; // -1 = not started, 0..5 = last applied step
+  var playing = false, playTimer = null;
+
+  function renderCode(){
+    codePanel.innerHTML = '';
+    codeLines.forEach(function(line){
+      var div = document.createElement('div');
+      div.className = 'code-line';
+      if (line.step!=null){
+        if (line.step===currentStep) div.classList.add('current');
+        else if (line.step<currentStep) div.classList.add('done');
+      }
+      var ln = document.createElement('span'); ln.className='ln'; ln.textContent=line.n;
+      div.appendChild(ln);
+      div.appendChild(document.createTextNode(line.t));
+      codePanel.appendChild(div);
+    });
+  }
+
+  // ---------- edges ----------
+  function rectOf(el){
+    var c = canvas.getBoundingClientRect(), r = el.getBoundingClientRect();
+    return {
+      left:r.left-c.left, top:r.top-c.top, right:r.right-c.left, bottom:r.bottom-c.top,
+      cx:(r.left+r.right)/2-c.left, cy:(r.top+r.bottom)/2-c.top
+    };
+  }
+  var lines = {};
+  function ensureLine(id){
+    if (!lines[id]){
+      var l = document.createElementNS('http://www.w3.org/2000/svg','line');
+      l.setAttribute('class','edge hidden');
+      edgeLayer.appendChild(l);
+      lines[id] = l;
+    }
+    return lines[id];
+  }
+  function setEdge(id, fromEl, fromSide, toEl, toSide, flash){
+    var l = ensureLine(id);
+    var a = rectOf(fromEl), b = rectOf(toEl);
+    var x1 = fromSide==='right' ? a.right : fromSide==='bottom' ? a.cx : a.left;
+    var y1 = fromSide==='bottom' ? a.bottom : a.cy;
+    var x2 = toSide==='left' ? b.left : toSide==='top' ? b.cx : b.right;
+    var y2 = toSide==='top' ? b.top : b.cy;
+    l.setAttribute('x1',x1); l.setAttribute('y1',y1);
+    l.setAttribute('x2',x2); l.setAttribute('y2',y2);
+    l.classList.remove('hidden');
+    if (flash){
+      l.classList.add('flash');
+      setTimeout(function(){ l.classList.remove('flash'); }, 550);
+    }
+  }
+  function hideEdge(id){
+    if (lines[id]) lines[id].classList.add('hidden');
+  }
+
+  function drawStaticEdges(){
+    setEdge('n23-n89', heapNode23, 'right', heapNode89, 'left');
+    setEdge('n89-null', heapNode89, 'right', heapNull, 'left');
+    setEdge('list-target', stackList, 'bottom', heapNode23, 'top');
+  }
+
+  // ---------- state application ----------
+  function resetVisualState(){
+    Object.keys(lines).forEach(function(id){ lines[id].remove(); });
+    lines = {};
+    stackN.classList.add('hidden');
+    heapNodeN.classList.add('hidden');
+    heapNodeN.classList.remove('ready');
+    heapNodeN.querySelector('.val').textContent = '?';
+    heapNodeN.querySelector('.ptr').textContent = '?';
+    drawStaticEdges();
+  }
+
+  function applyStep(idx, animate){
+    var val = insertValueInput.value || '?';
+    if (idx===0){
+      stackN.classList.remove('hidden');
+      heapNodeN.classList.remove('hidden');
+      if (animate){ stackN.classList.add('pulse'); heapNodeN.classList.add('pulse'); setTimeout(function(){ stackN.classList.remove('pulse'); heapNodeN.classList.remove('pulse'); }, 400); }
+      setEdge('n-nheap', stackN, 'bottom', heapNodeN, 'top');
+    } else if (idx===1){
+      if (animate) pulse(stackN);
+    } else if (idx===2){
+      heapNodeN.querySelector('.val').textContent = val;
+      if (animate) pulse(heapNodeN);
+    } else if (idx===3){
+      heapNodeN.querySelector('.ptr').textContent = 'N';
+      heapNodeN.classList.add('ready');
+      if (animate) pulse(heapNodeN);
+      // field is explicitly NULL now — no arrow drawn yet, cell just shows "N" for NULL
+    } else if (idx===4){
+      heapNodeN.querySelector('.ptr').textContent = '\u2022';
+      setEdge('nheap-next', heapNodeN, 'right', heapNode23, 'left', animate);
+    } else if (idx===5){
+      setEdge('list-target', stackList, 'bottom', heapNodeN, 'top', animate);
+    }
+  }
+
+  function pulse(el){
+    el.classList.add('pulse');
+    setTimeout(function(){ el.classList.remove('pulse'); }, 400);
+  }
+
+  function goToStep(target){
+    if (target<-1) target=-1;
+    if (target>=STEPS.length) target=STEPS.length-1;
+    var animateLast = (target===currentStep+1) && target>=0;
+    var prev = currentStep;
+    currentStep = target;
+    resetVisualState();
+    for (var s=0; s<=currentStep; s++){
+      applyStep(s, (animateLast && s===currentStep));
+    }
+    renderCode();
+    setReadout(currentStep>=0 ? STEPS[currentStep].readout : 'READY \u2014 press Next to begin');
+    stepCounter.textContent = 'STEP '+(currentStep+1)+'/'+STEPS.length;
+    updateButtons();
+  }
+
+  function setReadout(t){ readout.textContent = t; }
+
+  function updateButtons(){
+    document.getElementById('btnPrev').disabled = currentStep<=-1;
+    document.getElementById('btnNext').disabled = currentStep>=STEPS.length-1;
+    insertValueInput.disabled = currentStep>-1;
+    document.getElementById('btnPlay').textContent = playing ? 'Pause' : 'Play';
+  }
+
+  document.getElementById('btnNext').addEventListener('click', function(){ goToStep(currentStep+1); });
+  document.getElementById('btnPrev').addEventListener('click', function(){ goToStep(currentStep-1); });
+  document.getElementById('btnReset').addEventListener('click', function(){
+    stopPlay();
+    goToStep(-1);
+  });
+  document.getElementById('btnPlay').addEventListener('click', function(){
+    if (playing){ stopPlay(); return; }
+    playing = true;
+    updateButtons();
+    playTimer = setInterval(function(){
+      if (currentStep>=STEPS.length-1){ stopPlay(); return; }
+      goToStep(currentStep+1);
+    }, 1500);
+  });
+  function stopPlay(){
+    playing = false;
+    if (playTimer) clearInterval(playTimer);
+    playTimer = null;
+    updateButtons();
+  }
+
+  // ---------- init ----------
+  resetVisualState();
+  renderCode();
+  updateButtons();
+})();
+</script>
+</body>
+</html>

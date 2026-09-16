@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Delete Kth From End — The Dummy Node Fix</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Spectral:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#12100c; --panel:#1c1812; --panel-2:#221d15; --rule:#3a3226;
+    --ink:#ede3c8; --ink-dim:#b8ac8c; --gold:#c89b3c;
+    --rust:#c1502e; --rust-dim:#3a2118; --teal:#3f8f84; --teal-dim:#17322e;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; padding:26px 16px 60px; background:var(--bg); color:var(--ink);
+    font-family:'Spectral', Georgia, serif;
+  }
+  .wrap{max-width:1100px; margin:0 auto;}
+  header{border-bottom:1px solid var(--rule); padding-bottom:14px; margin-bottom:18px;}
+  .stamp{
+    font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.1em;
+    color:var(--gold); border:1px solid var(--rule); padding:3px 8px; border-radius:2px;
+    display:inline-block; margin-bottom:10px;
+  }
+  h1{font-size:24px; margin:0; font-weight:600;}
+
+  .stages{display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap;}
+  .stagepill{
+    font-family:'IBM Plex Mono',monospace; font-size:11.5px; letter-spacing:.03em;
+    background:var(--panel-2); color:var(--ink-dim); border:1px solid var(--rule);
+    padding:7px 12px; border-radius:14px; cursor:pointer;
+  }
+  .stagepill.active{background:var(--panel); color:var(--gold); border-color:var(--gold);}
+
+  .stage{
+    background:var(--panel); border:1px solid var(--rule); border-radius:5px;
+    padding:18px; overflow-x:auto;
+  }
+  .canvas-outer{position:relative; height:210px;}
+  .edge-layer{position:absolute; top:0; left:0;}
+  .node-layer{position:absolute; top:0; left:0;}
+
+  .node{
+    position:absolute; height:54px; border-radius:6px;
+    display:flex; background:var(--panel-2); border:1.5px solid var(--rule); color:var(--ink);
+    font-family:'IBM Plex Mono',monospace; overflow:hidden;
+    box-shadow:0 2px 6px rgba(0,0,0,.35);
+    transition:opacity .4s ease, transform .35s ease, border-color .3s ease, box-shadow .3s ease;
+  }
+  .node .val{flex:1; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:700;}
+  .node .ptr{width:22px; border-left:1px solid var(--rule); display:flex; align-items:center; justify-content:center; color:var(--gold); font-size:11px;}
+  .node.dummynode{border-style:dashed; color:var(--ink-dim); background:rgba(200,155,60,.05);}
+  .node.dummynode .val{font-size:11px; letter-spacing:.02em;}
+  .node.hidden{opacity:0; transform:scale(.7); pointer-events:none;}
+  .node.leaving{opacity:0; transform:scale(.55); pointer-events:none;}
+  .node.pulse-slow{border-color:var(--teal); box-shadow:0 0 0 4px rgba(63,143,132,.22);}
+  .node.pulse-fast{border-color:var(--gold); box-shadow:0 0 0 4px rgba(200,155,60,.22);}
+  .node.pulse-temp{border-color:var(--rust); box-shadow:0 0 0 4px rgba(193,80,46,.22);}
+
+  .nullbox{
+    position:absolute; width:56px; height:40px; border-radius:6px;
+    border:1.5px dashed var(--rule); color:var(--ink-dim); display:flex; align-items:center; justify-content:center;
+    font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.05em;
+  }
+
+  .marker{
+    position:absolute; display:flex; flex-direction:column; align-items:center;
+    font-family:'IBM Plex Mono',monospace; font-size:11px; font-weight:700; letter-spacing:.06em;
+    transition:left 1.3s cubic-bezier(.4,0,.2,1), opacity .3s ease;
+  }
+  .marker.hidden{opacity:0; pointer-events:none;}
+  .marker .chip{padding:3px 9px; border-radius:10px; white-space:nowrap;}
+  .marker .arrow{font-size:13px; line-height:1; margin-top:1px;}
+  .marker.slow{top:0;}
+  .marker.slow .chip{background:var(--teal-dim); color:var(--teal); border:1px solid var(--teal);}
+  .marker.slow .arrow{color:var(--teal);}
+  .marker.fast{top:28px;}
+  .marker.fast .chip{background:rgba(200,155,60,.14); color:var(--gold); border:1px solid var(--gold);}
+  .marker.fast .arrow{color:var(--gold);}
+  .marker.temp{top:56px;}
+  .marker.temp .chip{background:var(--rust-dim); color:var(--rust); border:1px solid var(--rust);}
+  .marker.temp .arrow{color:var(--rust);}
+
+  .calltag{
+    position:absolute; top:100%; margin-top:6px; font-family:'IBM Plex Mono',monospace;
+    font-size:10.5px; letter-spacing:.08em; padding:2px 8px; border-radius:9px;
+    opacity:0; transition:opacity .4s ease, left 1.3s cubic-bezier(.4,0,.2,1);
+    white-space:nowrap;
+  }
+  .calltag.show{opacity:1;}
+  .calltag.rust{background:var(--rust-dim); color:var(--rust); border:1px solid var(--rust);}
+  .calltag.gold{background:rgba(200,155,60,.14); color:var(--gold); border:1px solid var(--gold);}
+
+  .edge{stroke:var(--rule); stroke-width:1.6px; marker-end:url(#arrowhead4);}
+  .edge.flash{stroke:var(--gold); stroke-width:2.4px;}
+
+  .readout{
+    font-family:'IBM Plex Mono',monospace; font-size:14.5px; color:var(--gold);
+    min-height:38px; margin-top:16px; letter-spacing:.02em; line-height:1.5;
+  }
+  .controls{display:flex; align-items:center; gap:8px; margin-top:8px; flex-wrap:wrap;}
+  input[type=number]{
+    width:60px; background:var(--panel-2); border:1px solid var(--rule); color:var(--ink);
+    font-family:'IBM Plex Mono',monospace; font-size:13px; padding:7px 8px; border-radius:3px;
+  }
+  button{
+    font-family:'IBM Plex Mono',monospace; font-size:12.5px; background:var(--panel-2);
+    color:var(--ink); border:1px solid var(--gold); padding:8px 14px; border-radius:3px; cursor:pointer;
+  }
+  button:hover{background:#2a2418;}
+  button:disabled{opacity:.35; cursor:not-allowed;}
+  .quiet-btn{border-color:var(--rule); color:var(--ink-dim);}
+  .step-counter{font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--ink-dim); margin-left:auto;}
+  label.klabel{font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--ink-dim);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <span class="stamp">UNIT 1 · LINKED LISTS</span>
+    <h1>Deleting the Kth Node From the End</h1>
+  </header>
+
+  <div class="stages" id="stagesRow"></div>
+
+  <div class="stage">
+    <div class="canvas-outer" id="canvasOuter">
+      <svg class="edge-layer" id="edgeLayer">
+        <defs>
+          <marker id="arrowhead4" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L6,3 L0,6 Z" fill="#c89b3c"></path>
+          </marker>
+        </defs>
+      </svg>
+      <div class="node-layer" id="nodeLayer"></div>
+    </div>
+
+    <div class="readout" id="readout">READY</div>
+    <div class="controls">
+      <label class="klabel">k = </label>
+      <input id="kInput" type="number" value="3" min="1">
+      <button class="quiet-btn" id="btnRebuild">Rebuild</button>
+      <button id="btnPrev">\u2190 Prev</button>
+      <button id="btnNext">Next \u2192</button>
+      <button id="btnPlay">Play</button>
+      <button class="quiet-btn" id="btnReset">Reset</button>
+      <span class="step-counter" id="stepCounter">STEP 1/1</span>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var LEFT_PAD = 30, NODE_TOP = 104;
+  var CELL = 110, NODE_W = 66;
+  var nodeLayer = document.getElementById('nodeLayer');
+  var edgeLayer = document.getElementById('edgeLayer');
+  var canvasOuter = document.getElementById('canvasOuter');
+  var stageEl = document.querySelector('.stage');
+  var readout = document.getElementById('readout');
+  var stepCounter = document.getElementById('stepCounter');
+  var stagesRow = document.getElementById('stagesRow');
+
+  var values = [12,45,7,23,89,34,5];
+  var n = values.length; // real nodes occupy slots 1..n; slot 0 = dummy; slot n+1 = NULL
+  var k = 3;
+  var steps = [];
+  var stageStart = {1:0,2:0,3:0};
+  var currentIdx = 0;
+  var playing = false, playTimer = null;
+
+  function slotX(i){ return LEFT_PAD + i*CELL; }
+
+  function fitLayout(){
+    var available = stageEl.clientWidth - 36;
+    var slots = n + 3; // dummy + n real + NULL, plus one for breathing room
+    CELL = Math.floor((available-40)/slots);
+    CELL = Math.max(76, Math.min(115, CELL));
+    NODE_W = Math.max(48, Math.min(70, CELL-20));
+  }
+
+  // ---------- build the step sequence ----------
+  function buildSteps(){
+    steps = [];
+    var STAGE1 = 'STAGE 1 \u00b7 SPACE THE POINTERS';
+    var STAGE2 = 'STAGE 2 \u00b7 THE PROBLEM';
+    var STAGE3 = 'STAGE 3 \u00b7 THE DUMMY-NODE FIX';
+
+    function push(o){ steps.push(o); }
+
+    // ---- STAGE 1: naive spacing, no dummy. slots 1..n are real nodes.
+    stageStart[1] = 0;
+    push({stage:1,label:STAGE1, slow:1, fast:1, temp:null, dummy:false, deletedSlot:null,
+      highlight:[1], tag:null, readout:'slow = fast = head'});
+    var f = 1;
+    for (var h=1; h<=k; h++){
+      f += 1;
+      push({stage:1,label:STAGE1, slow:1, fast:f, temp:null, dummy:false, deletedSlot:null,
+        highlight:[f], tag:null, readout:'space fast ahead \u2014 hop '+h+'/'+k});
+    }
+    var s = 1;
+    var ticks1 = n - k;
+    for (var t=0; t<ticks1; t++){
+      s += 1; f += 1;
+      push({stage:1,label:STAGE1, slow:s, fast:f, temp:null, dummy:false, deletedSlot:null,
+        highlight:[s,f], tag:null, readout:'move together \u2014 slow & fast both step forward'});
+    }
+    push({stage:1,label:STAGE1, slow:s, fast:f, temp:null, dummy:false, deletedSlot:null,
+      highlight:[s], tag:{text:'TARGET', slot:s, color:'rust'},
+      readout:'fast hit NULL \u2014 slow lands ON the '+ordinal(k)+'-from-end node ('+values[s-1]+')'});
+
+    // ---- STAGE 2: the problem — no reference to the predecessor
+    stageStart[2] = steps.length;
+    var predSlotNaive = s - 1;
+    push({stage:2,label:STAGE2, slow:s, fast:f, temp:1, dummy:false, deletedSlot:null,
+      highlight:[s], tag:{text:'TARGET', slot:s, color:'rust'},
+      readout:'to delete it we must rewrite the PREVIOUS node\u2019s pointer \u2014 but we never kept a reference to it'});
+    var tempHops = predSlotNaive - 1;
+    var temp = 1;
+    for (var h2=1; h2<=tempHops; h2++){
+      temp += 1;
+      push({stage:2,label:STAGE2, slow:s, fast:f, temp:temp, dummy:false, deletedSlot:null,
+        highlight:[temp], tag:{text:'TARGET', slot:s, color:'rust'},
+        readout:'EXTRA PASS from head \u2014 hop '+h2+'/'+Math.max(tempHops,1)});
+    }
+    push({stage:2,label:STAGE2, slow:s, fast:f, temp:temp, dummy:false, deletedSlot:null,
+      highlight:[temp], tag:{text:'TARGET', slot:s, color:'rust'},
+      readout:'found it \u2014 but that took a WHOLE SEPARATE traversal just to get the predecessor'});
+
+    // ---- STAGE 3: the dummy node fix
+    stageStart[3] = steps.length;
+    push({stage:3,label:STAGE3, slow:null, fast:null, temp:null, dummy:true, deletedSlot:null,
+      highlight:[], tag:null, readout:'prepend a dummy node before head \u2014 dummy.next = head'});
+    push({stage:3,label:STAGE3, slow:0, fast:0, temp:null, dummy:true, deletedSlot:null,
+      highlight:[0], tag:null, readout:'slow = fast = dummy'});
+    var f3 = 0;
+    for (var h3=1; h3<=k; h3++){
+      f3 += 1;
+      push({stage:3,label:STAGE3, slow:0, fast:f3, temp:null, dummy:true, deletedSlot:null,
+        highlight:[f3], tag:null, readout:'space fast ahead \u2014 hop '+h3+'/'+k});
+    }
+    var s3 = 0;
+    var ticks3 = n - f3;
+    for (var t3=0; t3<ticks3; t3++){
+      s3 += 1; f3 += 1;
+      push({stage:3,label:STAGE3, slow:s3, fast:f3, temp:null, dummy:true, deletedSlot:null,
+        highlight:[s3,f3], tag:null, readout:'move together \u2014 slow & fast both step forward'});
+    }
+    var predNote = s3===0 ? '  (that\u2019s the dummy \u2014 we\u2019re deleting the head itself!)' : '';
+    push({stage:3,label:STAGE3, slow:s3, fast:f3, temp:null, dummy:true, deletedSlot:null,
+      highlight:[s3], tag:{text:'PREDECESSOR', slot:s3, color:'gold'},
+      readout:'slow is now the PREDECESSOR \u2014 found in the SAME traversal'+predNote});
+    var targetSlot3 = s3+1;
+    push({stage:3,label:STAGE3, slow:s3, fast:f3, temp:null, dummy:true, deletedSlot:targetSlot3,
+      highlight:[s3], tag:{text:'PREDECESSOR', slot:s3, color:'gold'},
+      readout:'slow->next = slow->next->next \u2014 unlink '+values[targetSlot3-1]+' in O(1), same pass'});
+    push({stage:3,label:STAGE3, slow:null, fast:null, temp:null, dummy:false, deletedSlot:targetSlot3,
+      highlight:[], tag:null, readout:'dummy discarded \u2014 list restored, '+ordinal(k)+'-from-end deleted'});
+  }
+
+  function ordinal(x){
+    var s=['th','st','nd','rd'], v=x%100;
+    return x+(s[(v-20)%10]||s[v]||s[0]);
+  }
+
+  // ---------- static DOM (created once per rebuild) ----------
+  var dummyEl, nullEl, realEls = [];
+
+  function buildDom(){
+    fitLayout();
+    nodeLayer.innerHTML = '';
+    realEls = [];
+
+    dummyEl = document.createElement('div');
+    dummyEl.className = 'node dummynode hidden';
+    dummyEl.style.top = NODE_TOP+'px'; dummyEl.style.width = NODE_W+'px';
+    dummyEl.style.left = slotX(0)+'px';
+    dummyEl.innerHTML = '<div class="val">dummy</div><div class="ptr">\u2022</div>';
+    nodeLayer.appendChild(dummyEl);
+
+    for (var i=1; i<=n; i++){
+      var el = document.createElement('div');
+      el.className = 'node';
+      el.dataset.slot = i;
+      el.style.left = slotX(i)+'px'; el.style.top = NODE_TOP+'px'; el.style.width = NODE_W+'px';
+      el.innerHTML = '<div class="val">'+values[i-1]+'</div><div class="ptr">\u2022</div>';
+      nodeLayer.appendChild(el);
+      realEls.push(el);
+    }
+
+    nullEl = document.createElement('div');
+    nullEl.className = 'nullbox';
+    nullEl.style.left = slotX(n+1)+'px'; nullEl.style.top = (NODE_TOP+7)+'px';
+    nullEl.textContent = 'NULL';
+    nodeLayer.appendChild(nullEl);
+
+    ['slow','fast','temp'].forEach(function(kind){
+      var m = document.createElement('div');
+      m.className = 'marker '+kind+' hidden';
+      m.id = 'marker_'+kind;
+      m.innerHTML = '<span class="chip">'+kind+'</span><span class="arrow">\u2193</span>';
+      nodeLayer.appendChild(m);
+    });
+
+    var tag = document.createElement('div');
+    tag.className = 'calltag';
+    tag.id = 'callTag';
+    nodeLayer.appendChild(tag);
+
+    resizeStage();
+  }
+
+  function resizeStage(){
+    var w = slotX(n+1)+70;
+    canvasOuter.style.width = Math.max(w,460)+'px';
+    canvasOuter.style.height = '210px';
+    edgeLayer.setAttribute('width', Math.max(w,460));
+    edgeLayer.setAttribute('height', 210);
+    nodeLayer.style.width = Math.max(w,460)+'px';
+    nodeLayer.style.height = '210px';
+  }
+
+  function nodeAt(slot){
+    if (slot===0) return dummyEl;
+    return realEls[slot-1];
+  }
+
+  // ---------- edges ----------
+  function chainOrder(step){
+    var order = [];
+    if (step.dummy) order.push(0);
+    for (var i=1; i<=n; i++){
+      if (step.deletedSlot!=null && i===step.deletedSlot) continue;
+      order.push(i);
+    }
+    return order;
+  }
+
+  function drawEdges(step){
+    edgeLayer.querySelectorAll('.edge').forEach(function(e){ e.remove(); });
+    var order = chainOrder(step);
+    for (var i=0; i<order.length; i++){
+      var fromEl = nodeAt(order[i]);
+      var toEl = (i+1<order.length) ? nodeAt(order[i+1]) : nullEl;
+      var line = document.createElementNS('http://www.w3.org/2000/svg','line');
+      line.setAttribute('class','edge');
+      var fr = fromEl.getBoundingClientRect(), tr = toEl.getBoundingClientRect(), cr = nodeLayer.getBoundingClientRect();
+      line.setAttribute('x1', fr.right-cr.left);
+      line.setAttribute('y1', fr.top+fr.height/2-cr.top);
+      line.setAttribute('x2', tr.left-cr.left);
+      line.setAttribute('y2', tr.top+tr.height/2-cr.top);
+      edgeLayer.appendChild(line);
+    }
+  }
+
+  // ---------- rendering ----------
+  function renderStep(idx){
+    var step = steps[idx];
+
+    dummyEl.classList.toggle('hidden', !step.dummy);
+    realEls.forEach(function(el, i0){
+      var slot = i0+1;
+      var isDeleted = step.deletedSlot!=null && slot===step.deletedSlot;
+      el.classList.toggle('leaving', isDeleted);
+      el.classList.remove('pulse-slow','pulse-fast','pulse-temp');
+    });
+    dummyEl.classList.remove('pulse-slow','pulse-fast','pulse-temp');
+    (step.highlight||[]).forEach(function(slot){
+      var el = nodeAt(slot);
+      if (!el) return;
+      if (step.slow===slot) el.classList.add('pulse-slow');
+      else if (step.fast===slot) el.classList.add('pulse-fast');
+      else if (step.temp===slot) el.classList.add('pulse-temp');
+    });
+
+    positionMarker('slow', step.slow);
+    positionMarker('fast', step.fast);
+    positionMarker('temp', step.temp);
+
+    var tag = document.getElementById('callTag');
+    if (step.tag){
+      var el = nodeAt(step.tag.slot);
+      var r = el.getBoundingClientRect(), cr = nodeLayer.getBoundingClientRect();
+      tag.style.left = (r.left-cr.left + r.width/2 - 44)+'px';
+      tag.className = 'calltag show '+step.tag.color;
+      tag.textContent = step.tag.text;
+    } else {
+      tag.classList.remove('show');
+    }
+
+    drawEdges(step);
+
+    readout.textContent = step.readout;
+    stepCounter.textContent = 'STEP '+(idx+1)+'/'+steps.length;
+    renderStagePills(step.stage);
+
+    document.getElementById('btnPrev').disabled = idx<=0;
+    document.getElementById('btnNext').disabled = idx>=steps.length-1;
+  }
+
+  function positionMarker(kind, slot){
+    var m = document.getElementById('marker_'+kind);
+    if (slot==null){
+      m.classList.add('hidden');
+      return;
+    }
+    m.classList.remove('hidden');
+    m.style.left = slotX(slot)+'px';
+  }
+
+  function renderStagePills(activeStage){
+    stagesRow.innerHTML = '';
+    [[1,'1 \u00b7 SPACE POINTERS'],[2,'2 \u00b7 THE PROBLEM'],[3,'3 \u00b7 DUMMY FIX']].forEach(function(pair){
+      var p = document.createElement('div');
+      p.className = 'stagepill'+(pair[0]===activeStage ? ' active':'');
+      p.textContent = pair[1];
+      p.addEventListener('click', function(){ stopPlay(); goToStep(stageStart[pair[0]]); });
+      stagesRow.appendChild(p);
+    });
+  }
+
+  function goToStep(i){
+    if (i<0) i=0;
+    if (i>=steps.length) i=steps.length-1;
+    currentIdx = i;
+    renderStep(currentIdx);
+  }
+
+  document.getElementById('btnNext').addEventListener('click', function(){ stopPlay(); goToStep(currentIdx+1); });
+  document.getElementById('btnPrev').addEventListener('click', function(){ stopPlay(); goToStep(currentIdx-1); });
+  document.getElementById('btnReset').addEventListener('click', function(){ stopPlay(); goToStep(0); });
+  document.getElementById('btnPlay').addEventListener('click', function(){
+    if (playing){ stopPlay(); return; }
+    playing = true;
+    document.getElementById('btnPlay').textContent = 'Pause';
+    playTimer = setInterval(function(){
+      if (currentIdx>=steps.length-1){ stopPlay(); return; }
+      goToStep(currentIdx+1);
+    }, 1900);
+  });
+  function stopPlay(){
+    playing = false;
+    if (playTimer) clearInterval(playTimer);
+    playTimer = null;
+    document.getElementById('btnPlay').textContent = 'Play';
+  }
+
+  document.getElementById('btnRebuild').addEventListener('click', function(){
+    stopPlay();
+    var val = parseInt(document.getElementById('kInput').value, 10);
+    if (isNaN(val) || val<1 || val>n){ alert('k must be between 1 and '+n); return; }
+    k = val;
+    buildSteps();
+    buildDom();
+    goToStep(0);
+  });
+
+  var resizeTimer = null;
+  window.addEventListener('resize', function(){
+    if (resizeTimer) clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(function(){
+      buildDom();
+      goToStep(currentIdx);
+    }, 200);
+  });
+
+  // ---------- init ----------
+  buildSteps();
+  buildDom();
+  goToStep(0);
+})();
+</script>
+</body>
+</html>

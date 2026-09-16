@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Middle of a Linked List — Slow &amp; Fast Pointers</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Spectral:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#12100c; --panel:#1c1812; --panel-2:#221d15; --rule:#3a3226;
+    --ink:#ede3c8; --ink-dim:#b8ac8c; --gold:#c89b3c;
+    --rust:#c1502e; --teal:#3f8f84; --teal-dim:#17322e;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; padding:26px 16px 60px; background:var(--bg); color:var(--ink);
+    font-family:'Spectral', Georgia, serif;
+  }
+  .wrap{max-width:1100px; margin:0 auto;}
+  header{border-bottom:1px solid var(--rule); padding-bottom:14px; margin-bottom:18px;}
+  .stamp{
+    font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.1em;
+    color:var(--gold); border:1px solid var(--rule); padding:3px 8px; border-radius:2px;
+    display:inline-block; margin-bottom:10px;
+  }
+  h1{font-size:24px; margin:0; font-weight:600;}
+
+  main{display:grid; grid-template-columns:270px 1fr; gap:14px;}
+  @media (max-width:760px){ main{grid-template-columns:1fr;} }
+
+  .code-panel{
+    background:var(--panel); border:1px solid var(--rule); border-radius:5px;
+    padding:14px; height:fit-content;
+  }
+  .code-line{
+    font-family:'IBM Plex Mono',monospace; font-size:12.5px; color:var(--ink-dim);
+    white-space:pre; padding:3px 8px; margin-bottom:1px; border-left:3px solid transparent; border-radius:3px;
+    transition:background .25s ease, color .25s ease, border-color .25s ease;
+  }
+  .code-line .ln{display:inline-block; width:20px; color:var(--rule); user-select:none;}
+  .code-line.current{background:var(--panel-2); border-color:var(--gold); color:var(--ink); font-weight:600;}
+  .code-line.done{color:var(--teal);}
+
+  .stage{
+    background:var(--panel); border:1px solid var(--rule); border-radius:5px;
+    padding:18px; overflow-x:auto;
+  }
+  .canvas-outer{position:relative; height:200px;}
+  .edge-layer{position:absolute; top:0; left:0;}
+  .node-layer{position:absolute; top:0; left:0;}
+
+  .node{
+    position:absolute; height:54px; border-radius:6px;
+    display:flex; background:var(--panel-2); border:1.5px solid var(--rule); color:var(--ink);
+    font-family:'IBM Plex Mono',monospace; overflow:hidden;
+    box-shadow:0 2px 6px rgba(0,0,0,.35);
+    transition:border-color .3s ease, box-shadow .3s ease, transform .3s ease;
+  }
+  .node .val{flex:1; display:flex; align-items:center; justify-content:center; font-size:17px; font-weight:700;}
+  .node .ptr{width:22px; border-left:1px solid var(--rule); display:flex; align-items:center; justify-content:center; color:var(--gold); font-size:12px;}
+  .node.pulse-slow{border-color:var(--teal); box-shadow:0 0 0 4px rgba(63,143,132,.22);}
+  .node.pulse-fast{border-color:var(--gold); box-shadow:0 0 0 4px rgba(200,155,60,.22);}
+  .node.is-middle{border-color:var(--gold); border-width:2.5px; box-shadow:0 0 0 5px rgba(200,155,60,.28);}
+
+  .nullbox{
+    position:absolute; width:56px; height:40px; top:7px; border-radius:6px;
+    border:1.5px dashed var(--rule); color:var(--ink-dim); display:flex; align-items:center; justify-content:center;
+    font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.05em;
+  }
+
+  .marker{
+    position:absolute; display:flex; flex-direction:column; align-items:center;
+    font-family:'IBM Plex Mono',monospace; font-size:11px; font-weight:700; letter-spacing:.06em;
+    transition:left 1.5s cubic-bezier(.4,0,.2,1);
+  }
+  .marker .chip{
+    padding:3px 9px; border-radius:10px; white-space:nowrap;
+  }
+  .marker .arrow{font-size:13px; line-height:1; margin-top:1px;}
+  .marker.slow{top:0;}
+  .marker.slow .chip{background:var(--teal-dim); color:var(--teal); border:1px solid var(--teal);}
+  .marker.slow .arrow{color:var(--teal);}
+  .marker.fast{top:30px;}
+  .marker.fast .chip{background:rgba(200,155,60,.14); color:var(--gold); border:1px solid var(--gold);}
+  .marker.fast .arrow{color:var(--gold);}
+
+  .midtag{
+    position:absolute; top:-30px; font-family:'IBM Plex Mono',monospace; font-size:10.5px;
+    color:var(--gold); letter-spacing:.08em; opacity:0; transition:opacity .4s ease, left 1.5s cubic-bezier(.4,0,.2,1);
+  }
+  .midtag.show{opacity:1;}
+
+  .edge{stroke:var(--rule); stroke-width:1.6px; marker-end:url(#arrowhead3);}
+
+  .readout{
+    font-family:'IBM Plex Mono',monospace; font-size:14.5px; color:var(--gold);
+    min-height:22px; margin-top:14px; letter-spacing:.02em;
+  }
+  .controls{display:flex; align-items:center; gap:8px; margin-top:10px; flex-wrap:wrap;}
+  button{
+    font-family:'IBM Plex Mono',monospace; font-size:12.5px; background:var(--panel-2);
+    color:var(--ink); border:1px solid var(--gold); padding:8px 14px; border-radius:3px; cursor:pointer;
+  }
+  button:hover{background:#2a2418;}
+  button:disabled{opacity:.35; cursor:not-allowed;}
+  .quiet-btn{border-color:var(--rule); color:var(--ink-dim);}
+  .step-counter{font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--ink-dim); margin-left:auto;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <span class="stamp">UNIT 1 · LINKED LISTS</span>
+    <h1>Finding the Middle — One Traversal</h1>
+  </header>
+
+  <main>
+    <div class="code-panel" id="codePanel"></div>
+
+    <div class="stage">
+      <div class="canvas-outer" id="canvasOuter">
+        <svg class="edge-layer" id="edgeLayer">
+          <defs>
+            <marker id="arrowhead3" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+              <path d="M0,0 L6,3 L0,6 Z" fill="#c89b3c"></path>
+            </marker>
+          </defs>
+        </svg>
+        <div class="node-layer" id="nodeLayer"></div>
+      </div>
+
+      <div class="readout" id="readout">READY</div>
+      <div class="controls">
+        <button id="btnPrev">\u2190 Prev</button>
+        <button id="btnNext">Next \u2192</button>
+        <button id="btnPlay">Play</button>
+        <button class="quiet-btn" id="btnReset">Reset</button>
+        <button class="quiet-btn" id="btnOdd">Odd-length list</button>
+        <button class="quiet-btn" id="btnEven">Even-length list</button>
+        <span class="step-counter" id="stepCounter">STEP 1/1</span>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+(function(){
+  var CELL = 130, LEFT_PAD = 30, NODE_TOP = 66, NODE_W = 74;
+  var nodeLayer = document.getElementById('nodeLayer');
+  var edgeLayer = document.getElementById('edgeLayer');
+  var canvasOuter = document.getElementById('canvasOuter');
+  var stageEl = document.querySelector('.stage');
+  var readout = document.getElementById('readout');
+  var codePanel = document.getElementById('codePanel');
+  var stepCounter = document.getElementById('stepCounter');
+
+  var codeLines = [
+    {n:1, t:'Node* findMiddle(Node *head) {', lines:[]},
+    {n:2, t:'    Node *slow = head;',          lines:[2]},
+    {n:3, t:'    Node *fast = head;',          lines:[3]},
+    {n:4, t:'',                                lines:[]},
+    {n:5, t:'    while (fast && fast->next) {',lines:[5]},
+    {n:6, t:'        slow = slow->next;',      lines:[6]},
+    {n:7, t:'        fast = fast->next->next;',lines:[7]},
+    {n:8, t:'    }',                           lines:[]},
+    {n:9, t:'',                                lines:[]},
+    {n:10,t:'    return slow;  // middle',     lines:[10]},
+    {n:11,t:'}',                                lines:[]}
+  ];
+
+  var values = [12,45,7,23,89,34,5]; // odd example, default
+  var n = values.length;
+  var steps = [];
+  var currentIdx = 0;
+  var playing = false, playTimer = null;
+
+  function slotX(i){ return LEFT_PAD + i*CELL; }
+
+  function fitLayout(){
+    var available = stageEl.clientWidth - 36; // minus stage padding
+    var slots = n + 1; // n nodes + the NULL box
+    CELL = Math.floor((available - 40) / slots);
+    CELL = Math.max(78, Math.min(130, CELL));
+    NODE_W = Math.max(52, Math.min(74, CELL - 22));
+  }
+
+  function simulate(){
+    steps = [];
+    var slow = 0, fast = 0;
+    steps.push({slow:slow, fast:fast, lines:[2,3], readout:'slow = fast = head', final:false});
+    while (fast <= n-2){
+      slow += 1; fast += 2;
+      var fastLabel = fast >= n ? 'NULL' : ('index '+fast);
+      steps.push({slow:slow, fast:fast, lines:[5,6,7], readout:'slow \u2192 index '+slow+'   fast \u2192 '+fastLabel, final:false});
+    }
+    var finalFastLabel = steps[steps.length-1].fast >= n ? 'NULL' : ('index '+steps[steps.length-1].fast);
+    steps.push({slow:slow, fast:steps[steps.length-1].fast, lines:[10], final:true,
+      readout:'return slow \u2192 middle = '+values[slow]+'  (fast stopped at '+finalFastLabel+')'});
+  }
+
+  // ---------- static list rendering ----------
+  function buildList(){
+    fitLayout();
+    nodeLayer.innerHTML = '';
+    for (var i=0; i<n; i++){
+      var el = document.createElement('div');
+      el.className = 'node';
+      el.dataset.idx = i;
+      el.style.left = slotX(i)+'px';
+      el.style.top = NODE_TOP+'px';
+      el.style.width = NODE_W+'px';
+      var val = document.createElement('div'); val.className='val'; val.textContent = values[i];
+      var ptr = document.createElement('div'); ptr.className='ptr'; ptr.textContent = '\u2022';
+      el.appendChild(val); el.appendChild(ptr);
+      nodeLayer.appendChild(el);
+    }
+    var nb = document.createElement('div');
+    nb.className = 'nullbox'; nb.id = 'nullBox'; nb.textContent = 'NULL';
+    nb.style.left = slotX(n)+'px'; nb.style.top = (NODE_TOP+7)+'px';
+    nodeLayer.appendChild(nb);
+
+    var slowM = document.createElement('div');
+    slowM.className = 'marker slow'; slowM.id = 'slowMarker';
+    slowM.innerHTML = '<span class="chip">slow</span><span class="arrow">\u2193</span>';
+    slowM.style.left = slotX(0)+'px';
+    nodeLayer.appendChild(slowM);
+
+    var fastM = document.createElement('div');
+    fastM.className = 'marker fast'; fastM.id = 'fastMarker';
+    fastM.innerHTML = '<span class="chip">fast</span><span class="arrow">\u2193</span>';
+    fastM.style.left = slotX(0)+'px';
+    nodeLayer.appendChild(fastM);
+
+    var midTag = document.createElement('div');
+    midTag.className = 'midtag'; midTag.id = 'midTag';
+    midTag.textContent = 'MIDDLE';
+    midTag.style.left = slotX(0)+'px';
+    nodeLayer.appendChild(midTag);
+
+    resizeStage();
+    drawEdges();
+  }
+
+  function resizeStage(){
+    var w = slotX(n)+70;
+    canvasOuter.style.width = Math.max(w,420)+'px';
+    canvasOuter.style.height = '200px';
+    edgeLayer.setAttribute('width', Math.max(w,420));
+    edgeLayer.setAttribute('height', 200);
+    nodeLayer.style.width = Math.max(w,420)+'px';
+    nodeLayer.style.height = '200px';
+  }
+
+  function drawEdges(){
+    edgeLayer.querySelectorAll('.edge').forEach(function(e){ e.remove(); });
+    for (var i=0; i<n; i++){
+      var fromEl = nodeLayer.querySelector('.node[data-idx="'+i+'"]');
+      var toEl = (i+1<n) ? nodeLayer.querySelector('.node[data-idx="'+(i+1)+'"]') : document.getElementById('nullBox');
+      var line = document.createElementNS('http://www.w3.org/2000/svg','line');
+      line.setAttribute('class','edge');
+      var fr = fromEl.getBoundingClientRect(), tr = toEl.getBoundingClientRect(), cr = nodeLayer.getBoundingClientRect();
+      line.setAttribute('x1', fr.right-cr.left);
+      line.setAttribute('y1', fr.top+fr.height/2-cr.top);
+      line.setAttribute('x2', tr.left-cr.left);
+      line.setAttribute('y2', tr.top+tr.height/2-cr.top);
+      edgeLayer.appendChild(line);
+    }
+  }
+
+  // ---------- rendering a step ----------
+  function renderStep(idx, isJump){
+    var s = steps[idx];
+    var slowX = slotX(s.slow);
+    var fastX = slotX(s.fast >= n ? n : s.fast);
+    document.getElementById('slowMarker').style.left = slowX+'px';
+    document.getElementById('fastMarker').style.left = fastX+'px';
+
+    nodeLayer.querySelectorAll('.node').forEach(function(el){
+      el.classList.remove('pulse-slow','pulse-fast','is-middle');
+    });
+    var slowNode = nodeLayer.querySelector('.node[data-idx="'+s.slow+'"]');
+    if (slowNode) slowNode.classList.add(s.final ? 'is-middle' : 'pulse-slow');
+    if (!s.final && s.fast < n){
+      var fastNode = nodeLayer.querySelector('.node[data-idx="'+s.fast+'"]');
+      if (fastNode) fastNode.classList.add('pulse-fast');
+    }
+
+    var midTag = document.getElementById('midTag');
+    midTag.style.left = slowX+'px';
+    midTag.classList.toggle('show', !!s.final);
+
+    readout.textContent = s.readout;
+    stepCounter.textContent = 'STEP '+(idx+1)+'/'+steps.length;
+
+    var doneLines = [];
+    for (var i=0; i<idx; i++) doneLines = doneLines.concat(steps[i].lines);
+    renderCode(s.lines, doneLines);
+
+    document.getElementById('btnPrev').disabled = idx<=0;
+    document.getElementById('btnNext').disabled = idx>=steps.length-1;
+  }
+
+  function renderCode(currentLines, doneLines){
+    codePanel.innerHTML = '';
+    codeLines.forEach(function(line){
+      var div = document.createElement('div');
+      div.className = 'code-line';
+      if (currentLines.indexOf(line.n)!==-1) div.classList.add('current');
+      else if (doneLines.indexOf(line.n)!==-1) div.classList.add('done');
+      var ln = document.createElement('span'); ln.className='ln'; ln.textContent=line.n;
+      div.appendChild(ln);
+      div.appendChild(document.createTextNode(line.t));
+      codePanel.appendChild(div);
+    });
+  }
+
+  function goToStep(i){
+    if (i<0) i=0;
+    if (i>=steps.length) i=steps.length-1;
+    currentIdx = i;
+    renderStep(currentIdx);
+  }
+
+  document.getElementById('btnNext').addEventListener('click', function(){ stopPlay(); goToStep(currentIdx+1); });
+  document.getElementById('btnPrev').addEventListener('click', function(){ stopPlay(); goToStep(currentIdx-1); });
+  document.getElementById('btnReset').addEventListener('click', function(){ stopPlay(); goToStep(0); });
+
+  document.getElementById('btnPlay').addEventListener('click', function(){
+    if (playing){ stopPlay(); return; }
+    playing = true;
+    document.getElementById('btnPlay').textContent = 'Pause';
+    playTimer = setInterval(function(){
+      if (currentIdx>=steps.length-1){ stopPlay(); return; }
+      goToStep(currentIdx+1);
+    }, 1900);
+  });
+  function stopPlay(){
+    playing = false;
+    if (playTimer) clearInterval(playTimer);
+    playTimer = null;
+    document.getElementById('btnPlay').textContent = 'Play';
+  }
+
+  function loadList(newValues){
+    stopPlay();
+    values = newValues;
+    n = values.length;
+    simulate();
+    buildList();
+    goToStep(0);
+  }
+
+  document.getElementById('btnOdd').addEventListener('click', function(){ loadList([12,45,7,23,89,34,5]); });
+  document.getElementById('btnEven').addEventListener('click', function(){ loadList([12,45,7,23,89,34]); });
+
+  // ---------- init ----------
+  simulate();
+  buildList();
+  goToStep(0);
+
+  var resizeTimer = null;
+  window.addEventListener('resize', function(){
+    if (resizeTimer) clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(function(){
+      buildList();
+      goToStep(currentIdx);
+    }, 200);
+  });
+})();
+</script>
+</body>
+</html>

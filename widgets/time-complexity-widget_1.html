@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Time Complexity & Asymptotic Analysis — Field Report</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Bitter:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+  :root{
+    --bg: #12151A;
+    --panel: #1A1E25;
+    --panel-raised: #20242C;
+    --line: #313742;
+    --ink: #E9E4D8;
+    --ink-dim: #9AA0AB;
+    --amber: #E3A73B;
+    --blue: #6EA8DD;
+    --red: #C1543A;
+    --mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+    --serif: 'Bitter', Georgia, 'Times New Roman', serif;
+  }
+
+  *{ box-sizing: border-box; }
+  html,body{
+    margin:0; padding:0; background: var(--bg); color: var(--ink);
+    font-family: var(--serif);
+    -webkit-font-smoothing: antialiased;
+  }
+  body{
+    background-image:
+      radial-gradient(circle at 15% 8%, rgba(110,168,221,0.05), transparent 40%),
+      radial-gradient(circle at 85% 92%, rgba(227,167,59,0.05), transparent 40%);
+  }
+
+  .sheet{ max-width: 720px; margin: 0 auto; padding: 48px 20px 80px; }
+
+  header.cover{
+    border: 1px solid var(--line);
+    background: var(--panel);
+    padding: 22px 24px 20px;
+    margin-bottom: 22px;
+  }
+  .file-row{
+    display:flex; justify-content: space-between; align-items: baseline;
+    font-family: var(--mono); font-size: 11px; color: var(--ink-dim);
+    margin-bottom: 12px;
+  }
+  h1{ font-family: var(--serif); font-weight: 700; font-size: clamp(22px, 4.5vw, 30px); line-height: 1.15; margin: 0; }
+
+  /* ---------- Tabs ---------- */
+  .tabs{
+    display: flex;
+    gap: 4px;
+    margin-bottom: 0;
+    overflow-x: auto;
+  }
+  .tab-btn{
+    font-family: var(--mono);
+    font-size: 12.5px;
+    color: var(--ink-dim);
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-bottom: none;
+    padding: 10px 16px 9px;
+    cursor: pointer;
+    white-space: nowrap;
+    position: relative;
+    top: 1px;
+  }
+  .tab-btn .sym{ color: inherit; margin-right: 6px; }
+  .tab-btn.active{
+    color: var(--ink);
+    background: var(--panel);
+    border-color: var(--line);
+  }
+  .tab-btn[data-tab="oh"].active{ box-shadow: inset 0 2px 0 var(--blue); }
+  .tab-btn[data-tab="omega"].active{ box-shadow: inset 0 2px 0 var(--amber); }
+  .tab-btn[data-tab="theta"].active{ box-shadow: inset 0 2px 0 var(--red); }
+  .tab-btn[data-tab="highway"].active{ box-shadow: inset 0 2px 0 var(--ink-dim); }
+
+  .tab-panels{
+    border: 1px solid var(--line);
+    background: var(--panel);
+    padding: 24px 24px 26px;
+    margin-bottom: 40px;
+  }
+  .panel{ display: none; animation: fade 280ms ease; }
+  .panel.active{ display: block; }
+  @keyframes fade{ from{ opacity:0; transform: translateY(-3px);} to{ opacity:1; transform: translateY(0);} }
+
+  p{ line-height: 1.65; font-size: 15.5px; margin: 0 0 12px; }
+  p.muted{ color: var(--ink-dim); font-size: 14px; }
+  strong{ color: var(--ink); }
+
+  /* ---------- Reveal (used in Highway tab only) ---------- */
+  .reveal{ border: 1px solid var(--line); background: var(--panel-raised); margin: 14px 0; }
+  .reveal summary{
+    list-style:none; cursor:pointer; user-select:none;
+    padding: 12px 16px; display:flex; align-items:center; justify-content:space-between; gap:12px;
+  }
+  .reveal summary::-webkit-details-marker{ display:none; }
+  .reveal summary .q{ font-family: var(--serif); font-size: 15.5px; }
+  .reveal summary .tag{ flex-shrink:0; font-family: var(--mono); font-size: 10.5px; color: var(--ink-dim); border:1px solid var(--line); padding: 3px 8px; }
+  .reveal[open] summary .tag{ color: var(--bg); background: var(--amber); border-color: var(--amber); }
+  .reveal[open] summary .tag::after{ content:"OPENED"; }
+  .reveal:not([open]) summary .tag::after{ content:"REVEAL"; }
+  .reveal .content{ padding: 2px 16px 16px; border-top: 1px dashed var(--line); animation: fade 280ms ease; }
+  .stamp{ display:inline-block; font-family: var(--mono); font-size: 12px; color: var(--amber); border:1px solid var(--amber); padding: 5px 10px; margin: 8px 0 10px; transform: rotate(-1deg); }
+
+  /* ---------- Definition block ---------- */
+  .definition{
+    font-family: var(--mono); font-size: 13.5px; color: var(--ink);
+    background: var(--panel-raised); border: 1px solid var(--line);
+    padding: 12px 14px; margin: 14px 0; line-height: 1.75; overflow-x: auto;
+  }
+  .cond{ color: var(--blue); }
+  .panel[data-kind="omega"] .cond{ color: var(--amber); }
+  .panel[data-kind="theta"] .cond{ color: var(--red); }
+
+  /* ---------- Example set ---------- */
+  .example-set{
+    border: 1px solid var(--line);
+    margin: 16px 0 6px;
+  }
+  .example-set .head{
+    font-family: var(--mono); font-size: 11px; color: var(--ink-dim);
+    padding: 8px 14px; border-bottom: 1px solid var(--line); background: var(--panel-raised);
+  }
+  .example-row{ border-bottom: 1px solid var(--line); }
+  .example-row:last-child{ border-bottom: none; }
+  .example-row summary{
+    list-style:none; cursor:pointer; user-select:none;
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: 9px 14px;
+    font-family: var(--mono); font-size: 14px;
+  }
+  .example-row summary::-webkit-details-marker{ display:none; }
+  .example-row .fn{ min-width: 118px; color: var(--ink); }
+  .example-row .tag{ font-size: 10.5px; color: var(--ink-dim); border: 1px solid var(--line); padding: 2px 8px; white-space: nowrap; }
+  .example-row .tag::after{ content: "REVEAL"; }
+  .example-row[open] summary .tag{ color: var(--bg); background: var(--ink-dim); border-color: var(--ink-dim); }
+  .example-row[open] summary .tag::after{ content: "OPENED"; }
+  .example-row.in[open] summary .tag{ background: #8FD19E; border-color: #8FD19E; }
+  .example-row.out[open] summary .tag{ background: var(--red); border-color: var(--red); }
+  .example-row .verdict-box{
+    padding: 0 14px 10px;
+    animation: fade 220ms ease;
+  }
+  .example-row .verdict{ font-size: 11.5px; padding: 2px 8px; border: 1px solid; white-space: nowrap; }
+  .example-row.in .verdict{ color: #8FD19E; border-color: #3D6B47; }
+  .example-row.out .verdict{ color: var(--red); border-color: #6b3128; }
+
+  .note{ border: 1px solid var(--line); background: var(--panel-raised); padding: 12px 14px; margin-top: 14px; }
+  .note p{ margin: 0; font-size: 13.5px; color: var(--ink-dim); }
+
+  /* ---------- Trace chart ---------- */
+  .chart-block{ border: 1px solid var(--line); margin: 18px 0 6px; }
+  .chart-head{
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: 10px 14px; border-bottom: 1px solid var(--line); background: var(--panel-raised);
+    font-family: var(--mono); font-size: 11px; color: var(--ink-dim); flex-wrap: wrap;
+  }
+  .play-btn{
+    font-family: var(--mono); font-size: 11px; color: var(--ink);
+    background: var(--bg); border: 1px solid var(--red); padding: 5px 12px;
+    cursor: pointer; white-space: nowrap; transition: background 150ms ease, color 150ms ease;
+  }
+  .play-btn:hover{ background: var(--red); color: var(--bg); }
+  .play-btn:disabled{ opacity: 0.5; cursor: default; background: var(--bg); color: var(--ink-dim); }
+  #thetaCanvas{ display: block; width: 100%; height: auto; }
+  .chart-legend{
+    display: flex; flex-wrap: wrap; gap: 14px;
+    padding: 10px 14px 14px; font-family: var(--mono); font-size: 11.5px; color: var(--ink-dim);
+  }
+  .chart-legend span{ display: flex; align-items: center; gap: 6px; }
+  .chart-legend .dot{ width: 10px; height: 10px; display: inline-block; flex-shrink: 0; }
+  .chart-legend .dot.c2{ background: var(--red); }
+  .chart-legend .dot.f{ background: var(--blue); }
+  .chart-legend .dot.c1{ background: var(--amber); }
+  .chart-legend .dot.n0{ background: var(--ink-dim); border-radius: 50%; }
+
+  footer{ font-family: var(--mono); font-size: 11px; color: var(--ink-dim); text-align:center; }
+
+  @media (prefers-reduced-motion: reduce){ .panel, .reveal .content{ animation: none; } }
+  @media (max-width: 480px){
+    .sheet{ padding: 32px 14px 64px; }
+    .tab-panels{ padding: 18px 16px 20px; }
+    .example-row .fn{ min-width: 92px; }
+  }
+</style>
+</head>
+<body>
+<div class="sheet">
+
+  <header class="cover">
+    <div class="file-row">
+      <span>FIELD REPORT</span>
+      <span>ASYMPTOTIC ANALYSIS</span>
+    </div>
+    <h1>Time Complexity &amp; Asymptotic Analysis</h1>
+  </header>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="highway"><span class="sym">01</span>The Highway</button>
+    <button class="tab-btn" data-tab="oh"><span class="sym">O</span>Big-O</button>
+    <button class="tab-btn" data-tab="omega"><span class="sym">Ω</span>Big-Omega</button>
+    <button class="tab-btn" data-tab="theta"><span class="sym">Θ</span>Big-Theta</button>
+  </div>
+
+  <div class="tab-panels">
+
+    <!-- HIGHWAY -->
+    <div class="panel active" data-kind="highway" id="panel-highway">
+      <p>Speed limit's 100. I'm on a motorcycle, law-abiding, never over it. You're on the roadside — no radar gun, just your eyes.</p>
+
+      <details class="reveal">
+        <summary><span class="q">What can you tell me about my speed?</span><span class="tag"></span></summary>
+        <div class="content"><p class="muted">Think first — you never measured it. What's the one true thing you <em>can</em> say?</p></div>
+      </details>
+
+      <details class="reveal">
+        <summary><span class="q">The witness's report</span><span class="tag"></span></summary>
+        <div class="content">
+          <div class="stamp">SPEED ≤ 100 km/h</div>
+          <p>Not the exact speed — an upper bound. Whatever it was, it never crossed 100.</p>
+        </div>
+      </details>
+
+      <details class="reveal">
+        <summary><span class="q">That's Big-O</span><span class="tag"></span></summary>
+        <div class="content">
+          <p><strong>O(n)</strong> = "at most n" — a speed limit on running time, not an exact count. Same logic as the highway, just with a variable limit instead of a constant one.</p>
+        </div>
+      </details>
+
+      <div class="note"><p>O, Ω, and Θ aren't numbers you calculate — they're <strong>sets of functions</strong>. Saying f(n) ∈ O(n²) is like saying a car belongs to "vehicles that top out at 100." Flip through the other tabs for each set.</p></div>
+    </div>
+
+    <!-- BIG-O -->
+    <div class="panel" data-kind="oh" id="panel-oh">
+      <p><strong>O(g(n))</strong> — every function that grows <strong>no faster</strong> than g(n), eventually. The upper speed limit.</p>
+      <div class="definition">O(g(n)) = { f(n) : <span class="cond">∃ c, n₀ &gt; 0</span> s.t. f(n) ≤ c·g(n) for all n ≥ n₀ }</div>
+
+      <div class="example-set">
+        <div class="head">g(n) = n² — who's in O(n²)?</div>
+        <details class="example-row in"><summary><span class="fn">n</span><span class="tag"></span></summary><div class="verdict-box"><span class="verdict">IN</span></div></details>
+        <details class="example-row in"><summary><span class="fn">n log n</span><span class="tag"></span></summary><div class="verdict-box"><span class="verdict">IN</span></div></details>
+        <details class="example-row in"><summary><span class="fn">5n² − 3n</span><span class="tag"></span></summary><div class="verdict-box"><span class="verdict">IN</span></div></details>
+        <details class="example-row out"><summary><span class="fn">n³</span><span class="tag"></span></summary><div class="verdict-box"><span class="verdict">OUT</span></div></details>
+        <details class="example-row out"><summary><span class="fn">2ⁿ</span><span class="tag"></span></summary><div class="verdict-box"><span class="verdict">OUT</span></div></details>
+      </div>
+      <p class="muted">Anything at or below the n² curve qualifies — even things far slower than n² count, same as a car doing 40 still respects a 100 limit.</p>
+    </div>
+
+    <!-- BIG-OMEGA -->
+    <div class="panel" data-kind="omega" id="panel-omega">
+      <p><strong>Ω(g(n))</strong> — every function that grows <strong>at least as fast</strong> as g(n), eventually. The lower speed limit.</p>
+      <div class="definition">Ω(g(n)) = { f(n) : <span class="cond">∃ c, n₀ &gt; 0</span> s.t. f(n) ≥ c·g(n) for all n ≥ n₀ }</div>
+
+      <div class="example-set">
+        <div class="head">g(n) = n² — who's in Ω(n²)?</div>
+        <details class="example-row in"><summary><span class="fn">n³</span><span class="tag"></span></summary><div class="verdict-box"><span class="verdict">IN</span></div></details>
+        <details class="example-row in"><summary><span class="fn">2ⁿ</span><span class="tag"></span></summary><div class="verdict-box"><span class="verdict">IN</span></div></details>
+        <details class="example-row in"><summary><span class="fn">5n² − 3n</span><span class="tag"></span></summary><div class="verdict-box"><span class="verdict">IN</span></div></details>
+        <details class="example-row out"><summary><span class="fn">n</span><span class="tag"></span></summary><div class="verdict-box"><span class="verdict">OUT</span></div></details>
+        <details class="example-row out"><summary><span class="fn">n log n</span><span class="tag"></span></summary><div class="verdict-box"><span class="verdict">OUT</span></div></details>
+      </div>
+      <p class="muted">A minimum-speed sign, not a maximum: notice n³ and 2ⁿ flip from OUT (in the O tab) to IN here — they're too fast for O(n²) but easily clear the floor.</p>
+    </div>
+
+    <!-- BIG-THETA -->
+    <div class="panel" data-kind="theta" id="panel-theta">
+      <p><strong>Θ(g(n))</strong> — functions boxed in on <strong>both</strong> sides: O(g(n)) ∩ Ω(g(n)). Neither faster nor slower.</p>
+      <div class="definition">Θ(g(n)) = { f(n) : <span class="cond">∃ c₁, c₂, n₀ &gt; 0</span> s.t. c₁·g(n) ≤ f(n) ≤ c₂·g(n) for all n ≥ n₀ }</div>
+
+      <div class="example-set">
+        <div class="head">g(n) = n² — who's in Θ(n²)?</div>
+        <details class="example-row in"><summary><span class="fn">n²</span><span class="tag"></span></summary><div class="verdict-box"><span class="verdict">IN</span></div></details>
+        <details class="example-row in"><summary><span class="fn">5n² − 3n</span><span class="tag"></span></summary><div class="verdict-box"><span class="verdict">IN</span></div></details>
+        <details class="example-row in"><summary><span class="fn">n²/2 + 7</span><span class="tag"></span></summary><div class="verdict-box"><span class="verdict">IN</span></div></details>
+        <details class="example-row out"><summary><span class="fn">n</span><span class="tag"></span></summary><div class="verdict-box"><span class="verdict">OUT — too slow</span></div></details>
+        <details class="example-row out"><summary><span class="fn">n³</span><span class="tag"></span></summary><div class="verdict-box"><span class="verdict">OUT — too fast</span></div></details>
+      </div>
+      <p class="muted">5n² − 3n clears the bar on both tabs — that's exactly why it lands in Θ(n²): it's simultaneously in O(n²) and Ω(n²).</p>
+
+      <div class="chart-block">
+        <div class="chart-head">
+          <span>g(n) = n² &nbsp;·&nbsp; c₁ = 0.5 &nbsp;·&nbsp; c₂ = 1.4 &nbsp;·&nbsp; f(n) = n² − 6n + 40</span>
+          <button class="play-btn" id="thetaPlay">RUN TRACE</button>
+        </div>
+        <canvas id="thetaCanvas" width="640" height="340"></canvas>
+        <div class="chart-legend">
+          <span><i class="dot c2"></i>c₂·g(n) — dominates everything above n₀</span>
+          <span><i class="dot f"></i>f(n) — the function being classified</span>
+          <span><i class="dot c1"></i>c₁·g(n) — everything above n₀ dominates this</span>
+          <span><i class="dot n0"></i>n₀ — the crossover point</span>
+        </div>
+      </div>
+      <p class="muted">Before n₀, f(n) is free to break the bounds — it starts above c₂·g(n) entirely. Run the trace: past n₀, f(n) gets trapped for good.</p>
+    </div>
+
+  </div>
+
+  <footer>CASE REF: ASYMPTOTIC-01</footer>
+</div>
+
+<script>
+  // ---------- Theta bounds trace ----------
+  (function(){
+    const canvas = document.getElementById('thetaCanvas');
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height;
+    const padL = 46, padR = 16, padT = 18, padB = 34;
+    const plotW = W - padL - padR, plotH = H - padT - padB;
+    const nMax = 12, vMax = 210;
+    const n0 = 6, c1 = 0.5, c2 = 1.4;
+
+    const mapX = n => padL + (n / nMax) * plotW;
+    const mapY = v => padT + plotH - (Math.min(v, vMax) / vMax) * plotH;
+
+    const g  = n => n * n;
+    const f  = n => n * n - 6 * n + 40;
+
+    function sample(fn, step){
+      const pts = [];
+      for (let n = 0; n <= nMax + 1e-9; n += step) pts.push([n, fn(n)]);
+      return pts;
+    }
+    const gPts  = sample(g, 0.25);
+    const c2Pts = sample(n => c2 * g(n), 0.25);
+    const c1Pts = sample(n => c1 * g(n), 0.25);
+    const fPts  = sample(f, 0.15);
+
+    function drawAxes(){
+      ctx.clearRect(0, 0, W, H);
+      ctx.strokeStyle = '#262b34';
+      ctx.lineWidth = 1;
+      ctx.font = '10.5px IBM Plex Mono, monospace';
+      ctx.fillStyle = '#9AA0AB';
+      // horizontal gridlines + y labels
+      for (let v = 0; v <= vMax; v += 30) {
+        const y = mapY(v);
+        ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(W - padR, y); ctx.stroke();
+        ctx.fillText(String(v), 4, y + 3);
+      }
+      // x axis + labels
+      for (let n = 0; n <= nMax; n += 2) {
+        const x = mapX(n);
+        ctx.fillText('n=' + n, x - 8, H - padB + 16);
+      }
+      ctx.strokeStyle = '#3a4048';
+      ctx.beginPath(); ctx.moveTo(padL, padT); ctx.lineTo(padL, H - padB); ctx.lineTo(W - padR, H - padB); ctx.stroke();
+    }
+
+    function drawPartial(pts, progress, color, width, dashed){
+      const count = Math.max(2, Math.floor(pts.length * progress));
+      ctx.beginPath();
+      ctx.strokeStyle = color;
+      ctx.lineWidth = width;
+      ctx.setLineDash(dashed ? [4, 4] : []);
+      for (let i = 0; i < count; i++){
+        const [n, v] = pts[i];
+        const x = mapX(n), y = mapY(v);
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+      ctx.setLineDash([]);
+      return count > 0 ? pts[count - 1] : null;
+    }
+
+    function fillChannel(progress){
+      // shade the region between c1*g and c2*g, only for n >= n0, revealed left to right
+      const startN = n0;
+      const endN = startN + (nMax - startN) * progress;
+      if (endN <= startN) return;
+      ctx.beginPath();
+      let first = true;
+      for (let n = startN; n <= endN; n += 0.25){
+        const x = mapX(n), y = mapY(c2 * g(n));
+        if (first){ ctx.moveTo(x, y); first = false; } else ctx.lineTo(x, y);
+      }
+      for (let n = endN; n >= startN; n -= 0.25){
+        const x = mapX(n), y = mapY(c1 * g(n));
+        ctx.lineTo(x, y);
+      }
+      ctx.closePath();
+      ctx.fillStyle = 'rgba(110,168,221,0.08)';
+      ctx.fill();
+    }
+
+    function drawN0(progress){
+      const x = mapX(n0);
+      const yTop = padT, yBot = H - padB;
+      const y = yBot - (yBot - yTop) * progress;
+      ctx.beginPath();
+      ctx.strokeStyle = '#9AA0AB';
+      ctx.setLineDash([3, 3]);
+      ctx.lineWidth = 1;
+      ctx.moveTo(x, yBot); ctx.lineTo(x, y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      if (progress > 0.85){
+        ctx.fillStyle = '#9AA0AB';
+        ctx.font = '11px IBM Plex Mono, monospace';
+        ctx.fillText('n₀', x - 8, yTop + 10);
+      }
+    }
+
+    function labelAt(pt, text, color, dx, dy){
+      if (!pt) return;
+      const [n, v] = pt;
+      ctx.fillStyle = color;
+      ctx.font = '11.5px IBM Plex Mono, monospace';
+      ctx.fillText(text, mapX(n) + dx, mapY(v) + dy);
+    }
+
+    function renderStatic(){
+      drawAxes();
+      drawPartial(gPts, 1, '#3a4048', 1, true);
+      drawPartial(c2Pts, 1, '#C1543A', 2, false);
+      drawPartial(c1Pts, 1, '#E3A73B', 2, false);
+      fillChannel(1);
+      drawN0(1);
+      drawPartial(fPts, 1, '#6EA8DD', 2.5, false);
+      labelAt(c2Pts[c2Pts.length - 1], 'c₂·g(n)', '#C1543A', -70, -6);
+      labelAt(c1Pts[c1Pts.length - 1], 'c₁·g(n)', '#E3A73B', -70, 12);
+      labelAt(fPts[fPts.length - 1], 'f(n)', '#6EA8DD', -34, -10);
+    }
+
+    let running = false;
+    function playTrace(){
+      if (running) return;
+      running = true;
+      const btn = document.getElementById('thetaPlay');
+      btn.disabled = true;
+      const totalMs = 3400;
+      const t0 = performance.now();
+
+      function frame(now){
+        const t = Math.min(1, (now - t0) / totalMs);
+        drawAxes();
+
+        const p1 = Math.min(1, t / 0.22);                      // g(n) reference
+        drawPartial(gPts, p1, '#3a4048', 1, true);
+
+        const p2 = Math.min(1, Math.max(0, (t - 0.18) / 0.28)); // c2 bound
+        const c2Last = drawPartial(c2Pts, p2, '#C1543A', 2, false);
+
+        const p3 = Math.min(1, Math.max(0, (t - 0.42) / 0.28)); // c1 bound
+        const c1Last = drawPartial(c1Pts, p3, '#E3A73B', 2, false);
+
+        const p4 = Math.min(1, Math.max(0, (t - 0.60) / 0.4));  // channel + n0
+        fillChannel(p4);
+        drawN0(Math.min(1, Math.max(0, (t - 0.60) / 0.2)));
+
+        const p5 = Math.min(1, Math.max(0, (t - 0.66) / 0.34)); // f(n)
+        const fLast = drawPartial(fPts, p5, '#6EA8DD', 2.5, false);
+
+        if (p2 > 0.05) labelAt(c2Pts[Math.max(1, Math.floor(c2Pts.length * p2)) - 1], 'c₂·g(n)', '#C1543A', -70, -6);
+        if (p3 > 0.05) labelAt(c1Pts[Math.max(1, Math.floor(c1Pts.length * p3)) - 1], 'c₁·g(n)', '#E3A73B', -70, 12);
+        if (p5 > 0.05) labelAt(fPts[Math.max(1, Math.floor(fPts.length * p5)) - 1], 'f(n)', '#6EA8DD', -34, -10);
+
+        if (t < 1){
+          requestAnimationFrame(frame);
+        } else {
+          renderStatic();
+          running = false;
+          btn.disabled = false;
+          btn.textContent = 'RUN TRACE AGAIN';
+        }
+      }
+      requestAnimationFrame(frame);
+    }
+
+    drawAxes();
+    document.getElementById('thetaPlay').addEventListener('click', playTrace);
+  })();
+
+  const buttons = document.querySelectorAll('.tab-btn');
+  const panels = document.querySelectorAll('.panel');
+  buttons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      buttons.forEach(b => b.classList.remove('active'));
+      panels.forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
+    });
+  });
+</script>
+</body>
+</html>

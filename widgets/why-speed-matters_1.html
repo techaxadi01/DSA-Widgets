@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Why Does Speed Matter? — The Vault</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #12100c;
+    --panel: #1c1812;
+    --panel-2: #221d15;
+    --rule: #3a3226;
+    --ink: #ede3c8;
+    --ink-dim: #b8ac8c;
+    --gold: #c89b3c;
+    --linear: #c1502e;
+    --linear-dim: #7a3520;
+    --binary: #3f8f84;
+    --binary-dim: #275650;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(1200px 800px at 15% -10%, rgba(200,155,60,0.06), transparent 60%),
+      var(--bg);
+    color:var(--ink);
+    font-family:'Spectral', Georgia, serif;
+    line-height:1.5;
+    padding:32px 18px 80px;
+  }
+  .ledger{
+    max-width:760px;
+    margin:0 auto;
+  }
+  header{
+    border-bottom:1px solid var(--rule);
+    padding-bottom:20px;
+    margin-bottom:28px;
+  }
+  .stamp{
+    display:inline-block;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    letter-spacing:0.12em;
+    color:var(--gold);
+    border:1px solid var(--rule);
+    padding:3px 8px;
+    border-radius:2px;
+    margin-bottom:14px;
+  }
+  h1{
+    font-size:clamp(28px,4.4vw,40px);
+    font-weight:600;
+    margin:0 0 8px;
+    color:var(--ink);
+  }
+  .sub{
+    color:var(--ink-dim);
+    font-size:16px;
+    max-width:56ch;
+    margin:0;
+  }
+  section{
+    margin-bottom:34px;
+    background:var(--panel);
+    border:1px solid var(--rule);
+    border-radius:4px;
+    padding:22px 24px;
+  }
+  section h2{
+    font-size:19px;
+    font-weight:600;
+    margin:0 0 10px;
+    color:var(--ink);
+  }
+  section p{
+    color:var(--ink-dim);
+    font-size:15px;
+    margin:0 0 14px;
+    max-width:60ch;
+  }
+  .row{
+    display:flex;
+    flex-wrap:wrap;
+    gap:20px;
+    align-items:flex-end;
+  }
+  .field{display:flex; flex-direction:column; gap:6px;}
+  label{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    letter-spacing:0.04em;
+    color:var(--ink-dim);
+  }
+  input[type=range]{
+    width:280px;
+    accent-color:var(--gold);
+  }
+  input[type=number]{
+    background:var(--panel-2);
+    border:1px solid var(--rule);
+    color:var(--ink);
+    font-family:'IBM Plex Mono', monospace;
+    font-size:15px;
+    padding:7px 9px;
+    border-radius:3px;
+    width:110px;
+  }
+  input[type=number]:focus, input[type=range]:focus, button:focus{
+    outline:2px solid var(--gold);
+    outline-offset:2px;
+  }
+  button{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:13px;
+    letter-spacing:0.03em;
+    background:var(--panel-2);
+    color:var(--ink);
+    border:1px solid var(--gold);
+    padding:9px 16px;
+    border-radius:3px;
+    cursor:pointer;
+    transition:background 0.15s ease;
+  }
+  button:hover{background:#2a2418;}
+  button:disabled{
+    opacity:0.4;
+    cursor:not-allowed;
+  }
+  #vaultSizeDisplay{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:22px;
+    color:var(--gold);
+  }
+  .predict-inputs{display:flex; gap:24px; flex-wrap:wrap; margin-bottom:14px;}
+  .lanes{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:18px;
+    margin-top:18px;
+  }
+  @media (max-width:600px){ .lanes{grid-template-columns:1fr;} }
+  .lane{
+    border:1px solid var(--rule);
+    border-radius:4px;
+    padding:14px;
+    background:var(--panel-2);
+  }
+  .lane h3{
+    font-size:14px;
+    font-family:'IBM Plex Mono', monospace;
+    letter-spacing:0.04em;
+    margin:0 0 10px;
+    text-transform:none;
+  }
+  .lane.linear h3{color:var(--linear);}
+  .lane.binary h3{color:var(--binary);}
+  .tally{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:34px;
+    font-weight:600;
+    margin:8px 0 4px;
+  }
+  .lane.linear .tally{color:var(--linear);}
+  .lane.binary .tally{color:var(--binary);}
+  .tally-label{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    color:var(--ink-dim);
+    letter-spacing:0.05em;
+  }
+  .ledger-rows{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12.5px;
+    color:var(--ink-dim);
+    max-height:170px;
+    overflow-y:auto;
+    border-top:1px dashed var(--rule);
+    margin-top:10px;
+    padding-top:8px;
+  }
+  .ledger-rows div{padding:2px 0;}
+  .verdict{
+    margin-top:18px;
+    padding-top:14px;
+    border-top:1px solid var(--rule);
+    font-size:15px;
+    color:var(--ink);
+    display:none;
+  }
+  .verdict.show{display:block;}
+  .verdict .pred-line{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:13px;
+    color:var(--ink-dim);
+    display:block;
+    margin-top:6px;
+  }
+  .chart-wrap{overflow-x:auto;}
+  svg text{font-family:'IBM Plex Mono', monospace; fill:var(--ink-dim);}
+  .axis-line{stroke:var(--rule); stroke-width:1;}
+  .grid-line{stroke:var(--rule); stroke-width:0.5; stroke-dasharray:2 4;}
+  .curve-linear{stroke:var(--linear); stroke-width:2.5; fill:none;}
+  .curve-binary{stroke:var(--binary); stroke-width:2.5; fill:none;}
+  .pt-linear{fill:var(--linear);}
+  .pt-binary{fill:var(--binary);}
+  .legend-row{
+    display:flex;
+    gap:22px;
+    margin-top:8px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    color:var(--ink-dim);
+  }
+  .swatch{display:inline-block; width:10px; height:10px; border-radius:2px; margin-right:6px; vertical-align:middle;}
+  table{
+    width:100%;
+    border-collapse:collapse;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12.5px;
+    margin-top:18px;
+  }
+  th,td{
+    text-align:right;
+    padding:6px 8px;
+    border-bottom:1px solid var(--rule);
+    color:var(--ink-dim);
+  }
+  th:first-child, td:first-child{text-align:left; color:var(--ink);}
+  thead th{color:var(--gold); font-weight:500;}
+  .ratio{color:var(--gold);}
+  footer{
+    text-align:center;
+    color:var(--ink-dim);
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11.5px;
+    margin-top:20px;
+  }
+</style>
+</head>
+<body>
+<div class="ledger">
+
+  <header>
+    <span class="stamp">UNIT 1 · SESSION 1</span>
+    <h1>Why does speed even matter?</h1>
+    <p class="sub">Two strategies, one vault of numbers. Before you see who wins — predict it yourself.</p>
+  </header>
+
+  <section id="setupSection">
+    <h2>The Vault</h2>
+    <p>The vault holds every whole number from 1 up to <strong>N</strong>. One number inside is the secret. You get to guess it — but only by asking "is it higher or lower than this?"</p>
+    <div class="row">
+      <div class="field">
+        <label for="vaultSize">VAULT SIZE (N)</label>
+        <input type="range" id="vaultSize" min="0" max="100" value="60">
+        <div id="vaultSizeDisplay">10,000</div>
+      </div>
+      <button id="newTarget">Lock a new secret number</button>
+    </div>
+  </section>
+
+  <section id="predictSection">
+    <h2>Predict first</h2>
+    <p>Two students are going to hunt for the secret number. <strong>Linear Lyla</strong> guesses 1, then 2, then 3&nbsp;&mdash; in order, no skipping. <strong>Binary Beno</strong> always guesses the exact middle of what's left. Before running it: how many guesses will each need, worst case?</p>
+    <div class="predict-inputs">
+      <div class="field">
+        <label for="predictLinear">LINEAR LYLA — GUESSES</label>
+        <input type="number" id="predictLinear" min="1">
+      </div>
+      <div class="field">
+        <label for="predictBinary">BINARY BENO — GUESSES</label>
+        <input type="number" id="predictBinary" min="1">
+      </div>
+      <button id="lockPrediction">Lock in prediction</button>
+    </div>
+  </section>
+
+  <section id="raceSection" style="display:none;">
+    <h2>Run the race</h2>
+    <p>Both students hunt for the <em>same</em> secret number at the same time. Watch the tally climb.</p>
+    <button id="runRace">Start the hunt</button>
+    <div class="lanes">
+      <div class="lane linear">
+        <h3>Linear Lyla</h3>
+        <div class="tally-label">GUESSES SO FAR</div>
+        <div class="tally" id="linearTally">0</div>
+        <div class="ledger-rows" id="linearLog"></div>
+      </div>
+      <div class="lane binary">
+        <h3>Binary Beno</h3>
+        <div class="tally-label">GUESSES SO FAR</div>
+        <div class="tally" id="binaryTally">0</div>
+        <div class="ledger-rows" id="binaryLog"></div>
+      </div>
+    </div>
+    <div class="verdict" id="verdict"></div>
+  </section>
+
+  <section id="growthSection">
+    <h2>Now scale it up</h2>
+    <p>This gap barely shows at N=10. Watch what happens to the worst case as the vault grows to a million numbers — plotted on a log scale, because otherwise Lyla's line runs off the page.</p>
+    <div class="chart-wrap">
+      <svg id="growthChart" viewBox="0 0 700 420" width="100%" style="min-width:520px;"></svg>
+    </div>
+    <div class="legend-row">
+      <span><span class="swatch" style="background:var(--linear)"></span>Linear Lyla — worst case = N</span>
+      <span><span class="swatch" style="background:var(--binary)"></span>Binary Beno — worst case = log&#8322;N</span>
+    </div>
+    <table id="growthTable">
+      <thead>
+        <tr><th>Vault size (N)</th><th>Lyla's worst case</th><th>Beno's worst case</th><th>Beno is faster by</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </section>
+
+  <footer>Field Ledger · DSA Unit 1 — Asymptotic Notation, Session 1</footer>
+</div>
+
+<script>
+(function(){
+  var minN = 10, maxN = 1000000;
+
+  function sliderToN(v){
+    var t = v/100;
+    var logN = 1 + t*5; // log10(N) from 1 to 6
+    return Math.round(Math.pow(10, logN));
+  }
+  function fmt(n){ return n.toLocaleString('en-US'); }
+
+  var vaultSlider = document.getElementById('vaultSize');
+  var vaultDisplay = document.getElementById('vaultSizeDisplay');
+  var currentN = sliderToN(vaultSlider.value);
+  var secret = null;
+
+  function updateVaultDisplay(){
+    currentN = sliderToN(vaultSlider.value);
+    vaultDisplay.textContent = fmt(currentN);
+    resetRace();
+  }
+  vaultSlider.addEventListener('input', updateVaultDisplay);
+
+  function pickSecret(){
+    secret = 1 + Math.floor(Math.random()*currentN);
+    resetRace();
+  }
+  document.getElementById('newTarget').addEventListener('click', pickSecret);
+
+  var predictLinear = document.getElementById('predictLinear');
+  var predictBinary = document.getElementById('predictBinary');
+  var raceSection = document.getElementById('raceSection');
+  var lockedPrediction = null;
+
+  document.getElementById('lockPrediction').addEventListener('click', function(){
+    var pl = parseInt(predictLinear.value, 10);
+    var pb = parseInt(predictBinary.value, 10);
+    if (isNaN(pl) || isNaN(pb)) {
+      alert('Enter a guess-count prediction for both strategies first.');
+      return;
+    }
+    lockedPrediction = {linear: pl, binary: pb};
+    raceSection.style.display = 'block';
+    raceSection.scrollIntoView({behavior:'smooth', block:'start'});
+  });
+
+  var runBtn = document.getElementById('runRace');
+  var linearTally = document.getElementById('linearTally');
+  var binaryTally = document.getElementById('binaryTally');
+  var linearLog = document.getElementById('linearLog');
+  var binaryLog = document.getElementById('binaryLog');
+  var verdict = document.getElementById('verdict');
+
+  function resetRace(){
+    if (secret === null) secret = 1 + Math.floor(Math.random()*currentN);
+    linearTally.textContent = '0';
+    binaryTally.textContent = '0';
+    linearLog.innerHTML = '';
+    binaryLog.innerHTML = '';
+    verdict.classList.remove('show');
+    verdict.innerHTML = '';
+    runBtn.disabled = false;
+  }
+  pickSecret();
+
+  function logRow(container, text){
+    var row = document.createElement('div');
+    row.textContent = text;
+    container.appendChild(row);
+    container.scrollTop = container.scrollHeight;
+  }
+
+  function runBinary(){
+    var lo = 1, hi = currentN, guesses = 0;
+    var rows = [];
+    while (lo <= hi){
+      var mid = Math.floor((lo+hi)/2);
+      guesses++;
+      if (mid === secret){
+        rows.push({n:guesses, text:'#'+guesses+':  guess '+fmt(mid)+'  — found it'});
+        break;
+      } else if (mid < secret){
+        rows.push({n:guesses, text:'#'+guesses+':  guess '+fmt(mid)+'  — too low, go higher'});
+        lo = mid+1;
+      } else {
+        rows.push({n:guesses, text:'#'+guesses+':  guess '+fmt(mid)+'  — too high, go lower'});
+        hi = mid-1;
+      }
+    }
+    return {guesses: guesses, rows: rows};
+  }
+
+  function runRaceAnimation(){
+    runBtn.disabled = true;
+    linearTally.textContent = '0';
+    binaryTally.textContent = '0';
+    linearLog.innerHTML = '';
+    binaryLog.innerHTML = '';
+    verdict.classList.remove('show');
+
+    var binaryResult = runBinary();
+    var linearTarget = secret;
+
+    // Animate binary: one row per step, small delay, since step count is tiny (<=~20)
+    var bi = 0;
+    function stepBinary(){
+      if (bi < binaryResult.rows.length){
+        binaryTally.textContent = binaryResult.rows[bi].n;
+        logRow(binaryLog, binaryResult.rows[bi].text);
+        bi++;
+        setTimeout(stepBinary, 260);
+      }
+    }
+    stepBinary();
+
+    // Animate linear: total duration fixed (~3.2s regardless of N), sampled logging
+    var duration = 3200;
+    var startTime = null;
+    var loggedMilestones = new Set();
+    // decide which guesses to actually print as rows: first 4, last 1, and a few evenly spaced
+    var sampleCount = Math.min(linearTarget, 6);
+    var sampleSet = new Set();
+    for (var s=1; s<=Math.min(4, linearTarget); s++) sampleSet.add(s);
+    sampleSet.add(linearTarget);
+    if (linearTarget > 50) {
+      sampleSet.add(Math.floor(linearTarget*0.25));
+      sampleSet.add(Math.floor(linearTarget*0.5));
+      sampleSet.add(Math.floor(linearTarget*0.75));
+    }
+
+    function frame(ts){
+      if (!startTime) startTime = ts;
+      var elapsed = ts - startTime;
+      var progress = Math.min(1, elapsed/duration);
+      // ease so it feels like counting, not linear time-to-value for huge N (still monotonic)
+      var current = Math.max(1, Math.round(progress * linearTarget));
+      linearTally.textContent = fmt(current);
+
+      sampleSet.forEach(function(m){
+        if (m <= current && !loggedMilestones.has(m)){
+          loggedMilestones.add(m);
+          var text = (m === linearTarget)
+            ? '#'+fmt(m)+':  guess '+fmt(m)+'  — found it'
+            : '#'+fmt(m)+':  guess '+fmt(m)+'  — not yet';
+          logRow(linearLog, text);
+        }
+      });
+
+      if (progress < 1){
+        requestAnimationFrame(frame);
+      } else {
+        linearTally.textContent = fmt(linearTarget);
+        finishIfDone();
+      }
+    }
+    requestAnimationFrame(frame);
+
+    var doneCheckInterval = setInterval(function(){
+      if (bi >= binaryResult.rows.length){
+        clearInterval(doneCheckInterval);
+        finishIfDone();
+      }
+    }, 100);
+
+    var finished = false;
+    function finishIfDone(){
+      if (finished) return;
+      var linearDone = parseInt(linearTally.textContent.replace(/,/g,''),10) >= linearTarget;
+      var binaryDone = bi >= binaryResult.rows.length;
+      if (!(linearDone && binaryDone)) return;
+      finished = true;
+      showVerdict(linearTarget, binaryResult.guesses);
+      runBtn.disabled = false;
+    }
+  }
+
+  function showVerdict(linearGuesses, binaryGuesses){
+    var factor = (linearGuesses/Math.max(1,binaryGuesses)).toFixed(1);
+    var html = '<strong>Binary Beno wins</strong> — ' + fmt(binaryGuesses) + ' guesses vs Lyla\'s ' + fmt(linearGuesses) + ' (worst case). That\'s roughly ' + factor + '&times; fewer guesses, at N = ' + fmt(currentN) + '.';
+    if (lockedPrediction){
+      html += '<span class="pred-line">Your prediction — Lyla: ' + fmt(lockedPrediction.linear) + ', Beno: ' + fmt(lockedPrediction.binary) + '. Actual — Lyla: ' + fmt(linearGuesses) + ', Beno: ' + fmt(binaryGuesses) + '.</span>';
+    }
+    verdict.innerHTML = html;
+    verdict.classList.add('show');
+  }
+
+  runBtn.addEventListener('click', runRaceAnimation);
+
+  // ---- Growth chart ----
+  function drawChart(){
+    var svg = document.getElementById('growthChart');
+    var W = 700, H = 420;
+    var padL = 70, padR = 30, padT = 26, padB = 50;
+    var plotW = W - padL - padR, plotH = H - padT - padB;
+
+    var samples = [10, 100, 1000, 10000, 100000, 1000000];
+    var data = samples.map(function(n){
+      return { n:n, linear:n, binary:Math.ceil(Math.log2(n)) };
+    });
+
+    function xPos(n){
+      var t = (Math.log10(n) - 1) / 5; // 0..1 across 10..1e6
+      return padL + t*plotW;
+    }
+    function yPos(v){
+      var lv = Math.max(0, Math.log10(Math.max(v,1)));
+      var t = lv/6; // log10 range 0..6 (1..1e6)
+      return padT + (1-t)*plotH;
+    }
+
+    var svgns = 'http://www.w3.org/2000/svg';
+    function el(tag, attrs){
+      var e = document.createElementNS(svgns, tag);
+      for (var k in attrs) e.setAttribute(k, attrs[k]);
+      return e;
+    }
+
+    // grid + axes
+    var yTicks = [1,10,100,1000,10000,100000,1000000];
+    yTicks.forEach(function(v){
+      var y = yPos(v);
+      svg.appendChild(el('line', {x1:padL, x2:W-padR, y1:y, y2:y, class:'grid-line'}));
+      var t = el('text', {x:padL-10, y:y+4, 'text-anchor':'end', 'font-size':'11'});
+      t.textContent = v>=1000 ? (v/1000)+'k' : v;
+      if (v===1000000) t.textContent = '1M';
+      svg.appendChild(t);
+    });
+    samples.forEach(function(n){
+      var x = xPos(n);
+      var t = el('text', {x:x, y:H-padB+22, 'text-anchor':'middle', 'font-size':'11'});
+      t.textContent = n>=1000000 ? '1M' : (n>=1000 ? (n/1000)+'k' : n);
+      svg.appendChild(t);
+    });
+    svg.appendChild(el('line', {x1:padL, x2:padL, y1:padT, y2:H-padB, class:'axis-line'}));
+    svg.appendChild(el('line', {x1:padL, x2:W-padR, y1:H-padB, y2:H-padB, class:'axis-line'}));
+
+    var axisLabelY = el('text', {x:18, y:padT+plotH/2, 'text-anchor':'middle', 'font-size':'11', transform:'rotate(-90 18 '+(padT+plotH/2)+')'});
+    axisLabelY.textContent = 'Worst-case guesses (log scale)';
+    svg.appendChild(axisLabelY);
+    var axisLabelX = el('text', {x:padL+plotW/2, y:H-8, 'text-anchor':'middle', 'font-size':'11'});
+    axisLabelX.textContent = 'Vault size N (log scale)';
+    svg.appendChild(axisLabelX);
+
+    function pathFor(key){
+      var d = data.map(function(pt,i){
+        return (i===0?'M':'L') + xPos(pt.n) + ' ' + yPos(pt[key]);
+      }).join(' ');
+      return d;
+    }
+    svg.appendChild(el('path', {d:pathFor('linear'), class:'curve-linear'}));
+    svg.appendChild(el('path', {d:pathFor('binary'), class:'curve-binary'}));
+
+    data.forEach(function(pt){
+      svg.appendChild(el('circle', {cx:xPos(pt.n), cy:yPos(pt.linear), r:4, class:'pt-linear'}));
+      svg.appendChild(el('circle', {cx:xPos(pt.n), cy:yPos(pt.binary), r:4, class:'pt-binary'}));
+    });
+
+    // table
+    var tbody = document.querySelector('#growthTable tbody');
+    tbody.innerHTML = '';
+    data.forEach(function(pt){
+      var tr = document.createElement('tr');
+      var ratio = Math.round(pt.linear/pt.binary);
+      tr.innerHTML = '<td>'+fmt(pt.n)+'</td><td>'+fmt(pt.linear)+'</td><td>'+fmt(pt.binary)+'</td><td class="ratio">'+fmt(ratio)+'&times;</td>';
+      tbody.appendChild(tr);
+    });
+  }
+
+  updateVaultDisplay();
+  drawChart();
+})();
+</script>
+</body>
+</html>
