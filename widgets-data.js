@@ -1,8 +1,30 @@
 // DSA Interactive Hub - Widgets Data Manifest
-// Generated on: 2026-09-16 23:18:39
+// Generated on: 2026-09-22 22:31:24
 // DO NOT EDIT DIRECTLY: Run 'update_widgets.py' or 'update-widgets.bat' to re-index!
 
 const DSA_WIDGETS = [
+  {
+    "id": "reverse-palindrome-checker",
+    "filename": "widgets/reverse-palindrome-checker.html",
+    "title": "Optimal Linked List Palindrome Check",
+    "subtitle": "7 Elements (Odd) 8 Elements (Even) Default Cases",
+    "stamp": "DATA STRUCTURES ALGORITHMS",
+    "category": "Linked Lists",
+    "categoryIcon": "🔗",
+    "categoryColor": "#c89b3c",
+    "description": "Traverse in $O(N)$ time with zero extra heap/stack allocation ($O(1)$ space). Find middle with slow/fast pointers, reverse the second half in-place, compare symmetrically, and restore the list without...",
+    "tags": [
+      "Dynamic Memory",
+      "Linked Lists",
+      "Pointers",
+      "Two Pointers"
+    ],
+    "sizeKb": 63.9,
+    "linesCount": 1994,
+    "estimatedMinutes": 15,
+    "lastModified": "Sep 22, 2026",
+    "timestamp": 1790093960
+  },
   {
     "id": "time-complexity-widget_1",
     "filename": "widgets/time-complexity-widget_1.html",
