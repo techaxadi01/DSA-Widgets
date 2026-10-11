@@ -211,43 +211,7 @@
     }
   }
 
-  // Render Compact Widget Cards
-  function renderWidgets() {
-    if (!widgetsContainer) return;
-
-    if (state.widgets.length === 0) {
-      widgetsContainer.innerHTML = `
-        <div class="empty-state">
-          <div class="empty-icon">📁</div>
-          <h3 class="empty-title">Welcome to Your DSA Study Hub</h3>
-          <p class="empty-subtitle">Your folder is ready. Whenever you add widgets from your professor, double-click <strong>update-widgets.bat</strong>!</p>
-          <button class="btn-compact" onclick="document.getElementById('guideCard').classList.add('open')">⚡ View How to Add Widgets</button>
-        </div>
-      `;
-      updateFilterIndicators(0);
-      return;
-    }
-
-    const filtered = getFilteredAndSortedWidgets();
-    updateFilterIndicators(filtered.length);
-
-    if (filtered.length === 0) {
-      widgetsContainer.innerHTML = `
-        <div class="empty-state">
-          <div class="empty-icon">🔍</div>
-          <h3 class="empty-title">No Visualizers Match Your Filter</h3>
-          <p class="empty-subtitle">Try selecting "All Visualizers" in the left sidebar or clearing your search.</p>
-          <button class="btn-compact" id="resetFiltersBtn">Reset All Filters</button>
-        </div>
-      `;
-      const resetBtn = document.getElementById('resetFiltersBtn');
-      if (resetBtn) {
-        resetBtn.addEventListener('click', resetAllFilters);
-      }
-      return;
-    }
-
-    // Render Individual Widget Card
+  // Render Individual Widget Card
   function renderWidgetCard(w) {
     const catColor = w.categoryColor || '#c89b3c';
     const catIcon = w.categoryIcon || '📚';
