@@ -16,12 +16,13 @@ A centralized, interactive study hub hosting Data Structures & Algorithms concep
 
 Whenever Dr. Binayak Dutta shares a new visualizer or algorithm widget:
 
-1. **Save the File**: Copy or drop the new `.html` file into the **`widgets/`** subfolder.
+1. **Save the File**: Copy or drop the new `.html` file into **`widgets/`** directly or inside any subfolder (e.g. `widgets/AIML/`, `widgets/MCA A/`, etc.).
 2. **Sync & Push**: Double-click **`update-widgets.bat`** (or run `python update_widgets.py` / `node update_widgets.js`).
 3. **Done**: The script automatically:
-   - Reads the new file in **strictly read-only mode** (your widget files are never edited or modified).
-   - Identifies the topic and classifies it into its appropriate DSA category.
+   - Recursively reads visualizers in **strictly read-only mode** across `widgets/` and all its subfolders.
+   - Identifies the topic and classifies each into its appropriate DSA category.
    - Generates tags, descriptions, and updates `widgets-data.js`.
+   - **Subfolder Grouping**: In the **"All Visualizers"** tab, main root widgets appear directly on top (without collapse), while subfolders appear as sleek collapsible groups. In specific topic tabs, visualizers appear together with folder badges.
    - **GitHub Sync**: Automatically detects new additions or edits, stages them, crafts a descriptive commit message (e.g. `Add new widget: Quick Sort, step by step`), and pushes directly to GitHub (`origin/main`).
 
 *(This system is fully automated and self-sustaining — you never need to manually edit code, data files, or run git commands when new widgets are added.)*

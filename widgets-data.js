@@ -1,137 +1,78 @@
 // DSA Interactive Hub - Widgets Data Manifest
-// Generated on: 2026-10-11 21:41:26
+// Generated on: 2026-10-11 23:17:48
 // DO NOT EDIT DIRECTLY: Run 'update_widgets.py' or 'update-widgets.bat' to re-index!
 
 const DSA_WIDGETS = [
   {
-    "id": "aray_vs_linked",
-    "filename": "widgets/aray_vs_linked.html",
-    "title": "Array vs Linked List · CS Orientation",
-    "subtitle": "Array vs. Linked List",
-    "stamp": "LINKED LISTS",
+    "id": "stack_queue",
+    "filename": "widgets/AIML/stack_queue.html",
+    "title": "Stack & Queue · CS Orientation",
+    "subtitle": "Stack & Queue",
+    "stamp": "STACKS & QUEUES",
+    "category": "Stacks & Queues",
+    "categoryIcon": "🥞",
+    "categoryColor": "#f2cc8f",
+    "description": "Interactive visualizer and field study exploring Stack & Queue · CS Orientation.",
+    "tags": [
+      "Pointers",
+      "Stacks & Queues"
+    ],
+    "sizeKb": 14.6,
+    "linesCount": 413,
+    "estimatedMinutes": 10,
+    "lastModified": "Oct 11, 2026",
+    "timestamp": 1791740388,
+    "subfolder": "AIML"
+  },
+  {
+    "id": "reverse-palindrome-checker",
+    "filename": "widgets/MCA B/reverse-palindrome-checker.html",
+    "title": "Optimal Linked List Palindrome Check",
+    "subtitle": "7 Elements (Odd) 8 Elements (Even) Default Cases",
+    "stamp": "DATA STRUCTURES ALGORITHMS",
     "category": "Linked Lists",
     "categoryIcon": "🔗",
     "categoryColor": "#c89b3c",
-    "description": "Interactive visualizer and field study exploring Array vs Linked List · CS Orientation.",
+    "description": "Traverse in $O(N)$ time with zero extra heap/stack allocation ($O(1)$ space). Find middle with slow/fast pointers, reverse the second half in-place, compare symmetrically, and restore the list without...",
     "tags": [
+      "Dynamic Memory",
       "Linked Lists",
       "Pointers",
       "Two Pointers"
     ],
-    "sizeKb": 31.0,
-    "linesCount": 853,
+    "sizeKb": 65.9,
+    "linesCount": 1994,
     "estimatedMinutes": 15,
     "lastModified": "Oct 11, 2026",
-    "timestamp": 1791735035
+    "timestamp": 1791740388,
+    "subfolder": "MCA B"
   },
   {
-    "id": "merge_sort",
-    "filename": "widgets/merge_sort.html",
-    "title": "Merge sort, step by step",
-    "subtitle": "Merge sort, step by step",
+    "id": "quicksort-visualizer",
+    "filename": "widgets/MCA A/quicksort-visualizer.html",
+    "title": "Quick Sort, step by step",
+    "subtitle": "Quick Sort, one step at a time",
     "stamp": "SEARCHING & SORTING",
     "category": "Searching & Sorting",
     "categoryIcon": "⚡",
     "categoryColor": "#e07a5f",
-    "description": "Merge sort keeps splitting the array in half until every piece holds one element, then merges the pieces back together in sorted order. Type any numbers below to watch it happen.",
+    "description": "Watch how Quick Sort splits an array around a pivot. The pivot is always the first element of the current sub-array, and every move of i and j gets its own box with an explanation.",
     "tags": [
       "Divide & Conquer",
       "Pointers",
       "Searching & Sorting",
       "Sorting"
     ],
-    "sizeKb": 28.2,
-    "linesCount": 539,
+    "sizeKb": 22.4,
+    "linesCount": 444,
     "estimatedMinutes": 10,
     "lastModified": "Oct 11, 2026",
-    "timestamp": 1791730417
-  },
-  {
-    "id": "qimplementaion",
-    "filename": "widgets/qimplementaion.html",
-    "title": "Queue: Array vs Linked List · CS Orientation",
-    "subtitle": "Queue via Array vs. Linked List",
-    "stamp": "STACKS & QUEUES",
-    "category": "Stacks & Queues",
-    "categoryIcon": "🥞",
-    "categoryColor": "#f2cc8f",
-    "description": "Interactive visualizer and field study exploring Queue: Array vs Linked List · CS Orientation.",
-    "tags": [
-      "Pointers",
-      "Stacks & Queues",
-      "Two Pointers"
-    ],
-    "sizeKb": 29.9,
-    "linesCount": 763,
-    "estimatedMinutes": 15,
-    "lastModified": "Oct 11, 2026",
-    "timestamp": 1791730416
-  },
-  {
-    "id": "linked_list",
-    "filename": "widgets/linked_list.html",
-    "title": "Linked List Operations",
-    "subtitle": "Interactive C++ Explorer",
-    "stamp": "Interactive C++ Explorer",
-    "category": "Linked Lists",
-    "categoryIcon": "🔗",
-    "categoryColor": "#c89b3c",
-    "description": "MCA511-2 · UNIT 2 · LINKED LISTS",
-    "tags": [
-      "Linked Lists",
-      "Pointers"
-    ],
-    "sizeKb": 27.8,
-    "linesCount": 710,
-    "estimatedMinutes": 15,
-    "lastModified": "Oct 11, 2026",
-    "timestamp": 1791730416
-  },
-  {
-    "id": "linearvsbinary",
-    "filename": "widgets/linearvsbinary.html",
-    "title": "Search Race",
-    "subtitle": "Linear vs Binary Search",
-    "stamp": "Linear vs Binary Search",
-    "category": "Complexity & Analysis",
-    "categoryIcon": "⏱️",
-    "categoryColor": "#6ea8dd",
-    "description": "MCA511-2 · UNIT 1 · SEARCHING ALGORITHMS",
-    "tags": [
-      "Binary Search",
-      "Complexity & Analysis",
-      "Linear Search",
-      "Pointers"
-    ],
-    "sizeKb": 11.4,
-    "linesCount": 327,
-    "estimatedMinutes": 10,
-    "lastModified": "Oct 11, 2026",
-    "timestamp": 1791730416
-  },
-  {
-    "id": "aray_operation",
-    "filename": "widgets/aray_operation.html",
-    "title": "Array Operations",
-    "subtitle": "Interactive C++ Explorer",
-    "stamp": "Interactive C++ Explorer",
-    "category": "Complexity & Analysis",
-    "categoryIcon": "⏱️",
-    "categoryColor": "#6ea8dd",
-    "description": "MCA511-2 · UNIT 1 · ARRAYS OPERATIONS",
-    "tags": [
-      "Complexity & Analysis",
-      "Pointers"
-    ],
-    "sizeKb": 16.5,
-    "linesCount": 471,
-    "estimatedMinutes": 10,
-    "lastModified": "Oct 11, 2026",
-    "timestamp": 1791730416
+    "timestamp": 1791740388,
+    "subfolder": "MCA A"
   },
   {
     "id": "quick_sort",
-    "filename": "widgets/quick_sort.html",
+    "filename": "widgets/AIML/quick_sort.html",
     "title": "Quick Sort (last element pivot), step by step",
     "subtitle": "Quick Sort with the last element as pivot",
     "stamp": "SEARCHING & SORTING",
@@ -149,71 +90,140 @@ const DSA_WIDGETS = [
     "linesCount": 515,
     "estimatedMinutes": 10,
     "lastModified": "Oct 11, 2026",
-    "timestamp": 1791730416
+    "timestamp": 1791740388,
+    "subfolder": "AIML"
   },
   {
-    "id": "stack_queue",
-    "filename": "widgets/stack_queue.html",
-    "title": "Stack & Queue · CS Orientation",
-    "subtitle": "Stack & Queue",
+    "id": "qimplementaion",
+    "filename": "widgets/AIML/qimplementaion.html",
+    "title": "Queue: Array vs Linked List · CS Orientation",
+    "subtitle": "Queue via Array vs. Linked List",
     "stamp": "STACKS & QUEUES",
     "category": "Stacks & Queues",
     "categoryIcon": "🥞",
     "categoryColor": "#f2cc8f",
-    "description": "Interactive visualizer and field study exploring Stack & Queue · CS Orientation.",
+    "description": "Interactive visualizer and field study exploring Queue: Array vs Linked List · CS Orientation.",
     "tags": [
       "Pointers",
-      "Stacks & Queues"
+      "Stacks & Queues",
+      "Two Pointers"
     ],
-    "sizeKb": 14.6,
-    "linesCount": 413,
-    "estimatedMinutes": 10,
+    "sizeKb": 29.9,
+    "linesCount": 763,
+    "estimatedMinutes": 15,
     "lastModified": "Oct 11, 2026",
-    "timestamp": 1791730416
+    "timestamp": 1791740388,
+    "subfolder": "AIML"
   },
   {
-    "id": "quicksort-visualizer",
-    "filename": "widgets/quicksort-visualizer.html",
-    "title": "Quick Sort, step by step",
-    "subtitle": "Quick Sort, one step at a time",
+    "id": "merge_sort",
+    "filename": "widgets/AIML/merge_sort.html",
+    "title": "Merge sort, step by step",
+    "subtitle": "Merge sort, step by step",
     "stamp": "SEARCHING & SORTING",
     "category": "Searching & Sorting",
     "categoryIcon": "⚡",
     "categoryColor": "#e07a5f",
-    "description": "Watch how Quick Sort splits an array around a pivot. The pivot is always the first element of the current sub-array, and every move of i and j gets its own box with an explanation.",
+    "description": "Merge sort keeps splitting the array in half until every piece holds one element, then merges the pieces back together in sorted order. Type any numbers below to watch it happen.",
     "tags": [
       "Divide & Conquer",
       "Pointers",
       "Searching & Sorting",
       "Sorting"
     ],
-    "sizeKb": 22.0,
-    "linesCount": 444,
+    "sizeKb": 28.2,
+    "linesCount": 539,
     "estimatedMinutes": 10,
-    "lastModified": "Oct 7, 2026",
-    "timestamp": 1791386087
+    "lastModified": "Oct 11, 2026",
+    "timestamp": 1791740388,
+    "subfolder": "AIML"
   },
   {
-    "id": "reverse-palindrome-checker",
-    "filename": "widgets/reverse-palindrome-checker.html",
-    "title": "Optimal Linked List Palindrome Check",
-    "subtitle": "7 Elements (Odd) 8 Elements (Even) Default Cases",
-    "stamp": "DATA STRUCTURES ALGORITHMS",
+    "id": "linked_list",
+    "filename": "widgets/AIML/linked_list.html",
+    "title": "Linked List Operations",
+    "subtitle": "Interactive C++ Explorer",
+    "stamp": "Interactive C++ Explorer",
     "category": "Linked Lists",
     "categoryIcon": "🔗",
     "categoryColor": "#c89b3c",
-    "description": "Traverse in $O(N)$ time with zero extra heap/stack allocation ($O(1)$ space). Find middle with slow/fast pointers, reverse the second half in-place, compare symmetrically, and restore the list without...",
+    "description": "MCA511-2 · UNIT 2 · LINKED LISTS",
     "tags": [
-      "Dynamic Memory",
+      "Linked Lists",
+      "Pointers"
+    ],
+    "sizeKb": 27.8,
+    "linesCount": 710,
+    "estimatedMinutes": 15,
+    "lastModified": "Oct 11, 2026",
+    "timestamp": 1791740388,
+    "subfolder": "AIML"
+  },
+  {
+    "id": "linearvsbinary",
+    "filename": "widgets/AIML/linearvsbinary.html",
+    "title": "Search Race",
+    "subtitle": "Linear vs Binary Search",
+    "stamp": "Linear vs Binary Search",
+    "category": "Complexity & Analysis",
+    "categoryIcon": "⏱️",
+    "categoryColor": "#6ea8dd",
+    "description": "MCA511-2 · UNIT 1 · SEARCHING ALGORITHMS",
+    "tags": [
+      "Binary Search",
+      "Complexity & Analysis",
+      "Linear Search",
+      "Pointers"
+    ],
+    "sizeKb": 11.4,
+    "linesCount": 327,
+    "estimatedMinutes": 10,
+    "lastModified": "Oct 11, 2026",
+    "timestamp": 1791740388,
+    "subfolder": "AIML"
+  },
+  {
+    "id": "aray_vs_linked",
+    "filename": "widgets/AIML/aray_vs_linked.html",
+    "title": "Array vs Linked List · CS Orientation",
+    "subtitle": "Array vs. Linked List",
+    "stamp": "LINKED LISTS",
+    "category": "Linked Lists",
+    "categoryIcon": "🔗",
+    "categoryColor": "#c89b3c",
+    "description": "Interactive visualizer and field study exploring Array vs Linked List · CS Orientation.",
+    "tags": [
       "Linked Lists",
       "Pointers",
       "Two Pointers"
     ],
-    "sizeKb": 63.9,
-    "linesCount": 1994,
+    "sizeKb": 31.0,
+    "linesCount": 853,
     "estimatedMinutes": 15,
-    "lastModified": "Sep 22, 2026",
-    "timestamp": 1790093960
+    "lastModified": "Oct 11, 2026",
+    "timestamp": 1791740388,
+    "subfolder": "AIML"
+  },
+  {
+    "id": "aray_operation",
+    "filename": "widgets/AIML/aray_operation.html",
+    "title": "Array Operations",
+    "subtitle": "Interactive C++ Explorer",
+    "stamp": "Interactive C++ Explorer",
+    "category": "Complexity & Analysis",
+    "categoryIcon": "⏱️",
+    "categoryColor": "#6ea8dd",
+    "description": "MCA511-2 · UNIT 1 · ARRAYS OPERATIONS",
+    "tags": [
+      "Complexity & Analysis",
+      "Pointers"
+    ],
+    "sizeKb": 16.5,
+    "linesCount": 471,
+    "estimatedMinutes": 10,
+    "lastModified": "Oct 11, 2026",
+    "timestamp": 1791740388,
+    "subfolder": "AIML"
   },
   {
     "id": "time-complexity-widget_1",
@@ -235,7 +245,8 @@ const DSA_WIDGETS = [
     "linesCount": 492,
     "estimatedMinutes": 10,
     "lastModified": "Sep 16, 2026",
-    "timestamp": 1789579062
+    "timestamp": 1789579062,
+    "subfolder": ""
   },
   {
     "id": "malloc-walkthrough-visualizer",
@@ -257,7 +268,8 @@ const DSA_WIDGETS = [
     "linesCount": 381,
     "estimatedMinutes": 10,
     "lastModified": "Sep 16, 2026",
-    "timestamp": 1789579058
+    "timestamp": 1789579058,
+    "subfolder": ""
   },
   {
     "id": "linked-list-middle-visualizer",
@@ -279,7 +291,8 @@ const DSA_WIDGETS = [
     "linesCount": 373,
     "estimatedMinutes": 10,
     "lastModified": "Sep 16, 2026",
-    "timestamp": 1789579057
+    "timestamp": 1789579057,
+    "subfolder": ""
   },
   {
     "id": "why-speed-matters_1",
@@ -301,7 +314,8 @@ const DSA_WIDGETS = [
     "linesCount": 597,
     "estimatedMinutes": 15,
     "lastModified": "Sep 16, 2026",
-    "timestamp": 1789579054
+    "timestamp": 1789579054,
+    "subfolder": ""
   },
   {
     "id": "delete-kth-from-end-visualizer",
@@ -323,7 +337,8 @@ const DSA_WIDGETS = [
     "linesCount": 476,
     "estimatedMinutes": 10,
     "lastModified": "Sep 16, 2026",
-    "timestamp": 1789579049
+    "timestamp": 1789579049,
+    "subfolder": ""
   }
 ];
 

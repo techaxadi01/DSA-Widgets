@@ -279,10 +279,10 @@ def scan_and_generate():
     excluded_files = {"index.html", "dashboard.html", "home.html", "hub.html"}
 
     html_files = []
-    # 1. Scan widgets/ subfolder first if present
+    # 1. Scan widgets/ subfolder recursively if present
     if widgets_subfolder.exists() and widgets_subfolder.is_dir():
         html_files.extend([
-            f for f in widgets_subfolder.glob("*.html")
+            f for f in widgets_subfolder.rglob("*.html")
             if f.name.lower() not in excluded_files and not f.name.startswith(".")
         ])
 
@@ -302,8 +302,18 @@ def scan_and_generate():
         if meta:
             # Ensure filename is relative to root hub directory
             meta["filename"] = file_path.relative_to(current_dir).as_posix()
+
+            # Determine subfolder if nested inside widgets/
+            subfolder = ""
+            if widgets_subfolder in file_path.parents:
+                rel_to_widgets = file_path.relative_to(widgets_subfolder)
+                if len(rel_to_widgets.parts) > 1:
+                    subfolder = rel_to_widgets.parts[0]
+            meta["subfolder"] = subfolder
+
             widgets.append(meta)
-            print(f"  + Indexed [{meta['category']}]: {meta['title']} ({meta['filename']})")
+            sub_label = f" [Subfolder: {subfolder}]" if subfolder else ""
+            print(f"  + Indexed [{meta['category']}]{sub_label}: {meta['title']} ({meta['filename']})")
 
     output_js_path = current_dir / "widgets-data.js"
     json_str = json.dumps(widgets, indent=2, ensure_ascii=False)

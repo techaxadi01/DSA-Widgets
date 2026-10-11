@@ -13,7 +13,8 @@
     searchQuery: '',
     sortBy: 'recent',
     activePreviewWidget: null,
-    viewMode: 'grid'
+    viewMode: 'grid',
+    collapsedGroups: new Set()
   };
 
   // DOM Elements
@@ -246,49 +247,197 @@
       return;
     }
 
-    widgetsContainer.innerHTML = filtered.map(w => {
-      const catColor = w.categoryColor || '#c89b3c';
-      const catIcon = w.categoryIcon || '📚';
+    // Render Individual Widget Card
+  function renderWidgetCard(w) {
+    const catColor = w.categoryColor || '#c89b3c';
+    const catIcon = w.categoryIcon || '📚';
+    const subfolderBadge = w.subfolder ? `
+      <span class="subfolder-badge" title="Folder: widgets/${escapeHtml(w.subfolder)}/">
+        <span>📁</span>
+        <span>${escapeHtml(w.subfolder)}</span>
+      </span>
+    ` : '';
 
-      return `
-        <article class="widget-card" data-id="${escapeHtml(w.id)}" id="card-${escapeHtml(w.id)}">
-          <header class="card-header">
+    return `
+      <article class="widget-card" data-id="${escapeHtml(w.id)}" id="card-${escapeHtml(w.id)}">
+        <header class="card-header">
+          <div class="card-header-left">
             <span class="category-tag" style="border-color: ${catColor}35; color: ${catColor};">
               <span>${catIcon}</span>
               <span>${escapeHtml(w.category)}</span>
             </span>
-
-            <span class="card-spec">⏱️ ${w.estimatedMinutes || 10}m</span>
-          </header>
-
-          <h2 class="card-title">
-            <a href="${encodeURI(w.filename)}" target="_blank" rel="noopener">
-              ${escapeHtml(w.title)}
-            </a>
-          </h2>
-
-          <div class="card-subtitle">${escapeHtml(w.subtitle || w.stamp || '')}</div>
-
-          <p class="card-description">${escapeHtml(w.description || '')}</p>
-
-          <div class="card-tags">
-            ${(w.tags || []).map(t => `<span class="tag-pill" data-tag="${escapeHtml(t)}">#${escapeHtml(t)}</span>`).join('')}
+            ${subfolderBadge}
           </div>
 
-          <footer class="card-actions">
-            <a href="${encodeURI(w.filename)}" class="btn-primary" target="_blank" rel="noopener">
-              <span>Launch ↗</span>
-            </a>
+          <span class="card-spec">⏱️ ${w.estimatedMinutes || 10}m</span>
+        </header>
 
-            <button class="btn-ghost" data-action="quick-preview" data-id="${escapeHtml(w.id)}">
-              <span>Preview 👁️</span>
-            </button>
-          </footer>
-        </article>
+        <h2 class="card-title">
+          <a href="${encodeURI(w.filename)}" target="_blank" rel="noopener">
+            ${escapeHtml(w.title)}
+          </a>
+        </h2>
+
+        <div class="card-subtitle">${escapeHtml(w.subtitle || w.stamp || '')}</div>
+
+        <p class="card-description">${escapeHtml(w.description || '')}</p>
+
+        <div class="card-tags">
+          ${(w.tags || []).map(t => `<span class="tag-pill" data-tag="${escapeHtml(t)}">#${escapeHtml(t)}</span>`).join('')}
+        </div>
+
+        <footer class="card-actions">
+          <a href="${encodeURI(w.filename)}" class="btn-primary" target="_blank" rel="noopener">
+            <span>Launch ↗</span>
+          </a>
+
+          <button class="btn-ghost" data-action="quick-preview" data-id="${escapeHtml(w.id)}">
+            <span>Preview 👁️</span>
+          </button>
+        </footer>
+      </article>
+    `;
+  }
+
+  // Render Compact Widget Cards (Supports Subfolder Collapsible Groups in ALL tab)
+  function renderWidgets() {
+    if (!widgetsContainer) return;
+
+    if (state.widgets.length === 0) {
+      widgetsContainer.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-icon">📁</div>
+          <h3 class="empty-title">Welcome to Your DSA Study Hub</h3>
+          <p class="empty-subtitle">Your folder is ready. Whenever you add widgets from your professor, double-click <strong>update-widgets.bat</strong>!</p>
+          <button class="btn-compact" onclick="document.getElementById('guideCard').classList.add('open')">⚡ View How to Add Widgets</button>
+        </div>
       `;
-    }).join('');
+      updateFilterIndicators(0);
+      return;
+    }
 
+    const filtered = getFilteredAndSortedWidgets();
+    updateFilterIndicators(filtered.length);
+
+    if (filtered.length === 0) {
+      widgetsContainer.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-icon">🔍</div>
+          <h3 class="empty-title">No Visualizers Match Your Filter</h3>
+          <p class="empty-subtitle">Try selecting "All Visualizers" in the left sidebar or clearing your search.</p>
+          <button class="btn-compact" id="resetFiltersBtn">Reset All Filters</button>
+        </div>
+      `;
+      const resetBtn = document.getElementById('resetFiltersBtn');
+      if (resetBtn) {
+        resetBtn.addEventListener('click', resetAllFilters);
+      }
+      return;
+    }
+
+    // In "All Visualizers" tab, group by subfolder if any exist
+    if (state.selectedCategory === 'ALL') {
+      const rootWidgets = filtered.filter(w => !w.subfolder);
+      const subfolderMap = new Map();
+
+      filtered.forEach(w => {
+        if (w.subfolder) {
+          if (!subfolderMap.has(w.subfolder)) {
+            subfolderMap.set(w.subfolder, []);
+          }
+          subfolderMap.get(w.subfolder).push(w);
+        }
+      });
+
+      // If subfolders exist, render root widgets on top directly (without collapse option)
+      // and each subfolder as a separate collapsible group below
+      if (subfolderMap.size > 0) {
+        let html = '';
+
+        // 1. Root / Main folder widgets on top directly without collapse
+        if (rootWidgets.length > 0) {
+          html += `
+            <div class="main-group-section">
+              <div class="main-group-header">
+                <span class="group-folder-icon">📚</span>
+                <span class="main-group-title">Main Collection</span>
+                <span class="main-group-badge">${rootWidgets.length} visualizers</span>
+              </div>
+              <div class="group-cards-grid ${state.viewMode === 'list' ? 'list-view' : ''}">
+                ${rootWidgets.map(w => renderWidgetCard(w)).join('')}
+              </div>
+            </div>
+          `;
+        }
+
+        // 2. Each subfolder as a separate collapsible group
+        const sortedSubfolders = Array.from(subfolderMap.keys()).sort((a, b) => a.localeCompare(b));
+        const isSearching = state.searchQuery.trim().length > 0;
+
+        sortedSubfolders.forEach(subfolderName => {
+          const folderWidgets = subfolderMap.get(subfolderName);
+          // Auto-expand during active search query; otherwise obey state.collapsedGroups
+          const isCollapsed = isSearching ? false : state.collapsedGroups.has(subfolderName);
+
+          html += `
+            <div class="collapsible-group ${isCollapsed ? 'is-collapsed' : ''}" data-group="${escapeHtml(subfolderName)}">
+              <button class="collapsible-group-header" aria-expanded="${isCollapsed ? 'false' : 'true'}" data-toggle-group="${escapeHtml(subfolderName)}">
+                <div class="group-header-left">
+                  <span class="group-folder-icon">📁</span>
+                  <span class="group-name">${escapeHtml(subfolderName)}</span>
+                  <span class="group-count-badge">${folderWidgets.length}</span>
+                </div>
+                <div class="group-header-right">
+                  <span class="group-toggle-hint">${isCollapsed ? 'Expand' : 'Collapse'}</span>
+                  <span class="group-chevron ${isCollapsed ? 'collapsed' : ''}">▾</span>
+                </div>
+              </button>
+              <div class="collapsible-group-body ${isCollapsed ? 'collapsed' : ''}">
+                <div class="group-cards-grid ${state.viewMode === 'list' ? 'list-view' : ''}">
+                  ${folderWidgets.map(w => renderWidgetCard(w)).join('')}
+                </div>
+              </div>
+            </div>
+          `;
+        });
+
+        widgetsContainer.innerHTML = html;
+        attachCardEventListeners();
+        attachGroupEventListeners();
+        return;
+      }
+    }
+
+    // Default: in specific category tabs or when no subfolders exist, render all cards together
+    widgetsContainer.innerHTML = filtered.map(w => renderWidgetCard(w)).join('');
     attachCardEventListeners();
+  }
+
+  // Attach Collapsible Group Event Listeners
+  function attachGroupEventListeners() {
+    widgetsContainer.querySelectorAll('[data-toggle-group]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const groupName = btn.getAttribute('data-toggle-group');
+        const groupEl = btn.closest('.collapsible-group');
+        if (!groupEl) return;
+
+        const isCurrentlyCollapsed = groupEl.classList.contains('is-collapsed');
+        if (isCurrentlyCollapsed) {
+          groupEl.classList.remove('is-collapsed');
+          state.collapsedGroups.delete(groupName);
+          btn.setAttribute('aria-expanded', 'true');
+          const hint = btn.querySelector('.group-toggle-hint');
+          if (hint) hint.textContent = 'Collapse';
+        } else {
+          groupEl.classList.add('is-collapsed');
+          state.collapsedGroups.add(groupName);
+          btn.setAttribute('aria-expanded', 'false');
+          const hint = btn.querySelector('.group-toggle-hint');
+          if (hint) hint.textContent = 'Expand';
+        }
+      });
+    });
   }
 
   // Attach Card Event Listeners
@@ -393,6 +542,7 @@
         viewGridBtn.classList.add('active');
         viewListBtn.classList.remove('active');
         widgetsContainer.classList.remove('list-view');
+        widgetsContainer.querySelectorAll('.group-cards-grid').forEach(g => g.classList.remove('list-view'));
         state.viewMode = 'grid';
       });
 
@@ -400,6 +550,7 @@
         viewListBtn.classList.add('active');
         viewGridBtn.classList.remove('active');
         widgetsContainer.classList.add('list-view');
+        widgetsContainer.querySelectorAll('.group-cards-grid').forEach(g => g.classList.add('list-view'));
         state.viewMode = 'list';
       });
     }

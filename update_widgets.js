@@ -290,12 +290,25 @@ function scanAndGenerate() {
   const excluded = new Set(['index.html', 'dashboard.html', 'home.html', 'hub.html']);
   const htmlFiles = [];
 
-  // 1. Scan widgets/ subfolder first if present
+  function findHtmlFiles(dir) {
+    const results = [];
+    if (!fs.existsSync(dir)) return results;
+    const entries = fs.readdirSync(dir, { withFileTypes: true });
+    for (const entry of entries) {
+      if (entry.name.startsWith('.')) continue;
+      const fullPath = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        results.push(...findHtmlFiles(fullPath));
+      } else if (entry.isFile() && entry.name.toLowerCase().endsWith('.html') && !excluded.has(entry.name.toLowerCase())) {
+        results.push(fullPath);
+      }
+    }
+    return results;
+  }
+
+  // 1. Scan widgets/ subfolder recursively if present
   if (fs.existsSync(widgetsSubfolder) && fs.statSync(widgetsSubfolder).isDirectory()) {
-    const subFiles = fs.readdirSync(widgetsSubfolder)
-      .filter(f => f.endsWith('.html') && !excluded.has(f.toLowerCase()) && !f.startsWith('.'))
-      .map(f => path.join(widgetsSubfolder, f));
-    htmlFiles.push(...subFiles);
+    htmlFiles.push(...findHtmlFiles(widgetsSubfolder));
   }
 
   // 2. Also scan root directory
@@ -316,8 +329,21 @@ function scanAndGenerate() {
     const meta = extractMetadata(file);
     if (meta) {
       meta.filename = path.relative(currentDir, file).replace(/\\/g, '/');
+
+      // Determine subfolder if nested inside widgets/
+      let subfolder = "";
+      const relToWidgets = path.relative(widgetsSubfolder, file);
+      if (!relToWidgets.startsWith('..') && !path.isAbsolute(relToWidgets)) {
+        const parts = relToWidgets.split(path.sep);
+        if (parts.length > 1) {
+          subfolder = parts[0];
+        }
+      }
+      meta.subfolder = subfolder;
+
       widgets.push(meta);
-      console.log(`  + Indexed [${meta.category}]: ${meta.title} (${meta.filename})`);
+      const subLabel = subfolder ? ` [Subfolder: ${subfolder}]` : '';
+      console.log(`  + Indexed [${meta.category}]${subLabel}: ${meta.title} (${meta.filename})`);
     }
   }
 
