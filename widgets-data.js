@@ -1,5 +1,5 @@
 // DSA Interactive Hub - Widgets Data Manifest
-// Generated on: 2026-10-11 23:21:13
+// Generated on: 2026-10-11 23:31:53
 // DO NOT EDIT DIRECTLY: Run 'update_widgets.py' or 'update-widgets.bat' to re-index!
 
 const DSA_WIDGETS = [
@@ -224,6 +224,71 @@ const DSA_WIDGETS = [
     "lastModified": "Oct 11, 2026",
     "timestamp": 1791740388,
     "subfolder": "AIML"
+  },
+  {
+    "id": "mca_b_sort-visualizer",
+    "filename": "widgets/MCA B/sort-visualizer.html",
+    "title": "Sorting Algorithm Visualizer",
+    "subtitle": "Sorting algorithms, step by step",
+    "stamp": "SEARCHING & SORTING",
+    "category": "Searching & Sorting",
+    "categoryIcon": "⚡",
+    "categoryColor": "#e07a5f",
+    "description": "Sorting means putting items in order. Pick an algorithm, press Play, or drag the slider to move through every step. Quick sort and merge sort use divide and conquer (split, solve, combine). Bubble, se...",
+    "tags": [
+      "Divide & Conquer",
+      "Dynamic Memory",
+      "Pointers",
+      "Searching & Sorting"
+    ],
+    "sizeKb": 22.0,
+    "linesCount": 344,
+    "estimatedMinutes": 10,
+    "lastModified": "Oct 11, 2026",
+    "timestamp": 1791739246,
+    "subfolder": "MCA B"
+  },
+  {
+    "id": "mca_b_queue_from_two_stacks",
+    "filename": "widgets/MCA B/queue_from_two_stacks.html",
+    "title": "Queue built from two stacks",
+    "subtitle": "Build a queue from two stacks",
+    "stamp": "STACKS & QUEUES",
+    "category": "Stacks & Queues",
+    "categoryIcon": "🥞",
+    "categoryColor": "#f2cc8f",
+    "description": "A stack hands you the newest item, but a queue must hand you the oldest. Pouring one stack into another reverses the order, which is exactly the flip you need. Pour only when the output stack is empty...",
+    "tags": [
+      "Pointers",
+      "Stacks & Queues"
+    ],
+    "sizeKb": 9.1,
+    "linesCount": 153,
+    "estimatedMinutes": 5,
+    "lastModified": "Oct 11, 2026",
+    "timestamp": 1791737682,
+    "subfolder": "MCA B"
+  },
+  {
+    "id": "mca_b_stack_from_queue",
+    "filename": "widgets/MCA B/stack_from_queue.html",
+    "title": "Stack built from a queue",
+    "subtitle": "Build a stack from one queue",
+    "stamp": "STACKS & QUEUES",
+    "category": "Stacks & Queues",
+    "categoryIcon": "🥞",
+    "categoryColor": "#f2cc8f",
+    "description": "A queue hands you the oldest item, but a stack must hand you the newest. The fix is rotation: dequeue an item, then enqueue the same item at the rear. Choose which operation pays for it.",
+    "tags": [
+      "Pointers",
+      "Stacks & Queues"
+    ],
+    "sizeKb": 9.6,
+    "linesCount": 167,
+    "estimatedMinutes": 5,
+    "lastModified": "Oct 11, 2026",
+    "timestamp": 1791737681,
+    "subfolder": "MCA B"
   },
   {
     "id": "time-complexity-widget_1",

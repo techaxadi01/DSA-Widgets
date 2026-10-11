@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sorting Algorithm Visualizer</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#EDF1F4;--panel:#fff;--ink:#1c2b36;--mute:#5d6e7b;--line:#cfd8df;--bar:#8da2b3;--cmp:#e3a008;--piv:#c2185b;--rng:#3b74d8;--ok:#1f9d6b;--wr:#7a4fd1;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#121c24;--panel:#1a2731;--ink:#e6edf2;--mute:#94a6b3;--line:#2c3c48;--bar:#5d7487;--cmp:#f2b629;--piv:#ef5b94;--rng:#6a9bf0;--ok:#3cc08c;--wr:#a98af0}}
+:root[data-theme="dark"]{--bg:#121c24;--panel:#1a2731;--ink:#e6edf2;--mute:#94a6b3;--line:#2c3c48;--bar:#5d7487;--cmp:#f2b629;--piv:#ef5b94;--rng:#6a9bf0;--ok:#3cc08c;--wr:#a98af0}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:900px;margin:0 auto;padding:20px 16px 48px}
+h1{font:700 clamp(26px,5vw,38px)/1.1 "Bricolage Grotesque",system-ui,sans-serif;margin:8px 0 4px}
+h2{font:700 20px/1.2 "Bricolage Grotesque",system-ui,sans-serif;margin:0 0 8px}
+.sub{color:var(--mute);margin:0 0 18px;max-width:62ch}
+.tabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+button,select{font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px 14px;cursor:pointer}
+button:hover{border-color:var(--rng)}button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid var(--rng);outline-offset:2px}
+.tabs button[aria-selected="true"]{background:var(--rng);border-color:var(--rng);color:#fff;font-weight:600}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:16px}
+#stage{height:280px;display:flex;align-items:flex-end;gap:2px;padding-top:8px}
+.b{flex:1;min-width:0;background:var(--bar);border-radius:3px 3px 0 0;position:relative;transition:height .12s}
+.b span{position:absolute;top:-18px;left:0;right:0;text-align:center;font-size:11px;color:var(--mute)}
+.b.rng{background:var(--rng)}.b.ok{background:var(--ok)}.b.cmp{background:var(--cmp)}.b.wr{background:var(--wr)}.b.piv{background:var(--piv)}
+.b.dim{opacity:.35}
+#msg{min-height:3.4em;margin:12px 0 4px;font-weight:500}
+.ctl{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.ctl label{display:flex;gap:6px;align-items:center;color:var(--mute);font-size:14px}
+input[type=range]{accent-color:var(--rng)}
+#scrub{width:100%;margin-top:10px}
+.stats{display:flex;gap:20px;color:var(--mute);font-size:14px;margin-top:6px;flex-wrap:wrap}
+.stats b{color:var(--ink)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:14px;color:var(--mute)}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.text p{margin:0 0 10px;max-width:70ch}.text ul{margin:0 0 10px;padding-left:20px;max-width:70ch}
+code{background:var(--bg);padding:1px 5px;border-radius:4px;font-size:.92em}
+.wide{overflow-x:auto}table{border-collapse:collapse;font-size:14px}td,th{border:1px solid var(--line);padding:6px 10px;text-align:left}
+@media (prefers-reduced-motion:reduce){.b{transition:none}}
+</style>
+</head>
+<body>
+<main>
+<h1>Sorting algorithms, step by step</h1>
+<p class="sub">Sorting means putting items in order. Pick an algorithm, press Play, or drag the slider to move through every step. Quick sort and merge sort use <b>divide and conquer</b> (split, solve, combine). Bubble, selection and insertion sort are simpler but slower. Heap sort uses a clever tree layout inside the array.</p>
+
+<div class="tabs" role="tablist">
+<button role="tab" data-a="quick" aria-selected="true">Quick sort</button>
+<button role="tab" data-a="merge" aria-selected="false">Merge sort</button>
+<button role="tab" data-a="bubble" aria-selected="false">Bubble sort</button>
+<button role="tab" data-a="selection" aria-selected="false">Selection sort</button>
+<button role="tab" data-a="insertion" aria-selected="false">Insertion sort</button>
+<button role="tab" data-a="heap" aria-selected="false">Heap sort</button>
+</div>
+
+<div class="card">
+<div id="stage" aria-label="Bar chart of the array being sorted"></div>
+<div id="msg" aria-live="polite"></div>
+<div class="legend" id="legend"></div>
+<input id="scrub" type="range" min="0" max="0" value="0" aria-label="Step position">
+<div class="stats"><span>Step <b id="sStep">0</b> / <b id="sTot">0</b></span><span>Comparisons <b id="sCmp">0</b></span><span id="wlab">Swaps <b id="sWr">0</b></span></div>
+</div>
+
+<div class="card ctl">
+<button id="play">Play</button>
+<button id="back" aria-label="Step back">Back</button>
+<button id="fwd" aria-label="Step forward">Forward</button>
+<label>Speed <input id="speed" type="range" min="1" max="10" value="6"></label>
+<label>Size <select id="size"><option>8</option><option selected>16</option><option>32</option><option>48</option></select></label>
+<label>Input <select id="kind"><option value="rand">Random</option><option value="rev">Reversed</option><option value="sorted">Already sorted</option><option value="near">Nearly sorted</option><option value="dup">Many duplicates</option></select></label>
+<button id="shuf">New array</button>
+</div>
+
+<div class="card text" id="explain"></div>
+
+<div class="card text wide">
+<h2>Side by side</h2>
+<table>
+<tr><th>Algorithm</th><th>Typical time</th><th>Worst case</th><th>Extra memory</th><th>Stable?</th></tr>
+<tr><td>Quick</td><td>n log n</td><td>n² (bad pivots)</td><td>Small</td><td>No</td></tr>
+<tr><td>Merge</td><td>n log n</td><td>n log n</td><td>Helper array of size n</td><td>Yes</td></tr>
+<tr><td>Bubble</td><td>n²</td><td>n²</td><td>None</td><td>Yes</td></tr>
+<tr><td>Selection</td><td>n²</td><td>n²</td><td>None</td><td>No</td></tr>
+<tr><td>Insertion</td><td>n² (n if nearly sorted)</td><td>n²</td><td>None</td><td>Yes</td></tr>
+<tr><td>Heap</td><td>n log n</td><td>n log n</td><td>None</td><td>No</td></tr>
+</table>
+<p style="margin-top:10px">"Stable" means items that tie keep their original relative order. Try "Already sorted" on quick sort, then merge sort, and compare the step counts.</p>
+</div>
+</main>
+
+<script>
+const $=id=>document.getElementById(id);
+let algo='quick',frames=[],pos=0,timer=null,base=[];
+
+function makeArray(n,kind){
+  let a=Array.from({length:n},(_,i)=>i+1);
+  const shuffle=x=>{for(let i=x.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[x[i],x[j]]=[x[j],x[i]]}return x};
+  if(kind==='rand')shuffle(a);
+  else if(kind==='rev')a.reverse();
+  else if(kind==='near'){for(let k=0;k<Math.max(2,n/8);k++){const i=Math.floor(Math.random()*n),j=Math.floor(Math.random()*n);[a[i],a[j]]=[a[j],a[i]]}}
+  else if(kind==='dup')a=a.map(()=>1+Math.floor(Math.random()*4)*Math.ceil(n/4));
+  return a;
+}
+
+function genQuick(src){
+  const a=src.slice(),f=[],done=new Set();let c=0,w=0;
+  const push=o=>f.push({a:a.slice(),c,w,done:[...done],...o});
+  push({msg:'Starting array. Quick sort will pick a pivot, then split the items into "smaller" and "larger".'});
+  (function qs(lo,hi){
+    if(lo>hi)return;
+    if(lo===hi){done.add(lo);push({msg:`A group with one item (${a[lo]}) is already sorted.`});return}
+    const p=a[hi],rng=[lo,hi];let i=lo-1;
+    push({rng,piv:hi,msg:`Working on positions ${lo} to ${hi}. The pivot is the last item, ${p}. Goal: everything smaller than ${p} goes left of it.`});
+    for(let j=lo;j<hi;j++){
+      c++;push({rng,piv:hi,cmp:[j],msg:`Compare ${a[j]} with the pivot ${p}. Is it smaller?`});
+      if(a[j]<p){
+        i++;
+        if(i!==j){[a[i],a[j]]=[a[j],a[i]];w++}
+        push({rng,piv:hi,wr:[i,j],msg:`Yes. Move ${a[i]} into the "smaller" zone at position ${i}.`});
+      }else push({rng,piv:hi,msg:`No. ${a[j]} is not smaller, so it stays in the "larger" zone.`});
+    }
+    const k=i+1;
+    if(k!==hi){[a[k],a[hi]]=[a[hi],a[k]];w++}
+    done.add(k);
+    push({rng,wr:[k],msg:`Drop the pivot ${p} into position ${k}. It is now in its final place: smaller items are on its left, larger on its right.`});
+    qs(lo,k-1);qs(k+1,hi);
+  })(0,a.length-1);
+  push({msg:'Sorted! Every item has reached its final position.'});
+  return f;
+}
+
+function genMerge(src){
+  const a=src.slice(),f=[];let c=0,w=0,fin=false;
+  const push=o=>f.push({a:a.slice(),c,w,done:fin?a.map((_,i)=>i):[],...o});
+  push({msg:'Starting array. Merge sort keeps splitting in half until each piece has one item, then merges pieces back in order.'});
+  (function ms(lo,hi){
+    if(lo>=hi)return;
+    const mid=(lo+hi)>>1;
+    push({rng:[lo,hi],msg:`Split positions ${lo} to ${hi} into a left half (${lo}-${mid}) and a right half (${mid+1}-${hi}).`});
+    ms(lo,mid);ms(mid+1,hi);
+    const L=a.slice(lo,mid+1),R=a.slice(mid+1,hi+1);
+    let i=0,j=0,k=lo;
+    push({rng:[lo,hi],msg:`Merge two sorted halves: [${L.join(', ')}] and [${R.join(', ')}]. Repeatedly take the smaller front item.`});
+    while(i<L.length&&j<R.length){
+      c++;
+      const takeL=L[i]<=R[j];
+      a[k]=takeL?L[i++]:R[j++];w++;
+      push({rng:[lo,hi],wr:[k],msg:`Compare the fronts: ${takeL?`${a[k]} (left) ≤ ${R[j]} (right)`:`${a[k]} (right) < ${L[i]} (left)`}. Write ${a[k]} to position ${k}.`});
+      k++;
+    }
+    while(i<L.length){a[k]=L[i++];w++;push({rng:[lo,hi],wr:[k],msg:`Right half is empty, so copy the leftover ${a[k]} to position ${k}.`});k++}
+    while(j<R.length){a[k]=R[j++];w++;push({rng:[lo,hi],wr:[k],msg:`Left half is empty, so copy the leftover ${a[k]} to position ${k}.`});k++}
+  })(0,a.length-1);
+  fin=true;push({msg:'Sorted! The final merge combined the two big halves into one ordered list.'});
+  return f;
+}
+
+function render(){
+  const fr=frames[pos],n=fr.a.length,max=Math.max(...base);
+  const st=$('stage');
+  if(st.children.length!==n){st.innerHTML='';for(let i=0;i<n;i++){const d=document.createElement('div');d.className='b';d.appendChild(document.createElement('span'));st.appendChild(d)}}
+  const done=new Set(fr.done),wr=new Set(fr.wr||[]),cmp=new Set(fr.cmp||[]);
+  for(let i=0;i<n;i++){
+    const d=st.children[i];let cl='b';
+    if(done.has(i))cl+=' ok';
+    else if(fr.piv===i)cl+=' piv';
+    else if(wr.has(i))cl+=' wr';
+    else if(cmp.has(i))cl+=' cmp';
+    else if(fr.rng&&i>=fr.rng[0]&&i<=fr.rng[1])cl+=' rng';
+    else if(fr.rng)cl+=' dim';
+    d.className=cl;
+    d.style.height=(fr.a[i]/max*92+4)+'%';
+    d.firstChild.textContent=n<=16?fr.a[i]:'';
+  }
+  $('msg').textContent=fr.msg;
+  $('scrub').value=pos;$('sStep').textContent=pos;$('sCmp').textContent=fr.c;$('sWr').textContent=fr.w;
+}
+
+function build(){
+  stop();
+  frames=GEN[algo](base);
+  pos=0;$('scrub').max=frames.length-1;$('sTot').textContent=frames.length-1;
+  $('wlab').firstChild.textContent=algo==='merge'?'Writes ':'Swaps ';
+  $('legend').innerHTML=LEG[algo]?LEG[algo]:algo==='quick'
+   ?'<span><i style="background:var(--rng)"></i>Current group</span><span><i style="background:var(--piv)"></i>Pivot</span><span><i style="background:var(--cmp)"></i>Being compared</span><span><i style="background:var(--wr)"></i>Just moved</span><span><i style="background:var(--ok)"></i>Final position</span><span><i style="background:var(--bar);opacity:.35"></i>Not in play</span>'
+   :'<span><i style="background:var(--rng)"></i>Piece being worked on</span><span><i style="background:var(--wr)"></i>Just written</span><span><i style="background:var(--ok)"></i>Final result</span><span><i style="background:var(--bar);opacity:.35"></i>Not in play</span>';
+  $('explain').innerHTML=EX[algo];
+  render();
+}
+function newArr(){base=makeArray(+$('size').value,$('kind').value);build()}
+function stop(){clearInterval(timer);timer=null;$('play').textContent='Play'}
+function tick(){if(pos>=frames.length-1){stop();return}pos++;render()}
+function play(){
+  if(timer){stop();return}
+  if(pos>=frames.length-1)pos=0;
+  $('play').textContent='Pause';
+  timer=setInterval(tick,1100-$('speed').value*100);
+}
+$('play').onclick=play;
+$('fwd').onclick=()=>{stop();if(pos<frames.length-1){pos++;render()}};
+$('back').onclick=()=>{stop();if(pos>0){pos--;render()}};
+$('scrub').oninput=e=>{stop();pos=+e.target.value;render()};
+$('speed').oninput=()=>{if(timer){stop();play()}};
+$('size').onchange=$('kind').onchange=$('shuf').onclick=newArr;
+function pick(a){algo=a;document.querySelectorAll('.tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.a===a));build()}
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>pick(b.dataset.a));
+
+const QX=`<h2>How quick sort works</h2>
+<p><b>1. Pick a pivot.</b> A pivot is a reference value. Here it is the last item of the current group.</p>
+<p><b>2. Partition.</b> Walk through the group. Each item smaller than the pivot is swapped into a "smaller" zone on the left. Larger items stay on the right.</p>
+<p><b>3. Place the pivot.</b> Swap it between the two zones. It is now in its final position, and it never moves again.</p>
+<p><b>4. Repeat</b> on the left group and the right group. A group of 0 or 1 items is already sorted, which is the stopping point (the "base case").</p>
+<p><b>Edge cases to watch.</b></p>
+<ul><li>If the pivot is always the smallest or largest item (for example, already sorted input with a last-item pivot), the groups split 0 and n-1. That gives n² work. Real systems use a random or median-of-three pivot to avoid this.</li>
+<li>Many duplicates can also cause lopsided splits in this simple version.</li></ul>`;
+const MX=`<h2>How merge sort works</h2>
+<p><b>1. Split</b> the list in half, again and again, until each piece has a single item. One item is trivially sorted.</p>
+<p><b>2. Merge.</b> Take two sorted pieces. Look at the front item of each, copy the smaller one into the result, and move forward in that piece. When one piece runs out, copy the rest of the other.</p>
+<p><b>3. Repeat</b> merging upward until one sorted list remains.</p>
+<p><b>Why it is reliable.</b> The list is halved about log n times, and each level of merging touches n items, so the work is always about n log n, whatever the input looks like.</p>
+<p><b>Trade-offs and edge cases.</b></p>
+<ul><li>It needs extra memory for the temporary copies made while merging.</li>
+<li>On ties it takes the left item first (≤), which keeps equal items in their original order. That is what makes it stable.</li></ul>`;
+function genBubble(src){
+  const a=src.slice(),f=[],done=new Set(),n=a.length;let c=0,w=0;
+  const push=o=>f.push({a:a.slice(),c,w,done:[...done],...o});
+  push({msg:'Starting array. Bubble sort compares neighbours and swaps them if they are in the wrong order.'});
+  for(let p=0;p<n-1;p++){
+    let sw=false;
+    for(let j=0;j<n-1-p;j++){
+      c++;push({rng:[0,n-1-p],cmp:[j,j+1],msg:`Compare neighbours ${a[j]} and ${a[j+1]}. Is the left one bigger?`});
+      if(a[j]>a[j+1]){[a[j],a[j+1]]=[a[j+1],a[j]];w++;sw=true;push({rng:[0,n-1-p],wr:[j,j+1],msg:`Yes, so swap them. The bigger value ${a[j+1]} moves one step right.`});}
+    }
+    done.add(n-1-p);
+    push({rng:[0,Math.max(0,n-2-p)],msg:`Pass ${p+1} finished. The largest remaining value, ${a[n-1-p]}, has bubbled to position ${n-1-p} and is final.`});
+    if(!sw){for(let i=0;i<n;i++)done.add(i);push({msg:'This pass made no swaps, so everything is in order. Stop early.'});break;}
+  }
+  for(let i=0;i<n;i++)done.add(i);
+  push({msg:'Sorted!'});return f;
+}
+function genSelection(src){
+  const a=src.slice(),f=[],done=new Set(),n=a.length;let c=0,w=0;
+  const push=o=>f.push({a:a.slice(),c,w,done:[...done],...o});
+  push({msg:'Starting array. Selection sort repeatedly finds the smallest unsorted item and puts it at the front.'});
+  for(let i=0;i<n-1;i++){
+    let m=i;
+    push({rng:[i,n-1],piv:m,msg:`Find the smallest value in positions ${i} to ${n-1}. Assume it is ${a[i]} for now.`});
+    for(let j=i+1;j<n;j++){
+      c++;push({rng:[i,n-1],piv:m,cmp:[j],msg:`Is ${a[j]} smaller than the smallest so far (${a[m]})?`});
+      if(a[j]<a[m]){m=j;push({rng:[i,n-1],piv:m,msg:`Yes. New smallest: ${a[m]} at position ${m}.`});}
+    }
+    if(m!==i){[a[i],a[m]]=[a[m],a[i]];w++;}
+    done.add(i);
+    push({rng:[i+1,n-1],wr:[m],msg:m!==i?`Swap the smallest (${a[i]}) into position ${i}. It is final.`:`${a[i]} is already the smallest, so it stays in position ${i}. It is final.`});
+  }
+  for(let i=0;i<n;i++)done.add(i);
+  push({msg:'Sorted!'});return f;
+}
+function genInsertion(src){
+  const a=src.slice(),f=[],done=new Set(),n=a.length;let c=0,w=0;
+  const push=o=>f.push({a:a.slice(),c,w,done:[...done],...o});
+  push({msg:'Starting array. Insertion sort grows a sorted section on the left, like sorting playing cards in your hand.'});
+  for(let i=1;i<n;i++){
+    push({rng:[0,i],piv:i,msg:`Take ${a[i]} and slide it left into the sorted section (positions 0 to ${i-1}).`});
+    let j=i;
+    while(j>0){
+      c++;push({rng:[0,i],cmp:[j-1,j],msg:`Compare ${a[j-1]} and ${a[j]}. Is the left one bigger?`});
+      if(a[j-1]>a[j]){[a[j-1],a[j]]=[a[j],a[j-1]];w++;push({rng:[0,i],wr:[j-1,j],msg:`Yes, swap so the item moves one step left.`});j--;}
+      else{push({rng:[0,i],msg:`No. ${a[j]} is in the right place, so the sorted section now covers positions 0 to ${i}.`});break;}
+    }
+  }
+  for(let i=0;i<n;i++)done.add(i);
+  push({msg:'Sorted!'});return f;
+}
+function genHeap(src){
+  const a=src.slice(),f=[],done=new Set(),n=a.length;let c=0,w=0;
+  const push=o=>f.push({a:a.slice(),c,w,done:[...done],...o});
+  const sift=(i,m)=>{
+    while(true){
+      const l=2*i+1,r=l+1;let b=i;
+      if(l<m){c++;push({rng:[0,m-1],piv:i,cmp:[l],msg:`Compare parent ${a[i]} with its left child ${a[l]}.`});if(a[l]>a[b])b=l;}
+      if(r<m){c++;push({rng:[0,m-1],piv:i,cmp:[r],msg:`Compare the biggest so far (${a[b]}) with the right child ${a[r]}.`});if(a[r]>a[b])b=r;}
+      if(b===i)break;
+      [a[i],a[b]]=[a[b],a[i]];w++;
+      push({rng:[0,m-1],wr:[i,b],msg:`Swap: the bigger child ${a[i]} moves up above ${a[b]}.`});
+      i=b;
+    }
+  };
+  push({msg:'Starting array. Heap sort first rearranges the array into a max-heap (every parent is at least as big as its children), so the biggest value sits at position 0.'});
+  for(let s=(n>>1)-1;s>=0;s--)sift(s,n);
+  push({rng:[0,n-1],msg:'Max-heap built. The biggest value is at position 0. Now repeatedly move it to the end.'});
+  for(let e=n-1;e>0;e--){
+    [a[0],a[e]]=[a[e],a[0]];w++;done.add(e);
+    push({rng:[0,e-1],wr:[0],msg:`Swap the biggest value (${a[e]}) to position ${e}. It is final. Now repair the heap for the remaining items.`});
+    sift(0,e);
+  }
+  for(let i=0;i<n;i++)done.add(i);
+  push({msg:'Sorted!'});return f;
+}
+const GEN={quick:genQuick,merge:genMerge,bubble:genBubble,selection:genSelection,insertion:genInsertion,heap:genHeap};
+const lg=(c,t,o)=>`<span><i style="background:var(--${c})${o?';opacity:.35':''}"></i>${t}</span>`;
+const LEG={
+  bubble:lg('rng','Still being scanned')+lg('cmp','Being compared')+lg('wr','Just swapped')+lg('ok','Final position'),
+  selection:lg('rng','Unsorted part')+lg('piv','Smallest so far')+lg('cmp','Being checked')+lg('wr','Just moved')+lg('ok','Final position'),
+  insertion:lg('rng','Sorted section plus the item being inserted')+lg('piv','Item being inserted')+lg('cmp','Being compared')+lg('wr','Just swapped'),
+  heap:lg('rng','Heap (still being arranged)')+lg('piv','Parent being checked')+lg('cmp','Child being compared')+lg('wr','Just swapped')+lg('ok','Final position')
+};
+const EX={quick:QX,merge:MX,
+bubble:`<h2>How bubble sort works</h2>
+<p><b>1. Scan.</b> Go through the list comparing each pair of neighbours. If the left one is bigger, swap them.</p>
+<p><b>2. Bubble up.</b> After one full pass, the largest value has "bubbled" to the far right and is final. The next pass can skip it.</p>
+<p><b>3. Repeat</b> until a pass makes no swaps. That means the list is sorted.</p>
+<p><b>Edge cases.</b></p>
+<ul><li>Already sorted input is the best case: one pass, zero swaps, then it stops (about n comparisons).</li>
+<li>Reversed input is the worst case: every pair needs swapping, giving about n² work.</li>
+<li>Small values at the far right travel left only one step per pass, which makes bubble sort slow.</li></ul>`,
+selection:`<h2>How selection sort works</h2>
+<p><b>1. Search.</b> Look through the unsorted part and find the smallest value.</p>
+<p><b>2. Swap.</b> Put that value at the front of the unsorted part. It is now final.</p>
+<p><b>3. Repeat</b> on the rest, which is one item shorter each time.</p>
+<p><b>Edge cases and trade-offs.</b></p>
+<ul><li>It always does about n² comparisons, even on sorted input, because it must check every remaining item to be sure.</li>
+<li>It does at most n-1 swaps, which helps when moving items is expensive.</li>
+<li>It is not stable: swapping across a distance can jump an item past an equal one.</li></ul>`,
+insertion:`<h2>How insertion sort works</h2>
+<p><b>1. Start</b> with the first item as a sorted section of length one.</p>
+<p><b>2. Insert.</b> Take the next item and slide it left past every bigger item until it fits.</p>
+<p><b>3. Repeat</b> until every item has been inserted.</p>
+<p><b>Edge cases and trade-offs.</b></p>
+<ul><li>Nearly sorted input is very fast, since each item only moves a short way. That is why real libraries use insertion sort for small groups inside faster algorithms.</li>
+<li>Reversed input is the worst case: each item slides all the way to the front.</li>
+<li>It is stable, because it stops as soon as the left neighbour is not bigger.</li></ul>`,
+heap:`<h2>How heap sort works</h2>
+<p><b>Key idea: a heap.</b> Imagine the array as a tree where the item at position <code>i</code> has children at <code>2i+1</code> and <code>2i+2</code>. In a <b>max-heap</b>, every parent is at least as big as its children, so the biggest value is at position 0.</p>
+<p><b>1. Build the heap.</b> Starting from the last parent and moving backwards, "sift down" each item: swap it with its bigger child until it is no longer smaller than its children.</p>
+<p><b>2. Extract.</b> Swap the biggest value (position 0) with the last item of the heap. It is now final. Shrink the heap by one.</p>
+<p><b>3. Repair</b> the heap by sifting the new top item down, then repeat step 2.</p>
+<p><b>Trade-offs.</b> It guarantees n log n time and needs no extra memory, but it is not stable and jumps around memory, so it is often slower in practice than quick sort.</p>`};
+newArr();
+</script>
+</body>
+</html>
