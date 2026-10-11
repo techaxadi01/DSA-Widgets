@@ -252,9 +252,9 @@ function extractMetadata(filePath) {
   }
 
   const stat = fs.statSync(filePath);
-  const lastModified = stat.mtime.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  const lastModified = `${stat.mtime.toLocaleString('en-US', { month: 'short' })} ${stat.mtime.getDate()}, ${stat.mtime.getFullYear()}`;
   const sizeKb = Math.round((stat.size / 1024) * 10) / 10;
-  const linesCount = rawContent.split(/\r?\n/).length;
+  const linesCount = rawContent.split(/\r?\n/).length - (rawContent.endsWith('\n') || rawContent.endsWith('\r') ? 1 : 0);
   const estimatedMinutes = linesCount < 300 ? 5 : (linesCount < 550 ? 10 : 15);
 
   return {
@@ -438,6 +438,17 @@ function syncToGithub(widgets, currentDir = __dirname) {
         }
       } else {
         otherFiles.push({ file: fileRel, status: statusCode });
+      }
+    }
+
+    // Check if ONLY widgets-data.js changed with no widget additions, edits, or other file changes
+    if (!newWidgets.length && !updatedWidgets.length && !deletedWidgets.length) {
+      const nonManifestOthers = otherFiles.filter(f => f.file !== 'widgets-data.js');
+      if (!nonManifestOthers.length) {
+        spawnSync('git', ['restore', '--staged', 'widgets-data.js'], { cwd: currentDir });
+        spawnSync('git', ['restore', 'widgets-data.js'], { cwd: currentDir });
+        console.log('[GIT] Working tree is clean. No widget additions or modifications to commit.');
+        return true;
       }
     }
 

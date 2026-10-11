@@ -240,7 +240,8 @@ def extract_metadata(file_path):
 
     # 6. File statistics & timings
     stat = file_path.stat()
-    last_modified = datetime.datetime.fromtimestamp(stat.st_mtime).strftime("%b %d, %Y")
+    dt = datetime.datetime.fromtimestamp(stat.st_mtime)
+    last_modified = f"{dt.strftime('%b')} {dt.day}, {dt.year}"
     size_kb = round(stat.st_size / 1024, 1)
     lines_count = len(raw_content.splitlines())
     estimated_minutes = 5 if lines_count < 300 else (10 if lines_count < 550 else 15)
@@ -427,6 +428,15 @@ def sync_to_github(widgets, current_dir=None):
                     new_widgets.append({"title": title, "file": file_rel, "category": category})
             else:
                 other_files.append({"file": file_rel, "status": status_code})
+
+        # Check if ONLY widgets-data.js changed with no widget additions, edits, or other file changes
+        if not new_widgets and not updated_widgets and not deleted_widgets:
+            non_manifest_others = [f for f in other_files if f["file"] != "widgets-data.js"]
+            if not non_manifest_others:
+                subprocess.run(["git", "restore", "--staged", "widgets-data.js"], cwd=current_dir, check=False)
+                subprocess.run(["git", "restore", "widgets-data.js"], cwd=current_dir, check=False)
+                print("[GIT] Working tree is clean. No widget additions or modifications to commit.")
+                return True
 
         # Generate commit subject
         if new_widgets and not updated_widgets:
