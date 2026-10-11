@@ -6,6 +6,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { spawnSync } = require('child_process');
 
 const CATEGORY_DEFS = [
   {
@@ -337,6 +338,200 @@ if (typeof module !== 'undefined' && module.exports) {
   return widgets;
 }
 
+function syncToGithub(widgets, currentDir = __dirname) {
+  const gitDir = path.join(currentDir, '.git');
+  if (!fs.existsSync(gitDir)) {
+    console.log('[GIT] No .git directory found. Skipping GitHub sync.');
+    return false;
+  }
+
+  const gitCheck = spawnSync('git', ['--version'], { cwd: currentDir, encoding: 'utf8' });
+  if (gitCheck.error || gitCheck.status !== 0) {
+    console.log("[GIT WARNING] 'git' is not installed or not in your PATH. Skipping GitHub sync.");
+    return false;
+  }
+
+  try {
+    const statusProc = spawnSync('git', ['status', '--porcelain'], { cwd: currentDir, encoding: 'utf8' });
+    if (statusProc.error) throw statusProc.error;
+    const statusOutput = (statusProc.stdout || '').trim();
+    if (!statusOutput) {
+      console.log('[GIT] Working tree is clean. No changes to commit or push.');
+      return true;
+    }
+
+    const widgetMap = {};
+    for (const w of widgets) {
+      const rel = (w.filename || '').replace(/\\/g, '/');
+      const base = path.basename(rel);
+      widgetMap[rel] = w;
+      widgetMap[base] = w;
+    }
+
+    // Stage all changes
+    const addProc = spawnSync('git', ['add', '-A'], { cwd: currentDir, encoding: 'utf8' });
+    if (addProc.status !== 0) {
+      throw new Error(addProc.stderr || 'git add failed');
+    }
+
+    // Inspect staged changes
+    const diffProc = spawnSync('git', ['diff', '--cached', '--name-status'], { cwd: currentDir, encoding: 'utf8' });
+    if (diffProc.error) throw diffProc.error;
+
+    const stagedLines = (diffProc.stdout || '').trim().split(/\r?\n/).filter(Boolean);
+    if (!stagedLines.length) {
+      console.log('[GIT] No staged changes found.');
+      return true;
+    }
+
+    const excludedFiles = new Set(['index.html', 'dashboard.html', 'home.html', 'hub.html']);
+    const newWidgets = [];
+    const updatedWidgets = [];
+    const deletedWidgets = [];
+    const otherFiles = [];
+
+    for (const line of stagedLines) {
+      const parts = line.split(/\s+/);
+      if (parts.length < 2) continue;
+      const statusCode = parts[0];
+      const fileRel = parts.slice(1).join(' ').replace(/\\/g, '/');
+      const fname = path.basename(fileRel);
+
+      const isWidget = (fileRel.startsWith('widgets/') || fileRel.endsWith('.html')) && !excludedFiles.has(fname.toLowerCase());
+      const meta = widgetMap[fileRel] || widgetMap[fname];
+      const title = meta && meta.title ? meta.title : fname.replace('.html', '').replace(/[-_]/g, ' ');
+      const category = meta && meta.category ? meta.category : '';
+
+      if (isWidget) {
+        if (statusCode.startsWith('A') || statusCode.startsWith('?')) {
+          newWidgets.push({ title, file: fileRel, category });
+        } else if (statusCode.startsWith('M')) {
+          updatedWidgets.push({ title, file: fileRel, category });
+        } else if (statusCode.startsWith('D')) {
+          deletedWidgets.push({ title, file: fileRel, category });
+        } else if (statusCode.startsWith('R')) {
+          newWidgets.push({ title, file: fileRel, category });
+        }
+      } else {
+        otherFiles.push({ file: fileRel, status: statusCode });
+      }
+    }
+
+    let commitSubject = 'Update widgets catalog and manifest';
+    if (newWidgets.length && !updatedWidgets.length) {
+      if (newWidgets.length === 1) {
+        commitSubject = `Add new widget: ${newWidgets[0].title}`;
+      } else if (newWidgets.length <= 3) {
+        commitSubject = `Add new widgets: ${newWidgets.map(w => w.title).join(', ')}`;
+      } else {
+        commitSubject = `Add ${newWidgets.length} new widgets (${newWidgets[0].title} and others)`;
+      }
+    } else if (newWidgets.length && updatedWidgets.length) {
+      if (newWidgets.length === 1) {
+        commitSubject = `Add ${newWidgets[0].title} and update existing visualizers`;
+      } else {
+        commitSubject = `Add ${newWidgets.length} new widgets and update catalog`;
+      }
+    } else if (updatedWidgets.length && !newWidgets.length) {
+      if (updatedWidgets.length === 1) {
+        commitSubject = `Update widget: ${updatedWidgets[0].title}`;
+      } else {
+        commitSubject = `Update widgets: ${updatedWidgets.slice(0, 3).map(w => w.title).join(', ')}`;
+      }
+    } else if (deletedWidgets.length) {
+      commitSubject = `Remove widget: ${deletedWidgets[0].title}`;
+    }
+
+    const bodyLines = [];
+    if (newWidgets.length) {
+      bodyLines.push('New Additions:');
+      for (const w of newWidgets) {
+        const cat = w.category ? ` [${w.category}]` : '';
+        bodyLines.push(`  + ${w.title}${cat} (${w.file})`);
+      }
+    }
+    if (updatedWidgets.length) {
+      bodyLines.push('Updated Widgets:');
+      for (const w of updatedWidgets) {
+        bodyLines.push(`  ~ ${w.title} (${w.file})`);
+      }
+    }
+    if (deletedWidgets.length) {
+      bodyLines.push('Removed Widgets:');
+      for (const w of deletedWidgets) {
+        bodyLines.push(`  - ${w.title} (${w.file})`);
+      }
+    }
+    if (otherFiles.length) {
+      bodyLines.push('Other Changed Files:');
+      for (const of of otherFiles) {
+        bodyLines.push(`  * ${of.file}`);
+      }
+    }
+
+    const commitBody = bodyLines.join('\n');
+
+    console.log(`=======================================================`);
+    console.log(`  [GIT] Committing changes...`);
+    console.log(`  Subject: ${commitSubject}`);
+    console.log(`=======================================================`);
+
+    const commitArgs = ['commit', '-m', commitSubject];
+    if (commitBody) {
+      commitArgs.push('-m', commitBody);
+    }
+
+    const commitProc = spawnSync('git', commitArgs, { cwd: currentDir, encoding: 'utf8' });
+    if (commitProc.status !== 0) {
+      throw new Error(commitProc.stderr || 'git commit failed');
+    }
+    console.log('[GIT] Changes successfully committed locally.');
+
+    console.log('\n[GIT] Pushing commit to GitHub (origin)...');
+    let pushProc = spawnSync('git', ['push'], { cwd: currentDir, encoding: 'utf8' });
+    if (pushProc.status === 0) {
+      console.log('=======================================================');
+      console.log('  SUCCESS: Pushed to GitHub successfully!');
+      console.log(`  Commit: "${commitSubject}"`);
+      console.log('=======================================================\n');
+      return true;
+    } else {
+      const errMsg = (pushProc.stderr || '').trim();
+      const lower = errMsg.toLowerCase();
+      if (lower.includes('fetch first') || lower.includes('rejected') || lower.includes('non-fast-forward')) {
+        console.log("[GIT INFO] Remote has newer commits. Attempting 'git pull --rebase' before pushing...");
+        const pullProc = spawnSync('git', ['pull', '--rebase'], { cwd: currentDir, encoding: 'utf8' });
+        if (pullProc.status === 0) {
+          pushProc = spawnSync('git', ['push'], { cwd: currentDir, encoding: 'utf8' });
+          if (pushProc.status === 0) {
+            console.log('=======================================================');
+            console.log('  SUCCESS: Rebased and pushed to GitHub successfully!');
+            console.log(`  Commit: "${commitSubject}"`);
+            console.log('=======================================================\n');
+            return true;
+          }
+        }
+      }
+      console.warn(`\n[GIT WARNING] Failed to push to GitHub: ${errMsg}`);
+      console.log("[GIT INFO] Your changes have been committed locally. Run 'git push' when your connection is ready.");
+      return false;
+    }
+  } catch (err) {
+    console.warn(`\n[GIT ERROR] Sync failed: ${err.message}`);
+    return false;
+  }
+}
+
+function main() {
+  const args = process.argv.slice(2);
+  const noPush = args.includes('--no-push');
+
+  const widgets = scanAndGenerate();
+  if (!noPush) {
+    syncToGithub(widgets);
+  }
+}
+
 if (require.main === module) {
-  scanAndGenerate();
+  main();
 }

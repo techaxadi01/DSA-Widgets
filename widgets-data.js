@@ -1,8 +1,29 @@
 // DSA Interactive Hub - Widgets Data Manifest
-// Generated on: 2026-09-22 22:31:24
+// Generated on: 2026-10-11 08:59:26
 // DO NOT EDIT DIRECTLY: Run 'update_widgets.py' or 'update-widgets.bat' to re-index!
 
 const DSA_WIDGETS = [
+  {
+    "id": "quicksort-visualizer",
+    "filename": "widgets/quicksort-visualizer.html",
+    "title": "Quick Sort, step by step",
+    "subtitle": "Quick Sort, one step at a time",
+    "stamp": "SEARCHING & SORTING",
+    "category": "Searching & Sorting",
+    "categoryIcon": "⚡",
+    "categoryColor": "#e07a5f",
+    "description": "Watch how Quick Sort splits an array around a pivot. The pivot is always the first element of the current sub-array, and every move of i and j gets its own box with an explanation.",
+    "tags": [
+      "Pointers",
+      "Searching & Sorting",
+      "Visual Sim"
+    ],
+    "sizeKb": 22.0,
+    "linesCount": 444,
+    "estimatedMinutes": 10,
+    "lastModified": "Oct 07, 2026",
+    "timestamp": 1791386087
+  },
   {
     "id": "reverse-palindrome-checker",
     "filename": "widgets/reverse-palindrome-checker.html",

@@ -10,6 +10,10 @@ import os
 import re
 import json
 import datetime
+import subprocess
+import shutil
+import sys
+import argparse
 from pathlib import Path
 
 CATEGORY_DEFS = [
@@ -319,5 +323,202 @@ if (typeof module !== 'undefined' && module.exports) {{
     print(f"=======================================================\n")
     return widgets
 
+def sync_to_github(widgets, current_dir=None):
+    """
+    Check for git changes, generate a meaningful commit message indicating
+    new additions and updates, commit the changes, and push to GitHub.
+    """
+    if current_dir is None:
+        current_dir = Path(__file__).resolve().parent
+
+    if not (current_dir / ".git").exists():
+        print("[GIT] No .git directory found. Skipping GitHub sync.")
+        return False
+
+    if not shutil.which("git"):
+        print("[GIT WARNING] 'git' is not installed or not in your PATH. Skipping GitHub sync.")
+        return False
+
+    try:
+        # Check if there are any working tree changes or untracked files
+        status_proc = subprocess.run(
+            ["git", "status", "--porcelain"],
+            cwd=current_dir,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            check=True
+        )
+        status_output = status_proc.stdout.strip()
+        if not status_output:
+            print("[GIT] Working tree is clean. No changes to commit or push.")
+            return True
+
+        # Map widget filename / path to metadata
+        widget_map = {}
+        for w in widgets:
+            rel = w.get("filename", "").replace("\\", "/")
+            base = Path(rel).name
+            widget_map[rel] = w
+            widget_map[base] = w
+
+        # Stage all changes
+        subprocess.run(["git", "add", "-A"], cwd=current_dir, check=True)
+
+        # Inspect staged changes
+        diff_proc = subprocess.run(
+            ["git", "diff", "--cached", "--name-status"],
+            cwd=current_dir,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            check=True
+        )
+        staged_lines = [l.strip() for l in diff_proc.stdout.strip().splitlines() if l.strip()]
+        if not staged_lines:
+            print("[GIT] No staged changes found.")
+            return True
+
+        excluded_files = {"index.html", "dashboard.html", "home.html", "hub.html"}
+        new_widgets = []
+        updated_widgets = []
+        deleted_widgets = []
+        other_files = []
+
+        for line in staged_lines:
+            parts = line.split(maxsplit=1)
+            if len(parts) != 2:
+                continue
+            status_code = parts[0]
+            file_rel = parts[1].replace("\\", "/")
+            fname = Path(file_rel).name
+
+            is_widget = (file_rel.startswith("widgets/") or file_rel.endswith(".html")) and fname.lower() not in excluded_files
+
+            meta = widget_map.get(file_rel) or widget_map.get(fname)
+            title = meta.get("title") if meta else fname.replace(".html", "").replace("-", " ").replace("_", " ").title()
+            category = meta.get("category", "") if meta else ""
+
+            if is_widget:
+                if status_code.startswith("A") or status_code.startswith("?"):
+                    new_widgets.append({"title": title, "file": file_rel, "category": category})
+                elif status_code.startswith("M"):
+                    updated_widgets.append({"title": title, "file": file_rel, "category": category})
+                elif status_code.startswith("D"):
+                    deleted_widgets.append({"title": title, "file": file_rel, "category": category})
+                elif status_code.startswith("R"):
+                    new_widgets.append({"title": title, "file": file_rel, "category": category})
+            else:
+                other_files.append({"file": file_rel, "status": status_code})
+
+        # Generate commit subject
+        if new_widgets and not updated_widgets:
+            if len(new_widgets) == 1:
+                commit_subject = f"Add new widget: {new_widgets[0]['title']}"
+            elif len(new_widgets) <= 3:
+                titles = ", ".join(w["title"] for w in new_widgets)
+                commit_subject = f"Add new widgets: {titles}"
+            else:
+                commit_subject = f"Add {len(new_widgets)} new widgets ({new_widgets[0]['title']} and others)"
+        elif new_widgets and updated_widgets:
+            if len(new_widgets) == 1:
+                commit_subject = f"Add {new_widgets[0]['title']} and update existing visualizers"
+            else:
+                commit_subject = f"Add {len(new_widgets)} new widgets and update catalog"
+        elif updated_widgets and not new_widgets:
+            if len(updated_widgets) == 1:
+                commit_subject = f"Update widget: {updated_widgets[0]['title']}"
+            else:
+                titles = ", ".join(w["title"] for w in updated_widgets[:3])
+                commit_subject = f"Update widgets: {titles}"
+        elif deleted_widgets:
+            commit_subject = f"Remove widget: {deleted_widgets[0]['title']}"
+        else:
+            commit_subject = "Update widgets catalog and manifest"
+
+        # Generate commit body
+        body_lines = []
+        if new_widgets:
+            body_lines.append("New Additions:")
+            for w in new_widgets:
+                cat_info = f" [{w['category']}]" if w['category'] else ""
+                body_lines.append(f"  + {w['title']}{cat_info} ({w['file']})")
+        if updated_widgets:
+            body_lines.append("Updated Widgets:")
+            for w in updated_widgets:
+                body_lines.append(f"  ~ {w['title']} ({w['file']})")
+        if deleted_widgets:
+            body_lines.append("Removed Widgets:")
+            for w in deleted_widgets:
+                body_lines.append(f"  - {w['title']} ({w['file']})")
+        if other_files:
+            body_lines.append("Other Changed Files:")
+            for of in other_files:
+                body_lines.append(f"  * {of['file']}")
+
+        commit_body = "\n".join(body_lines)
+
+        print(f"=======================================================")
+        print(f"  [GIT] Committing changes...")
+        print(f"  Subject: {commit_subject}")
+        print(f"=======================================================")
+
+        commit_cmd = ["git", "commit", "-m", commit_subject]
+        if commit_body:
+            commit_cmd.extend(["-m", commit_body])
+
+        subprocess.run(commit_cmd, cwd=current_dir, check=True)
+        print("[GIT] Changes successfully committed locally.")
+
+        print("\n[GIT] Pushing commit to GitHub (origin)...")
+        push_res = subprocess.run(
+            ["git", "push"],
+            cwd=current_dir,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True
+        )
+
+        if push_res.returncode == 0:
+            print("=======================================================")
+            print("  SUCCESS: Pushed to GitHub successfully!")
+            print(f"  Commit: \"{commit_subject}\"")
+            print("=======================================================\n")
+            return True
+        else:
+            # Check if remote has changes that need pull --rebase
+            err_msg = push_res.stderr.strip()
+            if any(term in err_msg.lower() for term in ["fetch first", "rejected", "non-fast-forward"]):
+                print("[GIT INFO] Remote has newer commits. Attempting 'git pull --rebase' before pushing...")
+                pull_res = subprocess.run(["git", "pull", "--rebase"], cwd=current_dir, check=False)
+                if pull_res.returncode == 0:
+                    retry_push = subprocess.run(["git", "push"], cwd=current_dir, check=False)
+                    if retry_push.returncode == 0:
+                        print("=======================================================")
+                        print("  SUCCESS: Rebased and pushed to GitHub successfully!")
+                        print(f"  Commit: \"{commit_subject}\"")
+                        print("=======================================================\n")
+                        return True
+            print(f"\n[GIT WARNING] Failed to push to GitHub: {err_msg}")
+            print("[GIT INFO] Your changes have been committed locally. Run 'git push' when your connection is ready.")
+            return False
+
+    except subprocess.CalledProcessError as e:
+        err = e.stderr.strip() if e.stderr else str(e)
+        print(f"\n[GIT ERROR] Command failed: {err}")
+        return False
+    except Exception as e:
+        print(f"\n[GIT ERROR] Unexpected error during sync: {e}")
+        return False
+
+def main():
+    parser = argparse.ArgumentParser(description="DSA Widgets Catalog Scanner & GitHub Sync")
+    parser.add_argument("--no-push", action="store_true", help="Skip git commit and push to GitHub")
+    args = parser.parse_args()
+
+    widgets = scan_and_generate()
+    if not args.no_push:
+        sync_to_github(widgets)
+
 if __name__ == "__main__":
-    scan_and_generate()
+    main()

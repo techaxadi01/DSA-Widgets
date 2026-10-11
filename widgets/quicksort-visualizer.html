@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Quick Sort, step by step</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#eef2f6; --grid:rgba(20,33,61,.05); --card:#ffffff; --ink:#14213d; --muted:#5a6478; --line:#d5dce6;
+  --pivot:#b9770e; --pivotbg:#fdf0d5;
+  --i:#2b6fd6; --ibg:#e3edfd;
+  --j:#b8337f; --jbg:#fbe5f1;
+  --ok:#23845a; --okbg:#dcf3e7;
+  --swap:#d35a1f; --swapbg:#ffe6d6;
+  --btn:#14213d; --btnink:#ffffff;
+  --sans:"Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono:"JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0f1624; --grid:rgba(255,255,255,.035); --card:#18212f; --ink:#e7ecf4; --muted:#9aa6ba; --line:#2c3748;
+    --pivot:#f0b44c; --pivotbg:#3a2d12;
+    --i:#6ea2f5; --ibg:#1b2d4b;
+    --j:#ec79b8; --jbg:#3f1a30;
+    --ok:#4cc98f; --okbg:#143427;
+    --swap:#f08a50; --swapbg:#3f2314;
+    --btn:#e7ecf4; --btnink:#0f1624;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0f1624; --grid:rgba(255,255,255,.035); --card:#18212f; --ink:#e7ecf4; --muted:#9aa6ba; --line:#2c3748;
+  --pivot:#f0b44c; --pivotbg:#3a2d12;
+  --i:#6ea2f5; --ibg:#1b2d4b;
+  --j:#ec79b8; --jbg:#3f1a30;
+  --ok:#4cc98f; --okbg:#143427;
+  --swap:#f08a50; --swapbg:#3f2314;
+  --btn:#e7ecf4; --btnink:#0f1624;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:calc(env(safe-area-inset-top,0px) + 90px)}
+body{
+  margin:0; background:var(--bg); color:var(--ink); font-family:var(--sans); font-size:17px; line-height:1.55;
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:24px 24px;
+}
+.wrap{max-width:880px; margin:0 auto; padding:28px 18px 60px}
+h1{font-size:clamp(1.9rem,5vw,2.6rem); line-height:1.1; margin:0 0 8px; letter-spacing:-.01em}
+.lede{color:var(--muted); max-width:62ch; margin:0 0 22px}
+.panel{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:18px}
+.input-row{display:flex; flex-wrap:wrap; gap:10px; align-items:flex-end}
+.input-row label{display:block; font-weight:700; margin-bottom:6px}
+.field{flex:1 1 260px}
+input[type=text]{
+  width:100%; font:500 1rem var(--mono); padding:11px 12px; border-radius:10px;
+  border:1.5px solid var(--line); background:var(--bg); color:var(--ink);
+}
+input[type=text]:focus{outline:none; border-color:var(--i); box-shadow:0 0 0 3px var(--ibg)}
+button{
+  font:700 .95rem var(--sans); padding:11px 16px; border-radius:10px; border:1.5px solid var(--btn);
+  background:var(--btn); color:var(--btnink); cursor:pointer;
+}
+button.ghost{background:transparent; color:var(--ink); border-color:var(--line)}
+button:disabled{opacity:.4; cursor:not-allowed}
+button:focus-visible,input:focus-visible{outline:3px solid var(--i); outline-offset:2px}
+.hint{font-size:.88rem; color:var(--muted); margin-top:8px}
+.err{color:var(--swap); font-weight:700; font-size:.92rem; margin-top:8px; min-height:1.2em}
+.presets{display:flex; flex-wrap:wrap; gap:6px; margin-top:10px}
+.presets button{font-size:.82rem; padding:6px 10px; font-weight:400}
+
+.how{margin-top:16px}
+.how summary{cursor:pointer; font-weight:700}
+.how ol{margin:10px 0 0; padding-left:1.3em}
+.how li{margin-bottom:4px}
+code{font-family:var(--mono); font-size:.9em; background:var(--bg); padding:1px 5px; border-radius:5px}
+
+.legend{display:flex; flex-wrap:wrap; gap:8px 16px; margin:18px 0 0; font-size:.9rem}
+.legend span{display:inline-flex; align-items:center; gap:6px}
+.sw{width:18px; height:18px; border-radius:5px; border:2px solid; display:inline-block}
+
+.bar{
+  position:sticky; top:env(safe-area-inset-top,0px); z-index:5; margin:22px -6px 0; padding:10px 6px;
+  background:color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter:blur(6px);
+  display:flex; flex-wrap:wrap; gap:8px; align-items:center;
+}
+.progress{margin-left:auto; font-size:.92rem; color:var(--muted)}
+.progress b{color:var(--ink)}
+
+.flow{position:relative; margin-top:14px; padding-left:44px}
+.flow::before{content:""; position:absolute; left:17px; top:8px; bottom:8px; width:2px; background:var(--line)}
+.step{position:relative; margin-bottom:16px}
+.num{
+  position:absolute; left:-44px; top:14px; width:36px; height:36px; border-radius:50%;
+  background:var(--card); border:2px solid var(--line); display:grid; place-items:center;
+  font:700 .85rem var(--mono); color:var(--muted);
+}
+.card{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px 16px 16px; border-left-width:5px}
+.card.k-partition{border-left-color:var(--pivot)}
+.card.k-i{border-left-color:var(--i)}
+.card.k-j{border-left-color:var(--j)}
+.card.k-swap,.card.k-place{border-left-color:var(--swap)}
+.card.k-cross{border-left-color:var(--muted)}
+.card.k-single,.card.k-done{border-left-color:var(--ok)}
+.card.k-start{border-left-color:var(--ink)}
+.step.new .card{animation:pop .35s ease-out}
+@keyframes pop{from{transform:translateY(8px);opacity:0}to{transform:none;opacity:1}}
+@media (prefers-reduced-motion: reduce){.step.new .card{animation:none}}
+
+.chead{display:flex; flex-wrap:wrap; gap:6px 10px; align-items:baseline; margin-bottom:10px}
+.ctitle{font-size:1.08rem; font-weight:700; margin:0}
+.meta{font-size:.82rem; color:var(--muted)}
+.tag{font-size:.78rem; font-weight:700; padding:2px 8px; border-radius:999px}
+.t-partition{background:var(--pivotbg); color:var(--pivot)}
+.t-i{background:var(--ibg); color:var(--i)}
+.t-j{background:var(--jbg); color:var(--j)}
+.t-swap,.t-place{background:var(--swapbg); color:var(--swap)}
+.t-cross{background:var(--bg); color:var(--muted)}
+.t-single,.t-done{background:var(--okbg); color:var(--ok)}
+.t-start{background:var(--bg); color:var(--ink)}
+
+.arr-scroll{overflow-x:auto; padding:4px 2px 2px}
+.arr{display:grid; grid-auto-flow:column; grid-auto-columns:48px; gap:6px; width:max-content}
+.col{display:flex; flex-direction:column; align-items:center; gap:4px}
+.idx{font:500 .72rem var(--mono); color:var(--muted)}
+.cell{
+  width:48px; height:48px; border-radius:10px; display:grid; place-items:center;
+  font:700 1.1rem var(--mono); border:2px solid var(--line); background:var(--card); color:var(--ink);
+  transition:background .2s;
+}
+.cell.dim{opacity:.32}
+.cell.pv{background:var(--pivotbg); border-color:var(--pivot); color:var(--pivot)}
+.cell.ok{background:var(--okbg); border-color:var(--ok); color:var(--ok)}
+.cell.ci{box-shadow:0 0 0 3px var(--i); border-color:var(--i); background:var(--ibg)}
+.cell.cj{box-shadow:0 0 0 3px var(--j); border-color:var(--j); background:var(--jbg)}
+.cell.swp{background:var(--swapbg); border-color:var(--swap); color:var(--swap); box-shadow:0 0 0 3px var(--swap)}
+.cell.ghost{border-style:dashed; opacity:.5; background:transparent}
+.ptrs{display:flex; flex-direction:column; gap:2px; min-height:44px; align-items:center}
+.ptr{font:700 .75rem var(--mono); padding:1px 7px; border-radius:6px; line-height:1.4}
+.ptr.p{background:var(--pivot); color:var(--card)}
+.ptr.i{background:var(--i); color:var(--card)}
+.ptr.j{background:var(--j); color:var(--card)}
+.explain{margin:10px 0 0; max-width:70ch}
+.explain b{font-weight:700}
+.cmp{display:inline-block; font:700 .9rem var(--mono); padding:2px 8px; border-radius:6px; margin-top:8px}
+.cmp.yes{background:var(--okbg); color:var(--ok)}
+.cmp.no{background:var(--swapbg); color:var(--swap)}
+.result{font:700 1.05rem var(--mono); margin-top:8px}
+.empty{color:var(--muted); padding:20px 0}
+.floatnext{
+  position:fixed; right:16px; bottom:calc(16px + env(safe-area-inset-bottom,0px)); z-index:6;
+  box-shadow:0 6px 18px rgba(0,0,0,.18); display:none;
+}
+@media (max-width:560px){
+  .flow{padding-left:34px}
+  .flow::before{left:12px}
+  .num{left:-34px; width:28px; height:28px; font-size:.72rem}
+  .arr{grid-auto-columns:40px; gap:4px}
+  .cell{width:40px; height:40px; font-size:.95rem}
+  .floatnext{display:block}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Quick Sort, one step at a time</h1>
+  <p class="lede">Watch how Quick Sort splits an array around a pivot. The pivot is always the first element of the current sub-array, and every move of <b>i</b> and <b>j</b> gets its own box with an explanation.</p>
+
+  <div class="panel">
+    <div class="input-row">
+      <div class="field">
+        <label for="arrIn">Your array</label>
+        <input id="arrIn" type="text" value="5, 3, 1, 9, 8, 2, 4, 7" autocomplete="off" spellcheck="false">
+      </div>
+      <button id="runBtn">Sort this array</button>
+    </div>
+    <div class="hint">Separate numbers with commas or spaces. Use 2 to 16 numbers; negatives, decimals and repeats are fine.</div>
+    <div class="err" id="err" role="alert"></div>
+    <div class="presets" aria-label="Example arrays">
+      <button class="ghost" data-v="5, 3, 1, 9, 8, 2, 4, 7">Original example</button>
+      <button class="ghost" data-v="10, 80, 30, 90, 40, 50, 70">Mixed</button>
+      <button class="ghost" data-v="1, 2, 3, 4, 5, 6">Already sorted</button>
+      <button class="ghost" data-v="9, 7, 5, 3, 1">Reversed</button>
+      <button class="ghost" data-v="4, 2, 4, 1, 4, 3">With repeats</button>
+    </div>
+
+    <details class="how">
+      <summary>How this version of Quick Sort works</summary>
+      <ol>
+        <li>Take the sub-array from index <code>low</code> to <code>high</code>. The <b>pivot</b> is <code>a[low]</code>.</li>
+        <li>Put <b>i</b> at <code>low + 1</code> and <b>j</b> at <code>high</code>.</li>
+        <li>Move <b>i</b> right while <code>a[i] ≤ pivot</code>. It stops at the first element bigger than the pivot.</li>
+        <li>Move <b>j</b> left while <code>a[j] &gt; pivot</code>. It stops at the first element smaller than or equal to the pivot.</li>
+        <li>If <code>i &lt; j</code>, swap <code>a[i]</code> and <code>a[j]</code> and repeat from step 3.</li>
+        <li>If <code>i &gt; j</code> (they crossed), swap the pivot with <code>a[j]</code>. The pivot is now in its final place.</li>
+        <li>Repeat the whole process on the left part and the right part of the pivot.</li>
+      </ol>
+    </details>
+
+    <div class="legend">
+      <span><i class="sw" style="background:var(--pivotbg);border-color:var(--pivot)"></i>Pivot</span>
+      <span><i class="sw" style="background:var(--ibg);border-color:var(--i)"></i>Compared by i</span>
+      <span><i class="sw" style="background:var(--jbg);border-color:var(--j)"></i>Compared by j</span>
+      <span><i class="sw" style="background:var(--swapbg);border-color:var(--swap)"></i>Swapped</span>
+      <span><i class="sw" style="background:var(--okbg);border-color:var(--ok)"></i>Final position</span>
+      <span><i class="sw" style="opacity:.35;border-color:var(--line)"></i>Outside current sub-array</span>
+    </div>
+  </div>
+
+  <div class="bar" id="bar">
+    <button id="prevBtn" class="ghost">Previous</button>
+    <button id="nextBtn">Next step</button>
+    <button id="allBtn" class="ghost">Show all steps</button>
+    <button id="resetBtn" class="ghost">Start over</button>
+    <span class="progress" id="progress"></span>
+  </div>
+
+  <div class="flow" id="flow"></div>
+</div>
+<button class="floatnext" id="floatNext">Next step</button>
+
+<script>
+(function(){
+  let steps = [];
+  let shown = 0;
+
+  function parse(str){
+    const parts = str.split(/[\s,;]+/).filter(Boolean);
+    const nums = parts.map(Number);
+    if (parts.length === 0) return {error:"Type some numbers first, for example 5, 3, 1, 9."};
+    const bad = parts.find((p, k) => !isFinite(nums[k]));
+    if (bad !== undefined) return {error:`"${bad}" is not a number. Use only numbers separated by commas or spaces.`};
+    if (nums.length < 2) return {error:"Add at least 2 numbers so there is something to sort."};
+    if (nums.length > 16) return {error:`You entered ${nums.length} numbers. Use 16 or fewer so every step stays readable.`};
+    return {nums};
+  }
+
+  const range = (a, lo, hi) => lo > hi ? "empty" : `[${a.slice(lo, hi + 1).join(", ")}]`;
+
+  function generate(input){
+    const a = input.slice(), n = a.length, out = [], sorted = new Set();
+    let call = 0;
+    const push = o => out.push(Object.assign({arr:a.slice(), sorted:new Set(sorted)}, o));
+
+    push({kind:"start", tag:"Start", lo:0, hi:n-1,
+      title:"Starting array",
+      text:`We need to sort <b>${n}</b> numbers. Quick Sort will pick a pivot, move smaller-or-equal values to its left and bigger values to its right, then repeat on each side.`});
+
+    function qs(lo, hi, depth){
+      if (lo > hi) return;
+      if (lo === hi){
+        sorted.add(lo);
+        push({kind:"single", tag:"Base case", lo, hi, depth,
+          title:`Sub-array at index ${lo} has one element`,
+          text:`A single number (<b>${a[lo]}</b>) is already sorted by itself, so it stays at index ${lo}. No partition needed.`});
+        return;
+      }
+      const c = ++call, pivot = a[lo];
+      let i = lo + 1, j = hi;
+      const base = {lo, hi, depth, call:c, p:lo, pivot};
+
+      push(Object.assign({}, base, {kind:"partition", tag:`Partition ${c}`, i, j,
+        title:`Partition ${c}: indices ${lo} to ${hi}`,
+        text:`Current sub-array is ${range(a, lo, hi)}. The pivot is the first element, <b>${pivot}</b>. Place <b>i</b> at index ${i} (just after the pivot) and <b>j</b> at index ${j} (the last element). Goal: numbers ≤ ${pivot} go left, numbers &gt; ${pivot} go right.`}));
+
+      while (i <= j){
+        // Move i
+        while (true){
+          if (i > hi){
+            push(Object.assign({}, base, {kind:"i", tag:"Move i", i, j,
+              title:"i stops: end of sub-array reached",
+              text:`i is now at index ${i}, past the end of this sub-array. Every element it passed was ≤ ${pivot}, so i stops here.`}));
+            break;
+          }
+          if (a[i] <= pivot){
+            push(Object.assign({}, base, {kind:"i", tag:"Move i", i, j, cmpI:i,
+              cmp:{txt:`a[${i}] = ${a[i]} ≤ ${pivot}`, ok:true},
+              title:`i checks ${a[i]}: move right`,
+              text:`${a[i]} is smaller than or equal to the pivot, so it is already on the correct (left) side. <b>i moves one step right</b> to index ${i+1}.`}));
+            i++;
+          } else {
+            push(Object.assign({}, base, {kind:"i", tag:"Move i", i, j, cmpI:i,
+              cmp:{txt:`a[${i}] = ${a[i]} > ${pivot}`, ok:false},
+              title:`i checks ${a[i]}: stop`,
+              text:`${a[i]} is bigger than the pivot but sits on the left side, so it is out of place. <b>i stops at index ${i}</b>. Now j takes its turn.`}));
+            break;
+          }
+        }
+        // Move j
+        while (true){
+          if (a[j] > pivot){
+            push(Object.assign({}, base, {kind:"j", tag:"Move j", i, j, cmpJ:j,
+              cmp:{txt:`a[${j}] = ${a[j]} > ${pivot}`, ok:true},
+              title:`j checks ${a[j]}: move left`,
+              text:`${a[j]} is bigger than the pivot, so it is already on the correct (right) side. <b>j moves one step left</b> to index ${j-1}.`}));
+            j--;
+          } else {
+            const onPivot = j === lo;
+            push(Object.assign({}, base, {kind:"j", tag:"Move j", i, j, cmpJ:j,
+              cmp:{txt:`a[${j}] = ${a[j]} ≤ ${pivot}`, ok:false},
+              title: onPivot ? `j reaches the pivot: stop` : `j checks ${a[j]}: stop`,
+              text: onPivot
+                ? `j has reached the pivot itself at index ${lo}. It cannot go further, so <b>j stops at index ${j}</b>.`
+                : `${a[j]} is smaller than or equal to the pivot but sits on the right side, so it is out of place. <b>j stops at index ${j}</b>.`}));
+            break;
+          }
+        }
+        // Decide
+        if (i < j){
+          const x = a[i], y = a[j];
+          a[i] = y; a[j] = x;
+          push(Object.assign({}, base, {kind:"swap", tag:"Swap", i, j, swap:[i, j],
+            title:`Swap ${x} and ${y}`,
+            text:`i (${i}) is still left of j (${j}), so they have not crossed. Swap the two out-of-place numbers: <b>${x}</b> goes right to index ${j} and <b>${y}</b> goes left to index ${i}. Then i and j continue scanning.`}));
+        } else {
+          push(Object.assign({}, base, {kind:"cross", tag:"Crossed", i, j,
+            title:`i and j have crossed (i = ${i}, j = ${j})`,
+            text:`Since i is now to the right of j, scanning is finished. Everything from index ${lo+1} to ${j} is ≤ ${pivot}, and everything after index ${j} is &gt; ${pivot}. So index <b>${j}</b> is exactly where the pivot belongs.`}));
+        }
+      }
+
+      const other = a[j];
+      a[lo] = other; a[j] = pivot;
+      sorted.add(j);
+      const leftTxt = j - 1 >= lo ? `left part ${range(a, lo, j-1)} (indices ${lo}–${j-1})` : "left part (empty)";
+      const rightTxt = hi >= j + 1 ? `right part ${range(a, j+1, hi)} (indices ${j+1}–${hi})` : "right part (empty)";
+      push(Object.assign({}, base, {kind:"place", tag:"Place pivot", p:j, j, swap: lo !== j ? [lo, j] : [],
+        title:`Pivot ${pivot} goes to index ${j}`,
+        text: (lo !== j
+          ? `Swap the pivot a[${lo}] = ${pivot} with a[${j}] = ${other}. `
+          : `j stopped on the pivot itself, so no swap is needed. `)
+          + `<b>${pivot} is now in its final sorted position.</b> Next, Quick Sort handles the ${leftTxt}, then the ${rightTxt}.`}));
+
+      qs(lo, j - 1, depth + 1);
+      qs(j + 1, hi, depth + 1);
+    }
+
+    qs(0, n - 1, 0);
+    for (let k = 0; k < n; k++) sorted.add(k);
+    push({kind:"done", tag:"Done",
+      title:"The array is sorted",
+      text:`Every element has reached its final position. It took <b>${call}</b> partition${call === 1 ? "" : "s"} to finish.`,
+      result:`[${a.join(", ")}]`});
+    return out;
+  }
+
+  function cellsHTML(s){
+    const n = s.arr.length;
+    const needGhost = s.i === n;
+    let html = '<div class="arr-scroll"><div class="arr">';
+    for (let k = 0; k < n + (needGhost ? 1 : 0); k++){
+      const ghost = k === n;
+      const cls = ["cell"];
+      if (ghost) cls.push("ghost");
+      else {
+        const inRange = s.lo === undefined || (k >= s.lo && k <= s.hi);
+        if (s.sorted.has(k)) cls.push("ok");
+        else if (!inRange) cls.push("dim");
+        else if (k === s.p && s.kind !== "place") cls.push("pv");
+        if (s.cmpI === k) cls.push("ci");
+        if (s.cmpJ === k) cls.push("cj");
+        if (s.swap && s.swap.includes(k)) cls.push("swp");
+      }
+      const ptrs = [];
+      if (k === s.p && s.kind !== "start" && s.kind !== "done" && s.kind !== "single") ptrs.push('<span class="ptr p">P</span>');
+      if (k === s.i) ptrs.push('<span class="ptr i">i</span>');
+      if (k === s.j) ptrs.push('<span class="ptr j">j</span>');
+      html += `<div class="col"><span class="idx">${ghost ? "" : k}</span><div class="${cls.join(" ")}">${ghost ? "" : s.arr[k]}</div><div class="ptrs">${ptrs.join("")}</div></div>`;
+    }
+    return html + "</div></div>";
+  }
+
+  function stepHTML(s, idx, isNew){
+    let meta = "";
+    if (s.call) meta = `Pivot ${s.pivot} · sub-array ${s.lo}–${s.hi} · level ${s.depth}`;
+    else if (s.kind === "single") meta = `Level ${s.depth}`;
+    const cmp = s.cmp ? `<div class="cmp ${s.cmp.ok ? "yes" : "no"}">${s.cmp.txt}</div>` : "";
+    const res = s.result ? `<div class="result">${s.result}</div>` : "";
+    return `<div class="step${isNew ? " new" : ""}" id="step-${idx+1}">
+      <div class="num">${idx+1}</div>
+      <div class="card k-${s.kind}">
+        <div class="chead"><span class="tag t-${s.kind}">${s.tag}</span><h3 class="ctitle">${s.title}</h3>${meta ? `<span class="meta">${meta}</span>` : ""}</div>
+        ${cellsHTML(s)}
+        ${cmp}
+        <p class="explain">${s.text}</p>
+        ${res}
+      </div>
+    </div>`;
+  }
+
+  const flow = document.getElementById("flow");
+  const prevBtn = document.getElementById("prevBtn");
+  const nextBtn = document.getElementById("nextBtn");
+  const allBtn = document.getElementById("allBtn");
+  const floatNext = document.getElementById("floatNext");
+  const progress = document.getElementById("progress");
+
+  function render(scroll){
+    if (!steps.length){ flow.innerHTML = '<p class="empty">Enter an array above and choose Sort this array.</p>'; return; }
+    const prev = flow.children.length;
+    flow.innerHTML = steps.slice(0, shown).map((s, k) => stepHTML(s, k, scroll && k === shown - 1 && shown > prev)).join("");
+    progress.innerHTML = `Step <b>${shown}</b> of ${steps.length}`;
+    prevBtn.disabled = shown <= 1;
+    nextBtn.disabled = allBtn.disabled = floatNext.disabled = shown >= steps.length;
+    if (scroll){
+      const el = document.getElementById("step-" + shown);
+      if (el) el.scrollIntoView({behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block:"nearest"});
+    }
+  }
+
+  function run(){
+    const r = parse(document.getElementById("arrIn").value);
+    const err = document.getElementById("err");
+    if (r.error){ err.textContent = r.error; return; }
+    err.textContent = "";
+    steps = generate(r.nums);
+    shown = 1;
+    render(false);
+  }
+
+  function next(){ if (shown < steps.length){ shown++; render(true); } }
+  document.getElementById("runBtn").onclick = run;
+  document.getElementById("arrIn").addEventListener("keydown", e => { if (e.key === "Enter") run(); });
+  nextBtn.onclick = next;
+  floatNext.onclick = next;
+  prevBtn.onclick = () => { if (shown > 1){ shown--; render(false); const el = document.getElementById("step-" + shown); if (el) el.scrollIntoView({block:"nearest"}); } };
+  allBtn.onclick = () => { shown = steps.length; render(false); };
+  document.getElementById("resetBtn").onclick = () => { shown = steps.length ? 1 : 0; render(false); window.scrollTo({top:0}); };
+  document.querySelectorAll(".presets button").forEach(b => b.onclick = () => { document.getElementById("arrIn").value = b.dataset.v; run(); });
+  document.addEventListener("keydown", e => {
+    if (e.target.tagName === "INPUT") return;
+    if (e.key === "ArrowRight") next();
+    if (e.key === "ArrowLeft") prevBtn.click();
+  });
+
+  run();
+})();
+</script>
+</body>
+</html>

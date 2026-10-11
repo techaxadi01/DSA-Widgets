@@ -1,19 +1,19 @@
 @echo off
 setlocal enabledelayedexpansion
 
-title DSA Widgets Hub - Auto-Organizer
+title DSA Widgets Hub - Auto-Organizer & GitHub Sync
 
 echo =======================================================
-echo          DSA STUDY HUB - AUTOMATED ORGANIZER           
+echo     DSA STUDY HUB - AUTO-ORGANIZER & GITHUB SYNC       
 echo =======================================================
 echo.
-echo Scanning directory for new and updated visualizers...
+echo Scanning visualizers, updating catalog, and syncing to GitHub...
 echo.
 
 where python >nul 2>nul
 if %ERRORLEVEL% equ 0 (
-    echo [INFO] Running Python scanner...
-    python update_widgets.py
+    echo [INFO] Running Python scanner and GitHub syncer...
+    python update_widgets.py %*
     if !ERRORLEVEL! neq 0 (
         echo.
         echo [ERROR] Python script encountered an issue.
@@ -23,8 +23,8 @@ if %ERRORLEVEL% equ 0 (
 ) else (
     where node >nul 2>nul
     if %ERRORLEVEL% equ 0 (
-        echo [INFO] Python not found in PATH, running Node.js scanner...
-        node update_widgets.js
+        echo [INFO] Python not found in PATH, running Node.js scanner and GitHub syncer...
+        node update_widgets.js %*
         if !ERRORLEVEL! neq 0 (
             echo.
             echo [ERROR] Node script encountered an issue.
@@ -42,9 +42,8 @@ if %ERRORLEVEL% equ 0 (
 
 echo.
 echo =======================================================
-echo   SUCCESS! All widgets indexed into widgets-data.js   
+echo   COMPLETED: Hub indexed & GitHub repository synced!   
 echo =======================================================
 echo.
-echo Catalog updated successfully.
-timeout /t 2 >nul
+timeout /t 3 >nul
 exit /b 0
