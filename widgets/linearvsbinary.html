@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Search Race — Linear vs Binary Search</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #12132A;
+    --panel: #1B1D42;
+    --panel-2: #21234E;
+    --ink: #F4F2FF;
+    --ink-dim: #A8A6D6;
+    --line: #34366B;
+
+    --linear: #95E06C;
+    --binary: #5DADE2;
+    --target: #FFD93D;
+    --found: #FF9F43;
+    --dead: #34366B;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background: radial-gradient(circle at 15% -10%, #23255A 0%, var(--bg) 55%);
+    color: var(--ink);
+    font-family:'Sora', sans-serif;
+    padding: 32px 20px 60px;
+  }
+  .wrap{max-width: 1080px; margin: 0 auto;}
+  .eyebrow{
+    font-family:'Space Mono', monospace; font-size:13px; color: var(--target);
+    margin: 0 0 8px;
+  }
+  h1{ font-size: clamp(28px, 4vw, 42px); font-weight:800; margin:0 0 10px; line-height:1.1; }
+  .sub{ color: var(--ink-dim); font-size:16px; max-width:660px; line-height:1.5; }
+
+  .card{
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 22px;
+    margin-top: 20px;
+  }
+  .card h2{ font-size:14px; margin:0 0 16px; color: var(--ink-dim); font-weight:600; }
+
+  .controls{
+    display:flex; flex-wrap:wrap; gap: 12px; align-items:center; margin-bottom: 6px;
+  }
+  button{
+    font-family:'Space Mono', monospace; font-size: 13px;
+    background: var(--panel-2); color: var(--ink);
+    border: 1px solid var(--line); border-radius: 9px;
+    padding: 10px 16px; cursor:pointer;
+  }
+  button.primary{ background: var(--target); color:#1B1D42; border-color: var(--target); font-weight:700; }
+  button:disabled{ opacity:0.4; cursor:not-allowed; }
+  button:active:not(:disabled){ transform: scale(0.97); }
+
+  .n-control{ display:flex; align-items:center; gap:10px; font-family:'Space Mono', monospace; font-size:13px; color:var(--ink-dim); }
+  input[type=range]{
+    -webkit-appearance:none; width:120px; height:6px; border-radius:4px;
+    background: linear-gradient(90deg, var(--linear), var(--binary)); outline:none;
+  }
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none; width:18px; height:18px; border-radius:50%;
+    background: var(--ink); border:3px solid var(--panel-2); cursor:pointer;
+  }
+
+  .target-box{
+    font-family:'Space Mono', monospace; font-size: 14px;
+    background: var(--panel-2); border: 1px solid var(--line); border-radius:9px;
+    padding: 9px 14px; color: var(--target); font-weight:700;
+  }
+
+  .track{ margin-top: 22px; }
+  .track-head{ display:flex; justify-content:space-between; align-items:baseline; margin-bottom:10px; }
+  .track-title{ font-weight:700; font-size:15px; }
+  .track-title.linear{ color: var(--linear); }
+  .track-title.binary{ color: var(--binary); }
+  .track-stat{ font-family:'Space Mono', monospace; font-size: 13px; color: var(--ink-dim); }
+  .track-stat b{ color: var(--ink); }
+
+  .cells{ display:flex; gap:5px; flex-wrap:wrap; }
+  .cell{
+    flex: 1 1 0;
+    min-width: 30px;
+    aspect-ratio: 1;
+    display:flex; align-items:center; justify-content:center;
+    background: var(--panel-2);
+    border: 2px solid var(--line);
+    border-radius: 8px;
+    font-family:'Space Mono', monospace;
+    font-size: 13px;
+    font-weight:700;
+    color: var(--ink-dim);
+    transition: all .2s ease;
+  }
+  .cell.dead{ opacity: 0.25; }
+  .cell.current-linear{ border-color: var(--linear); color: var(--ink); box-shadow: 0 0 0 3px rgba(149,224,108,0.25); }
+  .cell.current-binary{ border-color: var(--binary); color: var(--ink); box-shadow: 0 0 0 3px rgba(93,173,226,0.25); }
+  .cell.passed{ border-color: var(--line); color: var(--ink-dim); }
+  .cell.found{ background: var(--found); color:#1B1D42; border-color: var(--found); }
+  .cell.target-marker{ text-decoration: underline; text-decoration-color: var(--target); }
+
+  .status{
+    margin-top: 22px;
+    background: linear-gradient(120deg, rgba(255,217,61,0.08), rgba(93,173,226,0.06));
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 16px 18px;
+    font-size: 15px;
+    line-height: 1.55;
+  }
+  .status b{ color: var(--target); }
+
+  footer{ margin-top: 26px; color: var(--ink-dim); font-size: 13px; font-family:'Space Mono', monospace; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="eyebrow">MCA511-2 · UNIT 1 · SEARCHING ALGORITHMS</p>
+  <h1>Search Race: Linear vs Binary</h1>
+  <p class="sub">Same sorted array, same target — watch how many comparisons each algorithm burns to find it (or prove it isn't there).</p>
+
+  <div class="card">
+    <div class="controls">
+      <button id="newArrayBtn" class="primary">New array</button>
+      <button id="newTargetBtn">New target</button>
+      <div class="n-control">
+        size: <span id="nLabel">16</span>
+        <input type="range" id="nSlider" min="8" max="30" value="16" step="1">
+      </div>
+      <div class="target-box">target = <span id="targetVal">—</span></div>
+    </div>
+    <div class="controls" style="margin-top:6px;">
+      <button id="stepBtn">Step ▸</button>
+      <button id="playBtn">Play ▸▸</button>
+      <button id="resetBtn">Reset ↺</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="track">
+      <div class="track-head">
+        <span class="track-title linear">Linear Search</span>
+        <span class="track-stat">comparisons: <b id="linearCount">0</b></span>
+      </div>
+      <div class="cells" id="linearCells"></div>
+    </div>
+
+    <div class="track">
+      <div class="track-head">
+        <span class="track-title binary">Binary Search</span>
+        <span class="track-stat">comparisons: <b id="binaryCount">0</b></span>
+      </div>
+      <div class="cells" id="binaryCells"></div>
+    </div>
+
+    <div class="status" id="status"></div>
+  </div>
+
+  <footer>Both searches run on the same sorted array. Linear checks one cell at a time, left to right. Binary jumps to the middle of the remaining range each step.</footer>
+</div>
+
+<script>
+let arr = [];
+let target = null;
+let n = 16;
+
+let linear = { idx: 0, comparisons: 0, done: false, foundAt: -1 };
+let binary = { low: 0, high: 0, mid: -1, comparisons: 0, done: false, foundAt: -1 };
+
+let playTimer = null;
+
+function genArray(size){
+  const set = new Set();
+  while (set.size < size) set.add(Math.floor(Math.random()*size*4) + 1);
+  return Array.from(set).sort((a,b)=>a-b).slice(0,size);
+}
+
+function pickTarget(){
+  // 65% chance target exists in array, 35% chance it's a "not found" case
+  if (Math.random() < 0.65){
+    return arr[Math.floor(Math.random()*arr.length)];
+  } else {
+    let candidate;
+    do { candidate = Math.floor(Math.random()*n*4) + 1; } while (arr.includes(candidate));
+    return candidate;
+  }
+}
+
+function newArray(){
+  n = parseInt(document.getElementById('nSlider').value, 10);
+  arr = genArray(n);
+  target = pickTarget();
+  resetSearch();
+}
+
+function newTarget(){
+  target = pickTarget();
+  resetSearch();
+}
+
+function resetSearch(){
+  stopPlay();
+  document.getElementById('targetVal').textContent = target;
+  linear = { idx: 0, comparisons: 0, done: false, foundAt: -1 };
+  binary = { low: 0, high: arr.length-1, mid: -1, comparisons: 0, done: false, foundAt: -1 };
+  render();
+}
+
+function stepLinear(){
+  if (linear.done) return;
+  const val = arr[linear.idx];
+  linear.comparisons++;
+  if (val === target){
+    linear.foundAt = linear.idx;
+    linear.done = true;
+  } else {
+    linear.idx++;
+    if (linear.idx >= arr.length) linear.done = true;
+  }
+}
+
+function stepBinary(){
+  if (binary.done) return;
+  if (binary.low > binary.high){ binary.done = true; return; }
+  const mid = Math.floor((binary.low + binary.high) / 2);
+  binary.mid = mid;
+  binary.comparisons++;
+  const val = arr[mid];
+  if (val === target){
+    binary.foundAt = mid;
+    binary.done = true;
+  } else if (val < target){
+    binary.low = mid + 1;
+    if (binary.low > binary.high) binary.done = true;
+  } else {
+    binary.high = mid - 1;
+    if (binary.low > binary.high) binary.done = true;
+  }
+}
+
+function stepBoth(){
+  let moved = false;
+  if (!linear.done){ stepLinear(); moved = true; }
+  if (!binary.done){ stepBinary(); moved = true; }
+  render();
+  if (linear.done && binary.done) stopPlay();
+  return moved;
+}
+
+function startPlay(){
+  if (playTimer) return;
+  playTimer = setInterval(() => {
+    const moved = stepBoth();
+    if (!moved) stopPlay();
+  }, 550);
+  document.getElementById('playBtn').textContent = 'Pause ❚❚';
+}
+function stopPlay(){
+  clearInterval(playTimer);
+  playTimer = null;
+  document.getElementById('playBtn').textContent = 'Play ▸▸';
+}
+
+function renderCells(container, mode){
+  container.innerHTML = '';
+  arr.forEach((val, i) => {
+    const cell = document.createElement('div');
+    cell.className = 'cell';
+    cell.textContent = val;
+    if (val === target) cell.classList.add('target-marker');
+
+    if (mode === 'linear'){
+      if (linear.foundAt === i) cell.classList.add('found');
+      else if (i < linear.idx) cell.classList.add('passed');
+      else if (i === linear.idx && !linear.done) cell.classList.add('current-linear');
+    } else {
+      const inRange = i >= binary.low && i <= binary.high;
+      if (binary.foundAt === i) cell.classList.add('found');
+      else if (!inRange) cell.classList.add('dead');
+      else if (i === binary.mid && !binary.done) cell.classList.add('current-binary');
+    }
+    container.appendChild(cell);
+  });
+}
+
+function renderStatus(){
+  const el = document.getElementById('status');
+  const bothDone = linear.done && binary.done;
+  if (!bothDone){
+    el.innerHTML = `Click <b>Step</b> to advance one comparison on each algorithm, or <b>Play</b> to watch it run automatically.`;
+    return;
+  }
+  const lFound = linear.foundAt !== -1;
+  const bFound = binary.foundAt !== -1;
+  const outcome = lFound ? `found at index <b>${linear.foundAt}</b>` : `<b>not found</b> — target isn't in the array`;
+  el.innerHTML = `Search finished: target ${outcome}.
+    Linear search took <b>${linear.comparisons}</b> comparisons.
+    Binary search took <b>${binary.comparisons}</b> comparisons.
+    For an array of ${arr.length}, log₂(${arr.length}) ≈ <b>${Math.log2(arr.length).toFixed(1)}</b> — that's the ceiling binary search almost never exceeds, no matter how the linear search struggled.`;
+}
+
+function render(){
+  renderCells(document.getElementById('linearCells'), 'linear');
+  renderCells(document.getElementById('binaryCells'), 'binary');
+  document.getElementById('linearCount').textContent = linear.comparisons;
+  document.getElementById('binaryCount').textContent = binary.comparisons;
+  renderStatus();
+}
+
+document.getElementById('nSlider').addEventListener('input', (e) => {
+  document.getElementById('nLabel').textContent = e.target.value;
+});
+document.getElementById('newArrayBtn').addEventListener('click', newArray);
+document.getElementById('newTargetBtn').addEventListener('click', newTarget);
+document.getElementById('stepBtn').addEventListener('click', stepBoth);
+document.getElementById('playBtn').addEventListener('click', () => playTimer ? stopPlay() : startPlay());
+document.getElementById('resetBtn').addEventListener('click', resetSearch);
+
+newArray();
+</script>
+</body>
+</html>

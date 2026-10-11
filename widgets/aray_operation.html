@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Array Operations — Interactive C++ Explorer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #12132A;
+    --panel: #1B1D42;
+    --panel-2: #21234E;
+    --ink: #F4F2FF;
+    --ink-dim: #A8A6D6;
+    --line: #34366B;
+
+    --target: #FFD93D;
+    --current: #5DADE2;
+    --compare: #FF9F43;
+    --shift: #C77DFF;
+    --source: #6C6E9E;
+    --found: #95E06C;
+    --miss: #FF6B6B;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background: radial-gradient(circle at 15% -10%, #23255A 0%, var(--bg) 55%);
+    color: var(--ink);
+    font-family:'Sora', sans-serif;
+    padding: 32px 20px 60px;
+  }
+  .wrap{max-width: 1080px; margin: 0 auto;}
+  .eyebrow{ font-family:'Space Mono', monospace; font-size:13px; color: var(--target); margin:0 0 8px; }
+  h1{ font-size: clamp(26px, 4vw, 40px); font-weight:800; margin:0 0 10px; line-height:1.1; }
+  .sub{ color: var(--ink-dim); font-size:16px; max-width:680px; line-height:1.5; }
+
+  .card{
+    background: var(--panel); border: 1px solid var(--line); border-radius: 14px;
+    padding: 22px; margin-top: 20px;
+  }
+  .card h2{ font-size:14px; margin:0 0 16px; color: var(--ink-dim); font-weight:600; }
+
+  .tabs{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom: 18px; }
+  .tab-btn{
+    font-family:'Space Mono', monospace; font-size:13px;
+    background: var(--panel-2); color: var(--ink-dim);
+    border:1px solid var(--line); border-radius: 9px;
+    padding: 9px 16px; cursor:pointer;
+  }
+  .tab-btn.active{ background: var(--target); color:#1B1D42; border-color:var(--target); font-weight:700; }
+
+  .op-desc{ font-size: 14.5px; color: var(--ink-dim); line-height:1.55; margin-bottom: 18px; }
+  .op-desc b{ color: var(--ink); }
+
+  .controls{ display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end; margin-bottom: 18px; }
+  .field label{ display:block; font-family:'Space Mono', monospace; font-size:12px; color:var(--ink-dim); margin-bottom:6px; }
+  .field input{
+    width: 100px; background: var(--panel-2); border:1px solid var(--line); color: var(--ink);
+    border-radius:8px; padding:9px 10px; font-family:'Space Mono', monospace; font-size:14px;
+  }
+  button{
+    font-family:'Space Mono', monospace; font-size: 13px;
+    background: var(--panel-2); color: var(--ink);
+    border: 1px solid var(--line); border-radius: 9px;
+    padding: 10px 16px; cursor:pointer;
+  }
+  button.primary{ background: var(--target); color:#1B1D42; border-color: var(--target); font-weight:700; }
+  button:disabled{ opacity:0.4; cursor:not-allowed; }
+  button:active:not(:disabled){ transform: scale(0.97); }
+
+  .split{ display:grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 6px; }
+  @media (max-width: 800px){ .split{ grid-template-columns: 1fr; } }
+
+  .codebox{
+    background: #0E0F26;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 14px 0;
+    font-family:'Space Mono', monospace;
+    font-size: 13.5px;
+    overflow-x:auto;
+  }
+  .codeline{
+    padding: 5px 16px;
+    white-space: pre;
+    color: #9391C4;
+    border-left: 3px solid transparent;
+  }
+  .codeline.active{
+    background: rgba(255,217,61,0.10);
+    border-left: 3px solid var(--target);
+    color: var(--ink);
+  }
+
+  .arraybox{
+    display:flex; align-items:center; justify-content:center;
+    background: var(--panel-2);
+    border-radius: 10px;
+    padding: 20px 10px;
+    min-height: 140px;
+  }
+  .cells{ display:flex; gap:6px; flex-wrap:wrap; justify-content:center; }
+  .cellwrap{ display:flex; flex-direction:column; align-items:center; gap:4px; }
+  .idx{ font-family:'Space Mono', monospace; font-size:11px; color: var(--ink-dim); }
+  .cell{
+    width: 46px; height:46px;
+    display:flex; align-items:center; justify-content:center;
+    background: #171833;
+    border: 2px solid var(--line);
+    border-radius: 8px;
+    font-family:'Space Mono', monospace; font-weight:700; font-size:14px;
+    color: var(--ink-dim);
+    transition: all .25s ease;
+  }
+  .cell.empty{ color: #45477A; border-style: dashed; }
+  .cell.current{ border-color: var(--current); color: var(--ink); box-shadow: 0 0 0 3px rgba(93,173,226,0.25); }
+  .cell.compare{ border-color: var(--compare); color: var(--ink); box-shadow: 0 0 0 3px rgba(255,159,67,0.25); }
+  .cell.shift{ border-color: var(--shift); color: var(--ink); box-shadow: 0 0 0 3px rgba(199,125,255,0.25); }
+  .cell.source{ opacity: 0.5; }
+  .cell.target{ border-color: var(--target); color: var(--target); box-shadow: 0 0 0 3px rgba(255,217,61,0.25); }
+  .cell.found{ border-color: var(--found); background: rgba(149,224,108,0.15); color: var(--found); }
+  .cell.miss{ border-color: var(--miss); }
+
+  .status{
+    margin-top: 18px;
+    background: linear-gradient(120deg, rgba(255,217,61,0.08), rgba(93,173,226,0.06));
+    border: 1px solid var(--line); border-radius: 12px;
+    padding: 14px 18px; font-size: 14.5px; line-height: 1.5;
+  }
+  .status b{ color: var(--target); }
+
+  .playback{ display:flex; align-items:center; gap:10px; margin-top: 16px; flex-wrap:wrap; }
+  .step-count{ font-family:'Space Mono', monospace; font-size:13px; color: var(--ink-dim); }
+
+  footer{ margin-top: 26px; color: var(--ink-dim); font-size: 13px; font-family:'Space Mono', monospace; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="eyebrow">MCA511-2 · UNIT 1 · ARRAYS &amp; OPERATIONS</p>
+  <h1>Array Operations — Interactive C++ Explorer</h1>
+  <p class="sub">Pick an operation, set the inputs, and step through it — the C++ code and the array update in lockstep, so you can see exactly which line causes which change.</p>
+
+  <div class="card">
+    <div class="tabs" id="tabs"></div>
+    <div class="op-desc" id="opDesc"></div>
+    <div class="controls" id="opControls"></div>
+
+    <div class="split">
+      <div>
+        <h2>C++ code</h2>
+        <div class="codebox" id="codebox"></div>
+      </div>
+      <div>
+        <h2>Array (capacity 10)</h2>
+        <div class="arraybox"><div class="cells" id="cells"></div></div>
+      </div>
+    </div>
+
+    <div class="status" id="status"></div>
+
+    <div class="playback">
+      <button id="runBtn" class="primary">Run ▸</button>
+      <button id="stepBtn">Step ▸</button>
+      <button id="playBtn">Play ▸▸</button>
+      <button id="resetBtn">Reset Array ↺</button>
+      <span class="step-count" id="stepCount"></span>
+    </div>
+  </div>
+
+  <footer>n = current logical size · capacity = 10 fixed slots · dashed cells = unused capacity</footer>
+</div>
+
+<script>
+const CAP = 10;
+let arr, n;
+let currentOp = 'traversal';
+let steps = [];
+let stepIdx = -1;
+let playTimer = null;
+
+function defaultArray(){
+  arr = [12, 45, 7, 23, 56, 3, 89, 34, null, null];
+  n = 8;
+}
+defaultArray();
+
+const OPS = {
+  traversal: {
+    label: 'Traversal',
+    desc: 'Visit every element from index 0 to n-1, one at a time — O(n).',
+    code: [
+      'for (int i = 0; i < n; i++) {',
+      '    cout << arr[i] << " ";',
+      '}'
+    ],
+    controls: [],
+    run(){
+      const s = [];
+      for (let i=0;i<n;i++){
+        s.push({line:0, highlight:{[i]:'current'}, message:`Loop check: i=${i} < n=${n} → true`});
+        s.push({line:1, highlight:{[i]:'current'}, message:`Print arr[${i}] = ${arr[i]}`});
+      }
+      s.push({line:0, highlight:{}, message:`Loop check: i=${n} < n=${n} → false. Traversal complete — O(n), every element visited once.`});
+      return {steps:s};
+    }
+  },
+  insertion: {
+    label: 'Insertion',
+    desc: 'Insert a value at a given position — every element from the end down to that position must shift right first. Worst case O(n).',
+    code: [
+      'for (int i = n; i > pos; i--) {',
+      '    arr[i] = arr[i - 1];',
+      '}',
+      'arr[pos] = value;',
+      'n++;'
+    ],
+    controls: [
+      {id:'pos', label:'Position', def:2},
+      {id:'value', label:'Value', def:99},
+    ],
+    run(inputs){
+      const pos = Math.max(0, Math.min(inputs.pos, n));
+      const value = inputs.value;
+      if (n >= CAP){
+        return {steps:[{line:-1, highlight:{}, message:'Array is full (n = capacity = 10) — cannot insert without resizing.'}], finalArr:arr.slice(), finalN:n};
+      }
+      const a = arr.slice();
+      const s = [];
+      s.push({line:0, cells:a.slice(), highlight:{}, message:`Start: shift from i=n=${n} down to pos+1=${pos+1}`});
+      for (let i=n; i>pos; i--){
+        a[i] = a[i-1];
+        s.push({line:1, cells:a.slice(), highlight:{[i]:'shift', [i-1]:'source'}, message:`arr[${i}] = arr[${i-1}] → ${a[i]} shifts right`});
+      }
+      a[pos] = value;
+      s.push({line:3, cells:a.slice(), highlight:{[pos]:'target'}, message:`arr[${pos}] = ${value} → inserted`});
+      s.push({line:4, cells:a.slice(), highlight:{}, message:`n becomes ${n+1}. Total work: ${n-pos} shifts — O(n) in the worst case (inserting at position 0).`});
+      return {steps:s, finalArr:a, finalN:n+1};
+    }
+  },
+  deletion: {
+    label: 'Deletion',
+    desc: 'Remove the value at a given position — every following element must shift left to close the gap. Worst case O(n).',
+    code: [
+      'for (int i = pos; i < n - 1; i++) {',
+      '    arr[i] = arr[i + 1];',
+      '}',
+      'n--;'
+    ],
+    controls: [
+      {id:'pos', label:'Position', def:2},
+    ],
+    run(inputs){
+      const pos = Math.max(0, Math.min(inputs.pos, n-1));
+      if (n === 0){
+        return {steps:[{line:-1, highlight:{}, message:'Array is empty — nothing to delete.'}], finalArr:arr.slice(), finalN:n};
+      }
+      const a = arr.slice();
+      const s = [];
+      s.push({line:0, cells:a.slice(), highlight:{[pos]:'target'}, message:`Start: shift left beginning at i=pos=${pos}`});
+      for (let i=pos; i<n-1; i++){
+        a[i] = a[i+1];
+        s.push({line:1, cells:a.slice(), highlight:{[i]:'shift', [i+1]:'source'}, message:`arr[${i}] = arr[${i+1}] → ${a[i]} shifts left`});
+      }
+      a[n-1] = null;
+      s.push({line:3, cells:a.slice(), highlight:{}, message:`n becomes ${n-1}. Total work: ${n-1-pos} shifts — O(n) in the worst case (deleting position 0).`});
+      return {steps:s, finalArr:a, finalN:n-1};
+    }
+  },
+  search: {
+    label: 'Search (Linear)',
+    desc: 'Scan from index 0 until the key is found or the array ends. No shortcuts — O(n) worst case.',
+    code: [
+      'for (int i = 0; i < n; i++) {',
+      '    if (arr[i] == key)',
+      '        return i;',
+      '}',
+      'return -1;'
+    ],
+    controls: [
+      {id:'key', label:'Search key', def:23},
+    ],
+    run(inputs){
+      const key = inputs.key;
+      const s = [];
+      let foundAt = -1;
+      for (let i=0;i<n;i++){
+        s.push({line:0, highlight:{[i]:'current'}, message:`Loop check: i=${i} < n=${n} → true`});
+        s.push({line:1, highlight:{[i]:'compare'}, message:`Compare arr[${i}] = ${arr[i]} with key = ${key}`});
+        if (arr[i] === key){
+          s.push({line:2, highlight:{[i]:'found'}, message:`Match! return i = ${i}`});
+          foundAt = i;
+          break;
+        }
+      }
+      if (foundAt === -1){
+        s.push({line:4, highlight:{}, message:`Loop ended, no match found → return -1`});
+      }
+      return {steps:s};
+    }
+  },
+  update: {
+    label: 'Update / Access',
+    desc: 'Direct read or write by index — no shifting, no scanning. This is the one array operation that is O(1), because the address is computed directly.',
+    code: [
+      'arr[index] = value;'
+    ],
+    controls: [
+      {id:'index', label:'Index', def:4},
+      {id:'value', label:'New value', def:100},
+    ],
+    run(inputs){
+      const index = Math.max(0, Math.min(inputs.index, n-1));
+      const value = inputs.value;
+      const a = arr.slice();
+      a[index] = value;
+      const s = [{line:0, cells:a.slice(), highlight:{[index]:'target'}, message:`arr[${index}] = ${value} → direct write, address computed instantly. O(1) — no other cell was touched.`}];
+      return {steps:s, finalArr:a, finalN:n};
+    }
+  }
+};
+
+const tabsEl = document.getElementById('tabs');
+Object.entries(OPS).forEach(([key, op]) => {
+  const btn = document.createElement('button');
+  btn.className = 'tab-btn' + (key===currentOp ? ' active' : '');
+  btn.textContent = op.label;
+  btn.dataset.key = key;
+  btn.addEventListener('click', () => {
+    currentOp = key;
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.key===key));
+    buildControls();
+    resetSteps();
+    renderCodeOnly();
+  });
+  tabsEl.appendChild(btn);
+});
+
+function buildControls(){
+  const op = OPS[currentOp];
+  document.getElementById('opDesc').innerHTML = op.desc;
+  const wrap = document.getElementById('opControls');
+  wrap.innerHTML = '';
+  op.controls.forEach(c => {
+    const div = document.createElement('div');
+    div.className = 'field';
+    div.innerHTML = `<label>${c.label}</label><input type="number" id="ctrl_${c.id}" value="${c.def}">`;
+    wrap.appendChild(div);
+  });
+}
+
+function renderCodeOnly(){
+  const op = OPS[currentOp];
+  const codebox = document.getElementById('codebox');
+  codebox.innerHTML = '';
+  op.code.forEach((line) => {
+    const div = document.createElement('div');
+    div.className = 'codeline';
+    div.textContent = line;
+    codebox.appendChild(div);
+  });
+  renderCells(arr, {});
+  document.getElementById('status').innerHTML = `Set the inputs above and click <b>Run</b> to generate the step-by-step trace.`;
+  document.getElementById('stepCount').textContent = '';
+}
+
+function renderCells(cellArr, highlight){
+  const cellsEl = document.getElementById('cells');
+  cellsEl.innerHTML = '';
+  for (let i=0;i<CAP;i++){
+    const wrap = document.createElement('div');
+    wrap.className = 'cellwrap';
+    const idx = document.createElement('div');
+    idx.className = 'idx';
+    idx.textContent = i;
+    const cell = document.createElement('div');
+    const val = cellArr[i];
+    const isEmpty = (val === null || val === undefined);
+    cell.className = 'cell' + (isEmpty ? ' empty' : '') + (highlight[i] ? ' ' + highlight[i] : '');
+    cell.textContent = isEmpty ? '·' : val;
+    wrap.appendChild(idx);
+    wrap.appendChild(cell);
+    cellsEl.appendChild(wrap);
+  }
+}
+
+function renderStep(){
+  const op = OPS[currentOp];
+  const codebox = document.getElementById('codebox');
+  const lines = codebox.querySelectorAll('.codeline');
+
+  if (stepIdx < 0 || steps.length === 0){
+    renderCodeOnly();
+    return;
+  }
+  const step = steps[stepIdx];
+  lines.forEach((el, i) => el.classList.toggle('active', i === step.line));
+
+  const cellsToShow = step.cells ? step.cells : arr;
+  renderCells(cellsToShow, step.highlight || {});
+  document.getElementById('status').innerHTML = step.message;
+  document.getElementById('stepCount').textContent = `Step ${stepIdx+1} / ${steps.length}`;
+
+  document.getElementById('stepBtn').disabled = stepIdx >= steps.length - 1;
+}
+
+function resetSteps(){
+  steps = [];
+  stepIdx = -1;
+  stopPlay();
+}
+
+function getInputs(){
+  const op = OPS[currentOp];
+  const inputs = {};
+  op.controls.forEach(c => {
+    inputs[c.id] = parseInt(document.getElementById(`ctrl_${c.id}`).value) || 0;
+  });
+  return inputs;
+}
+
+document.getElementById('runBtn').addEventListener('click', () => {
+  const op = OPS[currentOp];
+  const inputs = getInputs();
+  const result = op.run(inputs);
+  steps = result.steps;
+  stepIdx = 0;
+  if (result.finalArr){ arr = result.finalArr; n = result.finalN; }
+  renderStep();
+});
+
+document.getElementById('stepBtn').addEventListener('click', () => {
+  if (stepIdx < steps.length - 1){
+    stepIdx++;
+    renderStep();
+  }
+  if (stepIdx >= steps.length - 1) stopPlay();
+});
+
+document.getElementById('playBtn').addEventListener('click', () => {
+  if (playTimer) { stopPlay(); return; }
+  if (steps.length === 0) return;
+  playTimer = setInterval(() => {
+    if (stepIdx < steps.length - 1){
+      stepIdx++;
+      renderStep();
+    } else {
+      stopPlay();
+    }
+  }, 700);
+  document.getElementById('playBtn').textContent = 'Pause ❚❚';
+});
+
+function stopPlay(){
+  clearInterval(playTimer);
+  playTimer = null;
+  document.getElementById('playBtn').textContent = 'Play ▸▸';
+}
+
+document.getElementById('resetBtn').addEventListener('click', () => {
+  defaultArray();
+  resetSteps();
+  renderCodeOnly();
+});
+
+buildControls();
+renderCodeOnly();
+</script>
+</body>
+</html>

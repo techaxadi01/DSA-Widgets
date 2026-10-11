@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Quick Sort (last element pivot), step by step</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#eef2f6; --grid:rgba(20,33,61,.05); --card:#ffffff; --ink:#14213d; --muted:#5a6478; --line:#d5dce6; --barbg:#e6ebf2;
+  --pivot:#b9770e; --pivotbg:#fdf0d5;
+  --i:#2b6fd6; --ibg:#e3edfd;
+  --j:#b8337f; --jbg:#fbe5f1;
+  --ok:#23845a; --okbg:#dcf3e7;
+  --swap:#d35a1f; --swapbg:#ffe6d6;
+  --btn:#14213d; --btnink:#ffffff;
+  --sans:"Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono:"JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0f1624; --grid:rgba(255,255,255,.035); --card:#18212f; --ink:#e7ecf4; --muted:#9aa6ba; --line:#2c3748; --barbg:#253043;
+    --pivot:#f0b44c; --pivotbg:#3a2d12; --i:#6ea2f5; --ibg:#1b2d4b; --j:#ec79b8; --jbg:#3f1a30;
+    --ok:#4cc98f; --okbg:#143427; --swap:#f08a50; --swapbg:#3f2314; --btn:#e7ecf4; --btnink:#0f1624;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0f1624; --grid:rgba(255,255,255,.035); --card:#18212f; --ink:#e7ecf4; --muted:#9aa6ba; --line:#2c3748; --barbg:#253043;
+  --pivot:#f0b44c; --pivotbg:#3a2d12; --i:#6ea2f5; --ibg:#1b2d4b; --j:#ec79b8; --jbg:#3f1a30;
+  --ok:#4cc98f; --okbg:#143427; --swap:#f08a50; --swapbg:#3f2314; --btn:#e7ecf4; --btnink:#0f1624;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:calc(env(safe-area-inset-top,0px) + 20px)}
+body{
+  margin:0; background:var(--bg); color:var(--ink); font-family:var(--sans); font-size:17px; line-height:1.55;
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:24px 24px;
+}
+.wrap{max-width:900px; margin:0 auto; padding:28px 18px 80px}
+h1{font-size:clamp(1.9rem,5vw,2.6rem); line-height:1.1; margin:0 0 8px; letter-spacing:-.01em}
+h2{font-size:1.35rem; margin:34px 0 4px}
+.lede{color:var(--muted); max-width:62ch; margin:0 0 22px}
+.sub{color:var(--muted); margin:0 0 12px; max-width:62ch}
+.panel{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:18px}
+.input-row{display:flex; flex-wrap:wrap; gap:10px; align-items:flex-end}
+.input-row label{display:block; font-weight:700; margin-bottom:6px}
+.field{flex:1 1 260px}
+input[type=text]{
+  width:100%; font:500 1rem var(--mono); padding:11px 12px; border-radius:10px;
+  border:1.5px solid var(--line); background:var(--bg); color:var(--ink);
+}
+input[type=text]:focus{outline:none; border-color:var(--i); box-shadow:0 0 0 3px var(--ibg)}
+button{
+  font:700 .95rem var(--sans); padding:10px 15px; border-radius:10px; border:1.5px solid var(--btn);
+  background:var(--btn); color:var(--btnink); cursor:pointer;
+}
+button.ghost{background:transparent; color:var(--ink); border-color:var(--line)}
+button:disabled{opacity:.4; cursor:not-allowed}
+button:focus-visible,input:focus-visible{outline:3px solid var(--i); outline-offset:2px}
+.hint{font-size:.88rem; color:var(--muted); margin-top:8px}
+.err{color:var(--swap); font-weight:700; font-size:.92rem; margin-top:8px; min-height:1.2em}
+.presets{display:flex; flex-wrap:wrap; gap:6px; margin-top:6px}
+.presets button{font-size:.82rem; padding:6px 10px; font-weight:400}
+.how{margin-top:16px}
+.how summary{cursor:pointer; font-weight:700}
+.how ol{margin:10px 0 0; padding-left:1.3em}
+.how li{margin-bottom:4px}
+code{font-family:var(--mono); font-size:.9em; background:var(--bg); padding:1px 5px; border-radius:5px}
+.legend{display:flex; flex-wrap:wrap; gap:8px 16px; margin:18px 0 0; font-size:.9rem}
+.legend span{display:inline-flex; align-items:center; gap:6px}
+.sw{width:18px; height:18px; border-radius:5px; border:2px solid; display:inline-block}
+
+/* ---- Live animation stage ---- */
+.stage-wrap{overflow-x:auto; padding:30px 0 4px}
+.stage{position:relative; margin:0 auto}
+.bars{position:relative; height:170px; border-bottom:2px solid var(--line)}
+.bar{
+  position:absolute; left:0; bottom:0; border-radius:8px 8px 3px 3px; border:2px solid var(--line); background:var(--barbg);
+  transition:transform .55s cubic-bezier(.5,0,.2,1), height .4s, background-color .3s, border-color .3s, opacity .3s, box-shadow .3s;
+}
+.bar .v{position:absolute; top:-24px; left:0; right:0; text-align:center; font:700 .95rem var(--mono); color:var(--ink)}
+.bar.dim{opacity:.3}
+.bar.pv{background:var(--pivotbg); border-color:var(--pivot)}
+.bar.ok{background:var(--okbg); border-color:var(--ok)}
+.bar.ci{background:var(--ibg); border-color:var(--i); box-shadow:0 0 0 3px var(--i)}
+.bar.cj{background:var(--jbg); border-color:var(--j); box-shadow:0 0 0 3px var(--j)}
+.bar.swp{background:var(--swapbg); border-color:var(--swap); box-shadow:0 0 0 3px var(--swap)}
+.idxrow{position:relative; height:22px}
+.idxrow span{position:absolute; top:3px; text-align:center; font:500 .72rem var(--mono); color:var(--muted)}
+.mkrow{position:relative; height:62px}
+.mk{position:absolute; left:0; text-align:center; transition:transform .45s cubic-bezier(.5,0,.2,1), opacity .25s}
+.mk.hide{opacity:0}
+.mk.p{top:0}.mk.i{top:20px}.mk.j{top:40px}
+.caption{border-top:1px solid var(--line); margin-top:6px; padding-top:12px; min-height:120px}
+.controls{display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-top:14px}
+.speed{display:flex; align-items:center; gap:8px; font-size:.9rem; color:var(--muted)}
+.speed input{accent-color:var(--i)}
+.progress{margin-left:auto; font-size:.92rem; color:var(--muted)}
+.progress b{color:var(--ink)}
+
+/* ---- Flow of step cards ---- */
+.flowbar{display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin:10px 0 0}
+.flow{position:relative; margin-top:14px; padding-left:44px}
+.flow::before{content:""; position:absolute; left:17px; top:8px; bottom:8px; width:2px; background:var(--line)}
+.step{position:relative; margin-bottom:16px}
+.num{
+  position:absolute; left:-44px; top:14px; width:36px; height:36px; border-radius:50%;
+  background:var(--card); border:2px solid var(--line); display:grid; place-items:center;
+  font:700 .85rem var(--mono); color:var(--muted);
+}
+.step.current .num{border-color:var(--ink); color:var(--ink)}
+.card{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px 16px 16px; border-left-width:5px}
+.card.k-partition{border-left-color:var(--pivot)}
+.card.k-i{border-left-color:var(--i)}
+.card.k-j{border-left-color:var(--j)}
+.card.k-swap,.card.k-place{border-left-color:var(--swap)}
+.card.k-cross{border-left-color:var(--muted)}
+.card.k-single,.card.k-done{border-left-color:var(--ok)}
+.card.k-start{border-left-color:var(--ink)}
+.step.new .card{animation:pop .35s ease-out}
+@keyframes pop{from{transform:translateY(8px);opacity:0}to{transform:none;opacity:1}}
+@media (prefers-reduced-motion: reduce){.step.new .card{animation:none}.bar,.mk{transition:none}}
+.chead{display:flex; flex-wrap:wrap; gap:6px 10px; align-items:baseline; margin-bottom:10px}
+.ctitle{font-size:1.08rem; font-weight:700; margin:0}
+.meta{font-size:.82rem; color:var(--muted)}
+.tag{font-size:.78rem; font-weight:700; padding:2px 8px; border-radius:999px}
+.t-partition{background:var(--pivotbg); color:var(--pivot)}
+.t-i{background:var(--ibg); color:var(--i)}
+.t-j{background:var(--jbg); color:var(--j)}
+.t-swap,.t-place{background:var(--swapbg); color:var(--swap)}
+.t-cross{background:var(--bg); color:var(--muted)}
+.t-single,.t-done{background:var(--okbg); color:var(--ok)}
+.t-start{background:var(--bg); color:var(--ink)}
+.arr-scroll{overflow-x:auto; padding:4px 2px 2px}
+.arr{display:grid; grid-auto-flow:column; grid-auto-columns:48px; gap:6px; width:max-content}
+.col{display:flex; flex-direction:column; align-items:center; gap:4px}
+.idx{font:500 .72rem var(--mono); color:var(--muted)}
+.cell{
+  width:48px; height:48px; border-radius:10px; display:grid; place-items:center;
+  font:700 1.1rem var(--mono); border:2px solid var(--line); background:var(--card); color:var(--ink);
+}
+.cell.dim{opacity:.32}
+.cell.pv{background:var(--pivotbg); border-color:var(--pivot); color:var(--pivot)}
+.cell.ok{background:var(--okbg); border-color:var(--ok); color:var(--ok)}
+.cell.ci{box-shadow:0 0 0 3px var(--i); border-color:var(--i); background:var(--ibg)}
+.cell.cj{box-shadow:0 0 0 3px var(--j); border-color:var(--j); background:var(--jbg)}
+.cell.swp{background:var(--swapbg); border-color:var(--swap); color:var(--swap); box-shadow:0 0 0 3px var(--swap)}
+.cell.ghost{border-style:dashed; opacity:.5; background:transparent}
+.ptrs{display:flex; flex-direction:column; gap:2px; min-height:44px; align-items:center}
+.ptr{font:700 .75rem var(--mono); padding:1px 7px; border-radius:6px; line-height:1.4; white-space:nowrap}
+.ptr.p{background:var(--pivot); color:var(--card)}
+.ptr.i{background:var(--i); color:var(--card)}
+.ptr.j{background:var(--j); color:var(--card)}
+.explain{margin:10px 0 0; max-width:70ch}
+.cmp{display:inline-block; font:700 .9rem var(--mono); padding:2px 8px; border-radius:6px; margin-top:8px}
+.cmp.yes{background:var(--okbg); color:var(--ok)}
+.cmp.no{background:var(--swapbg); color:var(--swap)}
+.result{font:700 1.05rem var(--mono); margin-top:8px}
+.floatnext{
+  position:fixed; right:16px; bottom:calc(16px + env(safe-area-inset-bottom,0px)); z-index:6;
+  box-shadow:0 6px 18px rgba(0,0,0,.18); display:none;
+}
+@media (max-width:560px){
+  .flow{padding-left:34px}
+  .flow::before{left:12px}
+  .num{left:-34px; width:28px; height:28px; font-size:.72rem}
+  .arr{grid-auto-columns:40px; gap:4px}
+  .cell{width:40px; height:40px; font-size:.95rem}
+  .floatnext{display:block}
+  .progress{margin-left:0; width:100%}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Quick Sort with the last element as pivot</h1>
+  <p class="lede">Watch the array move in the live animation, then read every move of <b>i</b> and <b>j</b> in its own box below. Each box explains what was compared and why.</p>
+
+  <div class="panel">
+    <div class="input-row">
+      <div class="field">
+        <label for="arrIn">Your array</label>
+        <input id="arrIn" type="text" value="7, 2, 1, 6, 8, 5, 3" autocomplete="off" spellcheck="false">
+      </div>
+      <button id="runBtn">Sort this array</button>
+    </div>
+    <div class="hint">Separate numbers with commas or spaces. Use 2 to 16 numbers; negatives, decimals and repeats are fine.</div>
+    <div class="err" id="err" role="alert"></div>
+    <div class="presets" aria-label="Example arrays">
+      <button class="ghost" data-v="7, 2, 1, 6, 8, 5, 3">Original example</button>
+      <button class="ghost" data-v="10, 80, 30, 90, 40, 50, 70">Mixed</button>
+      <button class="ghost" data-v="1, 2, 3, 4, 5, 6">Already sorted</button>
+      <button class="ghost" data-v="9, 7, 5, 3, 1">Reversed</button>
+      <button class="ghost" data-v="4, 2, 4, 1, 4, 3">With repeats</button>
+      <button class="ghost" id="randBtn">Random array</button>
+    </div>
+
+    <details class="how">
+      <summary>How this version of Quick Sort works</summary>
+      <ol>
+        <li>Take the sub-array from index <code>low</code> to <code>high</code>. The <b>pivot</b> is the last element, <code>a[high]</code>.</li>
+        <li>Put <b>i</b> at <code>low − 1</code>, just before the sub-array. Everything from <code>low</code> up to <b>i</b> will be the "≤ pivot" zone, which starts empty.</li>
+        <li>Move <b>j</b> from <code>low</code> to <code>high − 1</code>, checking one element at a time.</li>
+        <li>If <code>a[j] ≤ pivot</code>: move <b>i</b> one step right, then swap <code>a[i]</code> and <code>a[j]</code>. This pulls the small element into the left zone.</li>
+        <li>If <code>a[j] &gt; pivot</code>: do nothing, just move <b>j</b> on.</li>
+        <li>When j reaches the pivot, swap the pivot with <code>a[i + 1]</code>. The pivot is now in its final place.</li>
+        <li>Repeat on the part left of the pivot and the part right of it.</li>
+      </ol>
+    </details>
+
+    <div class="legend">
+      <span><i class="sw" style="background:var(--pivotbg);border-color:var(--pivot)"></i>Pivot</span>
+      <span><i class="sw" style="background:var(--ibg);border-color:var(--i)"></i>i position</span>
+      <span><i class="sw" style="background:var(--jbg);border-color:var(--j)"></i>Compared by j</span>
+      <span><i class="sw" style="background:var(--swapbg);border-color:var(--swap)"></i>Swapped</span>
+      <span><i class="sw" style="background:var(--okbg);border-color:var(--ok)"></i>Final position</span>
+      <span><i class="sw" style="opacity:.35;border-color:var(--line)"></i>Outside current sub-array</span>
+    </div>
+  </div>
+
+  <h2>Live animation</h2>
+  <p class="sub">Bar height shows each value. Press Play to watch the whole sort, or step through it yourself.</p>
+  <div class="panel">
+    <div class="stage-wrap" id="stageWrap">
+      <div class="stage" id="stage">
+        <div class="bars" id="bars"></div>
+        <div class="idxrow" id="idxrow"></div>
+        <div class="mkrow" id="mkrow">
+          <div class="mk p hide" id="mkP"><span class="ptr p">P</span></div>
+          <div class="mk i hide" id="mkI"><span class="ptr i">i</span></div>
+          <div class="mk j hide" id="mkJ"><span class="ptr j">j</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="caption" id="caption" aria-live="polite"></div>
+    <div class="controls">
+      <button id="prevBtn" class="ghost">Previous</button>
+      <button id="playBtn">Play</button>
+      <button id="nextBtn">Next step</button>
+      <button id="resetBtn" class="ghost">Start over</button>
+      <label class="speed">Speed <input type="range" id="speed" min="0.5" max="3" step="0.25" value="1"><span id="speedVal">1×</span></label>
+      <span class="progress" id="progress"></span>
+    </div>
+  </div>
+
+  <h2>Step-by-step flow</h2>
+  <p class="sub">New boxes appear here as you move through the steps. The current step's number is outlined.</p>
+  <div class="flowbar">
+    <button id="allBtn" class="ghost">Show all steps</button>
+  </div>
+  <div class="flow" id="flow"></div>
+</div>
+<button class="floatnext" id="floatNext">Next step</button>
+
+<script>
+(function(){
+  let steps = [], shown = 0, timer = null, barEls = [], slot = 56;
+
+  function parse(str){
+    const parts = str.split(/[\s,;]+/).filter(Boolean);
+    const nums = parts.map(Number);
+    if (!parts.length) return {error:"Type some numbers first, for example 7, 2, 1, 6."};
+    const bad = parts.find((p, k) => !isFinite(nums[k]));
+    if (bad !== undefined) return {error:`"${bad}" is not a number. Use only numbers separated by commas or spaces.`};
+    if (nums.length < 2) return {error:"Add at least 2 numbers so there is something to sort."};
+    if (nums.length > 16) return {error:`You entered ${nums.length} numbers. Use 16 or fewer so every step stays readable.`};
+    return {nums};
+  }
+  const range = (a, lo, hi) => lo > hi ? "empty" : `[${a.slice(lo, hi + 1).join(", ")}]`;
+
+  function generate(input){
+    const a = input.slice(), ids = a.map((_, k) => k), n = a.length, out = [], sorted = new Set();
+    let call = 0;
+    const swap = (x, y) => { [a[x], a[y]] = [a[y], a[x]]; [ids[x], ids[y]] = [ids[y], ids[x]]; };
+    const push = o => out.push(Object.assign({arr:a.slice(), ids:ids.slice(), sorted:new Set(sorted)}, o));
+
+    push({kind:"start", tag:"Start", lo:0, hi:n-1, title:"Starting array",
+      text:`We need to sort <b>${n}</b> numbers. In each round, the <b>last element</b> of the current sub-array becomes the pivot. Smaller-or-equal values are gathered on its left, bigger values end up on its right.`});
+
+    function qs(lo, hi, depth){
+      if (lo > hi) return;
+      if (lo === hi){
+        sorted.add(lo);
+        push({kind:"single", tag:"Base case", lo, hi, depth, title:`Sub-array at index ${lo} has one element`,
+          text:`A single number (<b>${a[lo]}</b>) is already sorted by itself, so it stays at index ${lo}. No partition needed.`});
+        return;
+      }
+      const c = ++call, pivot = a[hi];
+      let i = lo - 1;
+      const base = {lo, hi, depth, call:c, p:hi, pivot};
+
+      push(Object.assign({}, base, {kind:"partition", tag:`Partition ${c}`, i, j:lo,
+        title:`Partition ${c}: indices ${lo} to ${hi}`,
+        text:`Current sub-array is ${range(a, lo, hi)}. The pivot is the last element, <b>${pivot}</b>. Put <b>i</b> at index ${i} (just before the sub-array), because no small elements have been found yet. <b>j</b> starts at index ${lo} and will check each element up to index ${hi-1}.`}));
+
+      for (let j = lo; j < hi; j++){
+        const v = a[j];
+        if (v <= pivot){
+          push(Object.assign({}, base, {kind:"j", tag:"Check j", i, j, cmpJ:j,
+            cmp:{txt:`a[${j}] = ${v} ≤ ${pivot}`, ok:true},
+            title:`j checks ${v}: it belongs on the left`,
+            text:`${v} is smaller than or equal to the pivot, so it must join the left "≤ pivot" zone. First <b>i moves one step right</b> (from ${i} to ${i+1}), then a[i] and a[j] will be swapped.`}));
+          i++;
+          if (i !== j){
+            const x = a[i];
+            swap(i, j);
+            push(Object.assign({}, base, {kind:"swap", tag:"Move i + swap", i, j, cmpI:i, swap:[i, j],
+              title:`i = ${i}: swap ${x} and ${v}`,
+              text:`i is now at index ${i}, which holds ${x} (a bigger number). Swap a[${i}] = ${x} with a[${j}] = ${v}. Now <b>${v}</b> sits inside the left zone and <b>${x}</b> moves right. j moves on to index ${j+1}.`}));
+          } else {
+            push(Object.assign({}, base, {kind:"i", tag:"Move i", i, j, cmpI:i,
+              title:`i = ${i}: same place as j, no real swap`,
+              text:`i has moved to index ${i}, which is the same position as j. Swapping an element with itself changes nothing, so ${v} simply stays where it is and the left zone grows by one. j moves on to index ${j+1}.`}));
+          }
+        } else {
+          push(Object.assign({}, base, {kind:"j", tag:"Check j", i, j, cmpJ:j,
+            cmp:{txt:`a[${j}] = ${v} > ${pivot}`, ok:false},
+            title:`j checks ${v}: it stays on the right`,
+            text:`${v} is bigger than the pivot, so it should not be in the left zone. <b>i does not move</b> (stays at ${i}). ` + (j + 1 < hi ? `j moves on to index ${j+1}.` : `j has now checked every element before the pivot.`)}));
+        }
+      }
+
+      push(Object.assign({}, base, {kind:"cross", tag:"Scan done", i, j:hi,
+        title:`j reached the pivot, scanning is finished`,
+        text: (i >= lo
+          ? `Indices ${lo} to ${i} ${range(a, lo, i)} are all ≤ ${pivot}. `
+          : `No element was ≤ ${pivot}, so the left zone is empty. `)
+          + (i + 1 <= hi - 1 ? `Indices ${i+1} to ${hi-1} ${range(a, i+1, hi-1)} are all &gt; ${pivot}. ` : "")
+          + `The pivot belongs right after the left zone, at index <b>i + 1 = ${i+1}</b>.`}));
+
+      const pos = i + 1, other = a[pos];
+      if (pos !== hi) swap(pos, hi);
+      sorted.add(pos);
+      const leftTxt = pos - 1 >= lo ? `left part ${range(a, lo, pos-1)} (indices ${lo}–${pos-1})` : "left part (empty)";
+      const rightTxt = hi >= pos + 1 ? `right part ${range(a, pos+1, hi)} (indices ${pos+1}–${hi})` : "right part (empty)";
+      push(Object.assign({}, base, {kind:"place", tag:"Place pivot", p:pos, i, swap: pos !== hi ? [pos, hi] : [],
+        title:`Pivot ${pivot} goes to index ${pos}`,
+        text: (pos !== hi
+          ? `Swap a[${pos}] = ${other} with the pivot a[${hi}] = ${pivot}. `
+          : `The pivot is already at index ${pos}, so no swap is needed. `)
+          + `<b>${pivot} is now in its final sorted position.</b> Next, Quick Sort handles the ${leftTxt}, then the ${rightTxt}.`}));
+
+      qs(lo, pos - 1, depth + 1);
+      qs(pos + 1, hi, depth + 1);
+    }
+
+    qs(0, n - 1, 0);
+    for (let k = 0; k < n; k++) sorted.add(k);
+    push({kind:"done", tag:"Done", title:"The array is sorted",
+      text:`Every element has reached its final position. It took <b>${call}</b> partition${call === 1 ? "" : "s"} to finish.`,
+      result:`[${a.join(", ")}]`});
+    return out;
+  }
+
+  function classesFor(s, k){
+    const cls = [];
+    const inRange = s.lo === undefined || (k >= s.lo && k <= s.hi);
+    if (s.sorted.has(k)) cls.push("ok");
+    else if (!inRange) cls.push("dim");
+    else if (k === s.p && s.kind !== "place") cls.push("pv");
+    if (s.cmpI === k) cls.push("ci");
+    if (s.cmpJ === k) cls.push("cj");
+    if (s.swap && s.swap.includes(k)) cls.push("swp");
+    return cls;
+  }
+  const showPtrs = s => !["start", "done", "single"].includes(s.kind);
+
+  function cellsHTML(s){
+    const n = s.arr.length, from = (showPtrs(s) && s.i === -1) ? -1 : 0;
+    let html = '<div class="arr-scroll"><div class="arr">';
+    for (let k = from; k < n; k++){
+      const ghost = k < 0;
+      const cls = ["cell"].concat(ghost ? ["ghost"] : classesFor(s, k));
+      const ptrs = [];
+      if (showPtrs(s)){
+        if (k === s.p) ptrs.push('<span class="ptr p">P</span>');
+        if (k === s.i) ptrs.push('<span class="ptr i">i</span>');
+        if (k === s.j) ptrs.push('<span class="ptr j">j</span>');
+      }
+      html += `<div class="col"><span class="idx">${k}</span><div class="${cls.join(" ")}">${ghost ? "" : s.arr[k]}</div><div class="ptrs">${ptrs.join("")}</div></div>`;
+    }
+    return html + "</div></div>";
+  }
+
+  function stepHTML(s, idx, isNew, isCur){
+    let meta = "";
+    if (s.call) meta = `Pivot ${s.pivot}, sub-array ${s.lo}–${s.hi}, level ${s.depth}`;
+    else if (s.kind === "single") meta = `Level ${s.depth}`;
+    const cmp = s.cmp ? `<div class="cmp ${s.cmp.ok ? "yes" : "no"}">${s.cmp.txt}</div>` : "";
+    const res = s.result ? `<div class="result">${s.result}</div>` : "";
+    return `<div class="step${isNew ? " new" : ""}${isCur ? " current" : ""}" id="step-${idx+1}">
+      <div class="num">${idx+1}</div>
+      <div class="card k-${s.kind}">
+        <div class="chead"><span class="tag t-${s.kind}">${s.tag}</span><h3 class="ctitle">${s.title}</h3>${meta ? `<span class="meta">${meta}</span>` : ""}</div>
+        ${cellsHTML(s)}${cmp}<p class="explain">${s.text}</p>${res}
+      </div></div>`;
+  }
+
+  /* ---- Live stage ---- */
+  const $ = id => document.getElementById(id);
+  function buildStage(){
+    const s0 = steps[0], n = s0.arr.length;
+    const w = $("stageWrap").clientWidth || 600;
+    slot = Math.max(34, Math.min(64, Math.floor(w / (n + 1))));
+    $("stage").style.width = ((n + 1) * slot) + "px";
+    const bars = $("bars"); bars.innerHTML = ""; barEls = [];
+    s0.arr.forEach((v, id) => {
+      const el = document.createElement("div");
+      el.className = "bar";
+      el.style.width = (slot - 8) + "px";
+      el.innerHTML = `<span class="v">${v}</span>`;
+      bars.appendChild(el); barEls[id] = el;
+    });
+    const row = $("idxrow"); row.innerHTML = "";
+    for (let k = -1; k < n; k++){
+      const sp = document.createElement("span");
+      sp.style.left = ((k + 1) * slot) + "px"; sp.style.width = (slot - 8) + "px";
+      sp.textContent = k; if (k < 0) sp.style.opacity = ".4";
+      row.appendChild(sp);
+    }
+    ["mkP", "mkI", "mkJ"].forEach(m => $(m).style.width = (slot - 8) + "px");
+  }
+  function drawStage(s){
+    const vals = steps[0].arr, min = Math.min(...vals), max = Math.max(...vals);
+    const hOf = v => 26 + (max === min ? 0.6 : (v - min) / (max - min)) * 124;
+    s.ids.forEach((id, k) => {
+      const el = barEls[id];
+      el.style.transform = `translateX(${(k + 1) * slot + 4}px)`;
+      el.style.height = hOf(s.arr[k]) + "px";
+      el.className = "bar " + classesFor(s, k).join(" ");
+    });
+    const place = (m, k) => {
+      const el = $(m);
+      if (!showPtrs(s) || k === undefined){ el.classList.add("hide"); return; }
+      el.classList.remove("hide");
+      el.style.transform = `translateX(${(k + 1) * slot + 4}px)`;
+    };
+    place("mkP", s.p); place("mkI", s.i); place("mkJ", s.j);
+    const cmp = s.cmp ? `<div class="cmp ${s.cmp.ok ? "yes" : "no"}">${s.cmp.txt}</div>` : "";
+    $("caption").innerHTML = `<div class="chead"><span class="tag t-${s.kind}">${s.tag}</span><h3 class="ctitle">${s.title}</h3></div>${cmp}<p class="explain">${s.text}</p>${s.result ? `<div class="result">${s.result}</div>` : ""}`;
+  }
+
+  function render(scrollToCard){
+    const flow = $("flow");
+    const prev = flow.children.length;
+    flow.innerHTML = steps.slice(0, shown).map((s, k) => stepHTML(s, k, k === shown - 1 && shown > prev, k === shown - 1)).join("");
+    drawStage(steps[shown - 1]);
+    $("progress").innerHTML = `Step <b>${shown}</b> of ${steps.length}`;
+    $("prevBtn").disabled = shown <= 1;
+    const atEnd = shown >= steps.length;
+    $("nextBtn").disabled = $("allBtn").disabled = $("floatNext").disabled = atEnd;
+    if (scrollToCard){
+      const el = $("step-" + shown);
+      if (el) el.scrollIntoView({behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block:"nearest"});
+    }
+  }
+
+  function stop(){ clearInterval(timer); timer = null; $("playBtn").textContent = "Play"; }
+  function next(scroll){ if (shown < steps.length){ shown++; render(scroll); } if (shown >= steps.length) stop(); }
+  function play(){
+    if (timer){ stop(); return; }
+    if (shown >= steps.length){ shown = 1; render(false); }
+    $("playBtn").textContent = "Pause";
+    const delay = 1600 / parseFloat($("speed").value);
+    timer = setInterval(() => next(false), delay);
+  }
+
+  function run(){
+    stop();
+    const r = parse($("arrIn").value);
+    if (r.error){ $("err").textContent = r.error; return; }
+    $("err").textContent = "";
+    steps = generate(r.nums);
+    shown = 1;
+    buildStage();
+    $("flow").innerHTML = "";
+    render(false);
+  }
+
+  $("runBtn").onclick = run;
+  $("arrIn").addEventListener("keydown", e => { if (e.key === "Enter") run(); });
+  $("nextBtn").onclick = () => { stop(); next(false); };
+  $("floatNext").onclick = () => { stop(); next(true); };
+  $("prevBtn").onclick = () => { stop(); if (shown > 1){ shown--; render(false); } };
+  $("playBtn").onclick = play;
+  $("resetBtn").onclick = () => { stop(); shown = 1; $("flow").innerHTML = ""; render(false); };
+  $("allBtn").onclick = () => { stop(); shown = steps.length; render(false); };
+  $("speed").oninput = e => {
+    $("speedVal").textContent = e.target.value + "×";
+    if (timer){ stop(); play(); }
+  };
+  $("randBtn").onclick = () => {
+    const n = 6 + Math.floor(Math.random() * 5);
+    $("arrIn").value = Array.from({length:n}, () => 1 + Math.floor(Math.random() * 30)).join(", ");
+    run();
+  };
+  document.querySelectorAll(".presets button[data-v]").forEach(b => b.onclick = () => { $("arrIn").value = b.dataset.v; run(); });
+  document.addEventListener("keydown", e => {
+    if (e.target.tagName === "INPUT") return;
+    if (e.key === "ArrowRight"){ stop(); next(false); }
+    if (e.key === "ArrowLeft") $("prevBtn").click();
+    if (e.key === " " && e.target === document.body){ e.preventDefault(); play(); }
+  });
+  let rt; window.addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(() => { if (steps.length){ buildStage(); drawStage(steps[shown - 1]); } }, 150); });
+
+  run();
+})();
+</script>
+</body>
+</html>

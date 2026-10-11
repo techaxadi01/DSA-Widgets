@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Linked List Operations — Interactive C++ Explorer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #F6F8FC;
+    --panel: #FFFFFF;
+    --panel-2: #EFF3FA;
+    --ink: #1E2A3A;
+    --ink-dim: #64708A;
+    --line: #DCE3F0;
+
+    --indigo: #4A55E0;
+    --indigo-light: #ECEDFC;
+    --emerald: #12A77E;
+    --amber: #F5A524;
+    --amber-light: #FFF4E0;
+    --coral: #F0553F;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:
+      radial-gradient(circle at 90% -5%, #ECEDFC 0%, transparent 40%),
+      radial-gradient(circle at 0% 105%, #E6F7F1 0%, transparent 40%),
+      var(--bg);
+    color: var(--ink);
+    font-family:'Sora', sans-serif;
+    padding: 32px 20px 60px;
+  }
+  .wrap{ max-width: 1080px; margin: 0 auto; }
+  .eyebrow{ font-family:'Space Mono', monospace; font-size:13px; color: var(--indigo); margin:0 0 8px; font-weight:700; }
+  h1{ font-size: clamp(26px, 4vw, 40px); font-weight:800; margin:0 0 10px; line-height:1.1; }
+  .sub{ color: var(--ink-dim); font-size:16px; max-width:680px; line-height:1.55; }
+
+  .card{
+    background: var(--panel); border: 1px solid var(--line); border-radius: 16px;
+    padding: 22px; margin-top: 20px;
+    box-shadow: 0 8px 24px -18px rgba(30,42,58,0.25);
+  }
+  .card h2{ font-size:14px; margin:0 0 16px; color: var(--ink-dim); font-weight:700; }
+
+  .tabs{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom: 18px; }
+  .tab-btn{
+    font-family:'Space Mono', monospace; font-size:13px;
+    background: var(--panel-2); color: var(--ink-dim);
+    border:1px solid var(--line); border-radius: 9px;
+    padding: 9px 16px; cursor:pointer;
+  }
+  .tab-btn.active{ background: var(--indigo); color:#fff; border-color:var(--indigo); font-weight:700; }
+
+  .op-desc{ font-size: 14.5px; color: var(--ink-dim); line-height:1.55; margin-bottom: 18px; }
+  .op-desc b{ color: var(--ink); }
+
+  .controls{ display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end; margin-bottom: 18px; }
+  .field label{ display:block; font-family:'Space Mono', monospace; font-size:12px; color:var(--ink-dim); margin-bottom:6px; }
+  .field input{
+    width: 100px; background: var(--panel-2); border:1px solid var(--line); color: var(--ink);
+    border-radius:8px; padding:9px 10px; font-family:'Space Mono', monospace; font-size:14px;
+  }
+  button{
+    font-family:'Space Mono', monospace; font-size: 13px;
+    background: var(--panel-2); color: var(--ink);
+    border: 1px solid var(--line); border-radius: 9px;
+    padding: 10px 16px; cursor:pointer;
+  }
+  button.primary{ background: var(--indigo); color:#fff; border-color: var(--indigo); font-weight:700; }
+  button:disabled{ opacity:0.4; cursor:not-allowed; }
+  button:active:not(:disabled){ transform: scale(0.97); }
+
+  .split{ display:grid; grid-template-columns: 300px 1fr; gap: 18px; margin-top: 6px; }
+  @media (max-width: 820px){ .split{ grid-template-columns: 1fr; } }
+
+  .codebox{
+    background: #1B1D2E;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 14px 0;
+    font-family:'Space Mono', monospace;
+    font-size: 12.5px;
+    overflow-x:auto;
+  }
+  .codeline{
+    padding: 4px 14px;
+    white-space: pre;
+    color: #8D93B8;
+    border-left: 3px solid transparent;
+  }
+  .codeline.active{
+    background: rgba(74,85,224,0.18);
+    border-left: 3px solid var(--indigo);
+    color: #EDEFFA;
+  }
+
+  .stage{
+    background: var(--panel-2);
+    border-radius: 12px;
+    padding: 30px 16px 16px;
+    min-height: 220px;
+    position: relative;
+    overflow-x: auto;
+  }
+  .stagecanvas{ position:relative; min-width: 720px; min-height: 170px; }
+  .arrow-svg{ position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; overflow:visible; }
+
+  .row{ display:flex; align-items:center; gap: 34px; position:relative; z-index:1; padding-top: 30px; }
+  .headtag{
+    position:absolute; top:-4px; left:0;
+    font-family:'Space Mono', monospace; font-size:11px; font-weight:700; color: var(--indigo);
+    background: var(--indigo-light); border:1px solid var(--indigo); border-radius:6px;
+    padding: 3px 8px;
+  }
+  .nodebox{
+    display:flex; border-radius: 9px; overflow:hidden;
+    border: 2px solid var(--line);
+    background: #fff;
+    box-shadow: 0 3px 8px -4px rgba(30,42,58,0.3);
+    transition: all .2s ease;
+  }
+  .nodebox .data{
+    width: 54px; height:46px; display:flex; align-items:center; justify-content:center;
+    font-family:'Space Mono', monospace; font-weight:700; font-size:16px; color: var(--ink);
+  }
+  .nodebox .ptr{
+    width: 24px; height:46px; display:flex; align-items:center; justify-content:center;
+    background: var(--panel-2); border-left: 2px solid var(--line);
+    color: var(--indigo); font-size: 13px;
+  }
+  .nodebox.staging{ border-style: dashed; border-color: var(--amber); }
+  .nodebox.staging .ptr{ background: var(--amber-light); }
+  .nodebox.current{ border-color: var(--indigo); box-shadow: 0 0 0 3px rgba(74,85,224,0.2); }
+  .nodebox.compare{ border-color: var(--amber); box-shadow: 0 0 0 3px rgba(245,165,36,0.25); }
+  .nodebox.found{ border-color: var(--emerald); box-shadow: 0 0 0 3px rgba(18,167,126,0.2); }
+  .nodebox.target{ border-color: var(--coral); box-shadow: 0 0 0 3px rgba(240,85,63,0.2); }
+
+  .nullbox{
+    width: 60px; height:38px; border-radius: 8px;
+    border: 2px dashed var(--line); color: var(--ink-dim);
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Space Mono', monospace; font-size:11px; letter-spacing:.03em;
+    background: #fff;
+  }
+
+  .stagingzone{
+    position:absolute; top: 4px; right: 8px;
+    display:flex; flex-direction:column; align-items:center; gap:4px;
+  }
+  .staginglabel{
+    font-family:'Space Mono', monospace; font-size:10.5px; color: var(--amber); font-weight:700;
+  }
+
+  .tempflag{
+    position:absolute; font-family:'Space Mono', monospace; font-size:11px; font-weight:700;
+    color: var(--indigo); background: var(--indigo-light); border:1px solid var(--indigo);
+    border-radius:6px; padding:2px 7px; transform: translate(-50%, -26px);
+    transition: left .25s ease, top .25s ease;
+  }
+
+  .status{
+    margin-top: 18px;
+    background: var(--amber-light);
+    border: 1px solid var(--amber); border-radius: 12px;
+    padding: 14px 18px; font-size: 14.5px; line-height: 1.5; color: var(--ink);
+  }
+  .status b{ color: #8A5A00; }
+
+  .playback{ display:flex; align-items:center; gap:10px; margin-top: 16px; flex-wrap:wrap; }
+  .step-count{ font-family:'Space Mono', monospace; font-size:13px; color: var(--ink-dim); }
+
+  footer{ margin-top: 26px; color: var(--ink-dim); font-size: 13px; font-family:'Space Mono', monospace; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="eyebrow">MCA511-2 · UNIT 2 · LINKED LISTS</p>
+  <h1>Linked List Operations — Interactive C++ Explorer</h1>
+  <p class="sub">Every box is a real node — data on the left, a pointer on the right. Watch the arrows redraw themselves as each line of C++ runs.</p>
+
+  <div class="card">
+    <div class="tabs" id="tabs"></div>
+    <div class="op-desc" id="opDesc"></div>
+    <div class="controls" id="opControls"></div>
+
+    <div class="split">
+      <div>
+        <h2>C++ code</h2>
+        <div class="codebox" id="codebox"></div>
+      </div>
+      <div>
+        <h2>List (max 6 nodes for this demo)</h2>
+        <div class="stage">
+          <div class="stagecanvas" id="stagecanvas">
+            <svg class="arrow-svg" id="arrowSvg"><defs>
+              <marker id="arrowhead3" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto">
+                <path d="M0,0 L7,3 L0,6 Z" fill="#4A55E0"/>
+              </marker>
+            </defs></svg>
+            <div class="row" id="row"></div>
+            <div class="stagingzone" id="stagingzone"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="status" id="status"></div>
+
+    <div class="playback">
+      <button id="runBtn" class="primary">Run ▸</button>
+      <button id="stepBtn">Step ▸</button>
+      <button id="playBtn">Play ▸▸</button>
+      <button id="resetBtn">Reset List ↺</button>
+      <span class="step-count" id="stepCount"></span>
+    </div>
+  </div>
+
+  <footer>head always points to the first box in the row — no separate bookkeeping needed, just like the real thing.</footer>
+</div>
+
+<script>
+const MAXN = 6;
+let mainList = [12, 45, 7, 23];
+let currentOp = 'traversal';
+let steps = [];
+let stepIdx = -1;
+let playTimer = null;
+
+function defaultList(){ mainList = [12, 45, 7, 23]; }
+
+function makeRow(arr){
+  return arr.map((v, i) => ({ id: 'n' + i, data: v }));
+}
+
+const OPS = {
+  traversal: {
+    label: 'Traversal',
+    desc: 'Walk from head to the end, one node at a time, following each next pointer. O(n).',
+    code: [
+      'Node* temp = head;',
+      'while (temp != NULL) {',
+      '    cout << temp->data << " ";',
+      '    temp = temp->next;',
+      '}'
+    ],
+    controls: [],
+    run(){
+      const s = [];
+      const row = makeRow(mainList);
+      if (row.length === 0){
+        s.push({line:0, rowNodes:row, tempMarkerId:null, message:'temp = head, but head is NULL — the list is empty.'});
+        s.push({line:1, rowNodes:row, tempMarkerId:null, message:'while (temp != NULL) → false immediately. Nothing to traverse.'});
+        return {steps:s};
+      }
+      s.push({line:0, rowNodes:row, tempMarkerId:'n0', message:'temp = head → temp now points at the first node.'});
+      for (let i=0;i<row.length;i++){
+        s.push({line:1, rowNodes:row, tempMarkerId:'n'+i, message:`while (temp != NULL) → true, temp is at index ${i}`});
+        s.push({line:2, rowNodes:row, tempMarkerId:'n'+i, highlight:{['n'+i]:'current'}, message:`Print temp->data = ${row[i].data}`});
+        const nextId = (i+1<row.length) ? 'n'+(i+1) : null;
+        s.push({line:3, rowNodes:row, tempMarkerId:nextId, message:`temp = temp->next → moves to ${nextId ? 'index '+(i+1) : 'NULL'}`});
+      }
+      s.push({line:1, rowNodes:row, tempMarkerId:null, message:'while (temp != NULL) → false. temp is NULL — traversal complete.'});
+      return {steps:s};
+    }
+  },
+
+  search: {
+    label: 'Search',
+    desc: 'Walk the list comparing each node\'s data to the key, stopping the moment a match is found. O(n).',
+    code: [
+      'Node* temp = head;',
+      'int pos = 0;',
+      'while (temp != NULL) {',
+      '    if (temp->data == key)',
+      '        return pos;',
+      '    temp = temp->next;',
+      '    pos++;',
+      '}',
+      'return -1;'
+    ],
+    controls: [
+      {id:'key', label:'Search key', def:23},
+    ],
+    run(inputs){
+      const key = inputs.key;
+      const row = makeRow(mainList);
+      const s = [];
+      if (row.length === 0){
+        s.push({line:0, rowNodes:row, tempMarkerId:null, message:'The list is empty — nothing to search.'});
+        s.push({line:8, rowNodes:row, tempMarkerId:null, message:'return -1 (not found).'});
+        return {steps:s};
+      }
+      s.push({line:0, rowNodes:row, tempMarkerId:'n0', message:'temp = head'});
+      let foundIdx = -1;
+      for (let i=0;i<row.length;i++){
+        s.push({line:2, rowNodes:row, tempMarkerId:'n'+i, message:`while (temp != NULL) → true, temp is at index ${i}`});
+        s.push({line:3, rowNodes:row, tempMarkerId:'n'+i, highlight:{['n'+i]:'compare'}, message:`Compare temp->data (${row[i].data}) with key (${key})`});
+        if (row[i].data === key){
+          s.push({line:4, rowNodes:row, tempMarkerId:'n'+i, highlight:{['n'+i]:'found'}, message:`Match! return pos = ${i}`});
+          foundIdx = i;
+          break;
+        }
+        const nextId = (i+1<row.length) ? 'n'+(i+1) : null;
+        s.push({line:5, rowNodes:row, tempMarkerId:nextId, message:`temp = temp->next`});
+      }
+      if (foundIdx === -1){
+        s.push({line:2, rowNodes:row, tempMarkerId:null, message:'while (temp != NULL) → false, reached the end.'});
+        s.push({line:8, rowNodes:row, tempMarkerId:null, message:'return -1 — key not found in the list.'});
+      }
+      return {steps:s};
+    }
+  },
+
+  insertion: {
+    label: 'Insertion',
+    desc: 'Create a new node on the heap, then relink pointers so it takes its place at the given position (0 = new head). Position 0 is O(1); any other position is O(n) because of the traversal needed to reach it.',
+    code: [
+      'Node* newNode = new Node();',
+      'newNode->data = value;',
+      'if (pos == 0) {',
+      '    newNode->next = head;',
+      '    head = newNode;',
+      '} else {',
+      '    Node* temp = head;',
+      '    for (int i = 0; i < pos - 1; i++)',
+      '        temp = temp->next;',
+      '    newNode->next = temp->next;',
+      '    temp->next = newNode;',
+      '}'
+    ],
+    controls: [
+      {id:'pos', label:'Position', def:2},
+      {id:'value', label:'Value', def:99},
+    ],
+    run(inputs){
+      const arr = mainList.slice();
+      if (arr.length >= MAXN){
+        return {steps:[{line:-1, rowNodes:makeRow(arr), message:`List is at the demo limit of ${MAXN} nodes — reset to try again.`}]};
+      }
+      const pos = Math.max(0, Math.min(inputs.pos, arr.length));
+      const value = inputs.value;
+      const row = makeRow(arr);
+      const s = [];
+      const staging = {id:'stg', data:'?'};
+
+      s.push({line:0, rowNodes:row, stagingNode:{...staging}, message:'newNode = new Node() → a fresh, unlinked node appears on the heap.'});
+      staging.data = value;
+      s.push({line:1, rowNodes:row, stagingNode:{...staging}, message:`newNode->data = ${value}`});
+
+      if (pos === 0){
+        s.push({line:2, rowNodes:row, stagingNode:{...staging}, message:'pos == 0 → true, inserting at the head.'});
+        const targetId = row.length ? 'n0' : 'nullbox';
+        s.push({line:3, rowNodes:row, stagingNode:{...staging}, extraArrows:[{from:'stg', to:targetId}],
+                message:`newNode->next = head → points to ${row.length ? 'the current first node' : 'NULL (the list was empty)'}`});
+        const newArr = [value, ...arr];
+        const newRow = makeRow(newArr);
+        s.push({line:4, rowNodes:newRow, highlight:{n0:'target'}, message:'head = newNode → the new node is now the first node in the list.'});
+        return {steps:s, finalList:newArr};
+      }
+
+      s.push({line:6, rowNodes:row, stagingNode:{...staging}, tempMarkerId:'n0', message:'temp = head'});
+      for (let i=0;i<pos-1;i++){
+        s.push({line:7, rowNodes:row, stagingNode:{...staging}, tempMarkerId:'n'+i, message:`for-loop check: i=${i} < pos-1=${pos-1} → true`});
+        s.push({line:8, rowNodes:row, stagingNode:{...staging}, tempMarkerId:'n'+(i+1), message:`temp = temp->next → now at index ${i+1}`});
+      }
+      s.push({line:7, rowNodes:row, stagingNode:{...staging}, tempMarkerId:'n'+(pos-1), message:`for-loop check: i=${pos-1} < pos-1 → false, stop. temp is at index ${pos-1} (the predecessor).`});
+
+      const afterId = (pos < row.length) ? 'n'+pos : 'nullbox';
+      s.push({line:9, rowNodes:row, stagingNode:{...staging}, tempMarkerId:'n'+(pos-1), extraArrows:[{from:'stg', to:afterId}],
+              message:`newNode->next = temp->next → points to ${pos<row.length ? 'the node currently at position '+pos : 'NULL (inserting at the end)'}`});
+
+      s.push({line:10, rowNodes:row, stagingNode:{...staging}, tempMarkerId:'n'+(pos-1),
+              arrowOverrides:{['n'+(pos-1)]:'stg'}, extraArrows:[{from:'stg', to:afterId}],
+              message:'temp->next = newNode → the predecessor now points to the new node instead of its old neighbor.'});
+
+      const newArr = [...arr.slice(0,pos), value, ...arr.slice(pos)];
+      const newRow = makeRow(newArr);
+      s.push({line:10, rowNodes:newRow, highlight:{['n'+pos]:'target'}, message:'The new node is now fully linked into the list.'});
+      return {steps:s, finalList:newArr};
+    }
+  },
+
+  deletion: {
+    label: 'Deletion',
+    desc: 'Find the node just before the target, bypass the target by relinking, then free it. Position 0 is O(1); any other position is O(n) because of the traversal.',
+    code: [
+      'Node* temp = head;',
+      'if (pos == 0) {',
+      '    head = temp->next;',
+      '    delete temp;',
+      '} else {',
+      '    for (int i = 0; i < pos - 1; i++)',
+      '        temp = temp->next;',
+      '    Node* toDelete = temp->next;',
+      '    temp->next = toDelete->next;',
+      '    delete toDelete;',
+      '}'
+    ],
+    controls: [
+      {id:'pos', label:'Position', def:1},
+    ],
+    run(inputs){
+      const arr = mainList.slice();
+      const row = makeRow(arr);
+      const s = [];
+      if (arr.length === 0){
+        s.push({line:-1, rowNodes:row, message:'The list is already empty — nothing to delete.'});
+        return {steps:s};
+      }
+      const pos = Math.max(0, Math.min(inputs.pos, arr.length-1));
+
+      s.push({line:0, rowNodes:row, tempMarkerId:'n0', message:'temp = head'});
+
+      if (pos === 0){
+        s.push({line:1, rowNodes:row, tempMarkerId:'n0', highlight:{n0:'target'}, message:'pos == 0 → true, deleting the head node.'});
+        s.push({line:2, rowNodes:row, tempMarkerId:'n0', highlight:{n0:'target'}, message:'head = temp->next → head now points to the second node.'});
+        const newArr = arr.slice(1);
+        s.push({line:3, rowNodes:makeRow(newArr), message:'delete temp → the old head node is freed from the heap.'});
+        return {steps:s, finalList:newArr};
+      }
+
+      s.push({line:1, rowNodes:row, tempMarkerId:'n0', message:'pos == 0 → false, need to traverse to the predecessor.'});
+      for (let i=0;i<pos-1;i++){
+        s.push({line:5, rowNodes:row, tempMarkerId:'n'+i, message:`for-loop check: i=${i} < pos-1=${pos-1} → true`});
+        s.push({line:6, rowNodes:row, tempMarkerId:'n'+(i+1), message:`temp = temp->next → now at index ${i+1}`});
+      }
+      s.push({line:5, rowNodes:row, tempMarkerId:'n'+(pos-1), message:`for-loop check: i=${pos-1} < pos-1 → false, stop. temp is at index ${pos-1}.`});
+      s.push({line:7, rowNodes:row, tempMarkerId:'n'+(pos-1), highlight:{['n'+pos]:'target'}, message:`toDelete = temp->next → the node at index ${pos} is marked for removal.`});
+      const afterId = (pos+1<row.length) ? 'n'+(pos+1) : 'nullbox';
+      s.push({line:8, rowNodes:row, tempMarkerId:'n'+(pos-1), highlight:{['n'+pos]:'target'},
+              arrowOverrides:{['n'+(pos-1)]:afterId}, message:'temp->next = toDelete->next → the predecessor now bypasses the deleted node.'});
+      const newArr = [...arr.slice(0,pos), ...arr.slice(pos+1)];
+      s.push({line:9, rowNodes:makeRow(newArr), message:'delete toDelete → the removed node is freed from the heap.'});
+      return {steps:s, finalList:newArr};
+    }
+  }
+};
+
+const tabsEl = document.getElementById('tabs');
+Object.entries(OPS).forEach(([key, op]) => {
+  const btn = document.createElement('button');
+  btn.className = 'tab-btn' + (key===currentOp ? ' active' : '');
+  btn.textContent = op.label;
+  btn.dataset.key = key;
+  btn.addEventListener('click', () => {
+    currentOp = key;
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.key===key));
+    buildControls();
+    resetSteps();
+    renderCodeOnly();
+  });
+  tabsEl.appendChild(btn);
+});
+
+function buildControls(){
+  const op = OPS[currentOp];
+  document.getElementById('opDesc').innerHTML = op.desc;
+  const wrap = document.getElementById('opControls');
+  wrap.innerHTML = '';
+  op.controls.forEach(c => {
+    const div = document.createElement('div');
+    div.className = 'field';
+    div.innerHTML = `<label>${c.label}</label><input type="number" id="ctrl_${c.id}" value="${c.def}">`;
+    wrap.appendChild(div);
+  });
+}
+
+function renderCodeOnly(){
+  const op = OPS[currentOp];
+  const codebox = document.getElementById('codebox');
+  codebox.innerHTML = '';
+  op.code.forEach((line) => {
+    const div = document.createElement('div');
+    div.className = 'codeline';
+    div.textContent = line;
+    codebox.appendChild(div);
+  });
+  drawScene({rowNodes: makeRow(mainList)});
+  document.getElementById('status').innerHTML = `Set the inputs above (if any) and click <b>Run</b> to generate the step-by-step trace.`;
+  document.getElementById('stepCount').textContent = '';
+}
+
+function drawScene(step){
+  const rowEl = document.getElementById('row');
+  const stagingEl = document.getElementById('stagingzone');
+  rowEl.innerHTML = '';
+  stagingEl.innerHTML = '';
+
+  const rowNodes = step.rowNodes || [];
+  const highlight = step.highlight || {};
+
+  if (rowNodes.length > 0){
+    const tag = document.createElement('div');
+    tag.className = 'headtag';
+    tag.textContent = 'head';
+    rowEl.style.position = 'relative';
+    rowEl.appendChild(tag);
+  } else {
+    const tag = document.createElement('div');
+    tag.className = 'headtag';
+    tag.textContent = 'head';
+    rowEl.appendChild(tag);
+  }
+
+  rowNodes.forEach(n => {
+    const box = document.createElement('div');
+    box.className = 'nodebox' + (highlight[n.id] ? ' ' + highlight[n.id] : '');
+    box.id = n.id;
+    box.innerHTML = `<div class="data">${n.data}</div><div class="ptr">&bull;</div>`;
+    rowEl.appendChild(box);
+  });
+
+  const nullBox = document.createElement('div');
+  nullBox.className = 'nullbox';
+  nullBox.id = 'nullbox';
+  nullBox.textContent = 'NULL';
+  rowEl.appendChild(nullBox);
+
+  if (step.stagingNode){
+    const label = document.createElement('div');
+    label.className = 'staginglabel';
+    label.textContent = 'unlinked (heap)';
+    const box = document.createElement('div');
+    box.className = 'nodebox staging';
+    box.id = step.stagingNode.id;
+    box.innerHTML = `<div class="data">${step.stagingNode.data}</div><div class="ptr">?</div>`;
+    stagingEl.appendChild(label);
+    stagingEl.appendChild(box);
+  }
+
+  requestAnimationFrame(() => drawArrows(step));
+  renderTempFlag(step.tempMarkerId);
+}
+
+function elCenter(el, side){
+  const canvasRect = document.getElementById('stagecanvas').getBoundingClientRect();
+  const r = el.getBoundingClientRect();
+  if (side === 'right') return { x: r.right - canvasRect.left, y: (r.top+r.bottom)/2 - canvasRect.top };
+  if (side === 'left')  return { x: r.left - canvasRect.left,  y: (r.top+r.bottom)/2 - canvasRect.top };
+  if (side === 'top')   return { x: (r.left+r.right)/2 - canvasRect.left, y: r.top - canvasRect.top };
+  return { x: (r.left+r.right)/2 - canvasRect.left, y: (r.top+r.bottom)/2 - canvasRect.top };
+}
+
+function drawArrows(step){
+  const svg = document.getElementById('arrowSvg');
+  const defs = svg.querySelector('defs').outerHTML;
+  svg.innerHTML = defs;
+
+  const rowNodes = step.rowNodes || [];
+  const overrides = step.arrowOverrides || {};
+
+  function addArrow(fromId, toId){
+    const fromEl = document.getElementById(fromId);
+    const toEl = document.getElementById(toId);
+    if (!fromEl || !toEl) return;
+    const a = elCenter(fromEl, 'right');
+    const b = elCenter(toEl, toId === 'stg' ? 'top' : 'left');
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    const midX = (a.x + b.x) / 2;
+    const d = (a.y === b.y)
+      ? `M ${a.x} ${a.y} L ${b.x} ${b.y}`
+      : `M ${a.x} ${a.y} Q ${midX} ${Math.min(a.y,b.y)-30}, ${b.x} ${b.y}`;
+    path.setAttribute('d', d);
+    path.setAttribute('fill', 'none');
+    path.setAttribute('stroke', '#4A55E0');
+    path.setAttribute('stroke-width', '2.2');
+    path.setAttribute('marker-end', 'url(#arrowhead3)');
+    svg.appendChild(path);
+  }
+
+  // head -> first node (or NULL if empty)
+  const headTag = document.querySelector('.headtag');
+  if (headTag){
+    const targetId = rowNodes.length ? rowNodes[0].id : 'nullbox';
+    const fromPt = elCenter(headTag, 'bottom' in {} ? 'bottom' : 'default');
+    const toEl = document.getElementById(targetId);
+    if (toEl){
+      const canvasRect = document.getElementById('stagecanvas').getBoundingClientRect();
+      const r = headTag.getBoundingClientRect();
+      const a = { x: (r.left+r.right)/2 - canvasRect.left, y: r.bottom - canvasRect.top };
+      const b = elCenter(toEl, 'top');
+      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      path.setAttribute('d', `M ${a.x} ${a.y} L ${b.x} ${b.y}`);
+      path.setAttribute('fill', 'none');
+      path.setAttribute('stroke', '#4A55E0');
+      path.setAttribute('stroke-width', '2.2');
+      path.setAttribute('marker-end', 'url(#arrowhead3)');
+      svg.appendChild(path);
+    }
+  }
+
+  // default chain between consecutive row nodes, honoring overrides
+  for (let i=0;i<rowNodes.length;i++){
+    const id = rowNodes[i].id;
+    if (overrides[id]) {
+      addArrow(id, overrides[id]);
+      continue;
+    }
+    const nextId = (i+1<rowNodes.length) ? rowNodes[i+1].id : 'nullbox';
+    addArrow(id, nextId);
+  }
+
+  (step.extraArrows || []).forEach(e => addArrow(e.from, e.to));
+}
+
+function renderTempFlag(nodeId){
+  let flag = document.getElementById('tempflag');
+  if (flag) flag.remove();
+  if (!nodeId) return;
+  const target = document.getElementById(nodeId);
+  if (!target) return;
+  const canvas = document.getElementById('stagecanvas');
+  const canvasRect = canvas.getBoundingClientRect();
+  const r = target.getBoundingClientRect();
+  flag = document.createElement('div');
+  flag.id = 'tempflag';
+  flag.className = 'tempflag';
+  flag.textContent = 'temp';
+  flag.style.left = ((r.left+r.right)/2 - canvasRect.left) + 'px';
+  flag.style.top = (r.top - canvasRect.top) + 'px';
+  canvas.appendChild(flag);
+}
+
+function renderStep(){
+  const codebox = document.getElementById('codebox');
+  const lines = codebox.querySelectorAll('.codeline');
+
+  if (stepIdx < 0 || steps.length === 0){
+    renderCodeOnly();
+    return;
+  }
+  const step = steps[stepIdx];
+  lines.forEach((el, i) => el.classList.toggle('active', i === step.line));
+
+  drawScene(step);
+  document.getElementById('status').innerHTML = step.message;
+  document.getElementById('stepCount').textContent = `Step ${stepIdx+1} / ${steps.length}`;
+  document.getElementById('stepBtn').disabled = stepIdx >= steps.length - 1;
+}
+
+function resetSteps(){
+  steps = [];
+  stepIdx = -1;
+  stopPlay();
+}
+
+function getInputs(){
+  const op = OPS[currentOp];
+  const inputs = {};
+  op.controls.forEach(c => {
+    inputs[c.id] = parseInt(document.getElementById(`ctrl_${c.id}`).value) || 0;
+  });
+  return inputs;
+}
+
+document.getElementById('runBtn').addEventListener('click', () => {
+  const op = OPS[currentOp];
+  const inputs = getInputs();
+  const result = op.run(inputs);
+  steps = result.steps;
+  stepIdx = 0;
+  if (result.finalList){ mainList = result.finalList; }
+  renderStep();
+});
+
+document.getElementById('stepBtn').addEventListener('click', () => {
+  if (stepIdx < steps.length - 1){
+    stepIdx++;
+    renderStep();
+  }
+  if (stepIdx >= steps.length - 1) stopPlay();
+});
+
+document.getElementById('playBtn').addEventListener('click', () => {
+  if (playTimer) { stopPlay(); return; }
+  if (steps.length === 0) return;
+  playTimer = setInterval(() => {
+    if (stepIdx < steps.length - 1){
+      stepIdx++;
+      renderStep();
+    } else {
+      stopPlay();
+    }
+  }, 900);
+  document.getElementById('playBtn').textContent = 'Pause ❚❚';
+});
+
+function stopPlay(){
+  clearInterval(playTimer);
+  playTimer = null;
+  document.getElementById('playBtn').textContent = 'Play ▸▸';
+}
+
+document.getElementById('resetBtn').addEventListener('click', () => {
+  defaultList();
+  resetSteps();
+  renderCodeOnly();
+});
+
+window.addEventListener('resize', () => {
+  if (stepIdx >= 0 && steps[stepIdx]) drawArrows(steps[stepIdx]);
+});
+
+buildControls();
+renderCodeOnly();
+</script>
+</body>
+</html>

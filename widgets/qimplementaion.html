@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Queue: Array vs Linked List · CS Orientation</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Lora:ital,wght@0,600;1,400&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:      #0d1117;
+  --surface: #161b22;
+  --s2:      #1c2128;
+  --border:  #30363d;
+  --gold:    #f0b429;
+  --blue:    #79c0ff;
+  --green:   #7ee787;
+  --red:     #ff7b72;
+  --purple:  #bc8cff;
+  --text:    #e6edf3;
+  --muted:   #8b949e;
+}
+
+body {
+  background: var(--bg); color: var(--text);
+  font-family: 'JetBrains Mono', monospace;
+  min-height: 100vh;
+  display: flex; flex-direction: column; align-items: center;
+  padding: 36px 20px 60px;
+}
+
+.header { text-align: center; margin-bottom: 28px; }
+.tag { font-size: 11px; color: var(--muted); letter-spacing:.18em; text-transform:uppercase; margin-bottom:8px; }
+h1 { font-size: 2em; color: var(--gold); letter-spacing:-.03em; margin-bottom:6px; }
+.subtitle { font-family: 'Lora', serif; font-style:italic; color: var(--muted); font-size:.92em; }
+
+.card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; padding: 22px 26px;
+  width: 100%; max-width: 1020px; margin-bottom: 16px;
+}
+
+/* ── controls ──────────────────────────────────────────────────────── */
+.controls { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+
+.ctrl-group { display: flex; flex-direction: column; gap: 6px; }
+.ctrl-label { font-size: .7em; color: var(--muted); letter-spacing:.07em; }
+
+input[type="text"] {
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: 8px; color: var(--text);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: .9em; padding: 8px 12px;
+  width: 100px; outline: none; transition: border-color .2s;
+}
+input:focus { border-color: var(--gold); }
+
+.btn {
+  border: none; border-radius: 8px; cursor: pointer;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: .82em; font-weight: 700; padding: 9px 22px;
+  transition: opacity .2s, transform .1s; white-space: nowrap;
+}
+.btn:hover:not(:disabled) { opacity:.85; transform: translateY(-1px); }
+.btn:disabled { opacity:.3; pointer-events: none; }
+.btn-enqueue { background: var(--green); color: #0d1117; }
+.btn-dequeue { background: var(--red); color: #fff; }
+.btn-reset   { background: var(--s2); border: 1px solid var(--border); color: var(--text); }
+
+/* ── two panels ────────────────────────────────────────────────────── */
+.panels {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 16px; width: 100%; max-width: 1020px; margin-bottom: 16px;
+}
+
+.panel {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; padding: 22px;
+}
+
+.panel-head {
+  display: flex; justify-content: space-between;
+  align-items: flex-start; margin-bottom: 20px;
+}
+.panel-title { font-size: 1em; color: var(--gold); margin-bottom: 3px; }
+.panel-sub   { font-size: .7em; color: var(--muted); }
+
+.cost-pill {
+  font-size: .72em; padding: 4px 12px;
+  border-radius: 20px; border: 1px solid var(--border);
+  color: var(--muted); background: var(--bg);
+  transition: all .4s; font-weight: 700; white-space: nowrap;
+}
+.cost-pill.good { border-color: var(--green); color: var(--green); background: #061410; }
+.cost-pill.bad  { border-color: var(--red);   color: var(--red);   background: #150505; }
+.cost-pill.ok   { border-color: var(--gold);  color: var(--gold);  background: #120e00; }
+
+/* ── array visual ──────────────────────────────────────────────────── */
+.arr-wrap {
+  display: flex; flex-direction: column; gap: 0;
+  min-height: 130px;
+}
+
+.arr-labels {
+  display: flex; gap: 5px; margin-bottom: 4px; height: 22px;
+}
+.arr-label-slot {
+  width: 64px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .65em; color: transparent;
+  transition: color .3s;
+}
+.arr-label-slot.front { color: var(--blue); }
+.arr-label-slot.rear  { color: var(--purple); }
+.arr-label-slot.both  { color: var(--gold); }
+
+.arr-slots { display: flex; gap: 5px; }
+
+.arr-slot {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  flex-shrink: 0;
+}
+
+.arr-box {
+  width: 64px; height: 52px;
+  border-radius: 8px; border: 2px solid var(--border);
+  background: var(--bg);
+  display: flex; align-items: center; justify-content: center;
+  font-size: .78em; font-weight: 700; color: var(--text);
+  transition: background .3s, border-color .3s, color .3s, transform .25s;
+  position: relative;
+}
+.arr-box.empty { opacity:.22; border-style: dashed; }
+
+.arr-box.front-marker { border-color: var(--blue); }
+.arr-box.rear-marker  { border-color: var(--purple); }
+.arr-box.both-marker  { border-color: var(--gold); }
+.arr-box.leaving      { background: #150505; border-color: var(--red); color: var(--red); }
+.arr-box.shifting     {
+  background: #1e1500 !important; border-color: var(--gold) !important;
+  color: var(--gold) !important;
+  animation: nudgeLeft .3s ease;
+}
+.arr-box.arrived      { background: #061410; border-color: var(--green); color: var(--green); animation: popIn .35s ease; }
+.arr-box.enqueuing    { background: #061410; border-color: var(--green); color: var(--green); animation: popIn .35s ease; }
+
+.arr-idx { font-size: .6em; color: var(--muted); }
+
+@keyframes nudgeLeft { from { transform: translateX(12px); } to { transform: translateX(0); } }
+@keyframes popIn     { from { transform: scale(.4); opacity:0; } to { transform: scale(1); opacity:1; } }
+@keyframes fadeOut   { to   { opacity:0; transform: scale(.75); } }
+
+/* ── linked list visual ────────────────────────────────────────────── */
+.ll-wrap { display: flex; flex-direction: column; min-height: 130px; }
+
+.ll-pointer-row {
+  display: flex; align-items: center; gap: 0;
+  font-size: .65em; min-height: 22px; margin-bottom: 4px;
+}
+.ll-ptr-label {
+  width: 80px; text-align: center; flex-shrink: 0;
+  transition: color .3s;
+}
+.ll-ptr-head { color: var(--blue); }
+.ll-ptr-tail { color: var(--purple); }
+.ll-ptr-gap  { flex: 1; }
+
+.ll-nodes { display: flex; align-items: center; flex-wrap: wrap; gap: 2px; }
+
+.ll-node-wrap { display: flex; align-items: center; }
+
+.ll-box {
+  width: 80px; height: 52px;
+  border-radius: 8px; border: 2px solid var(--border);
+  background: var(--bg);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 2px; transition: all .3s;
+  flex-shrink: 0;
+}
+.ll-val { font-size: .78em; font-weight: 700; }
+.ll-ptr { font-size: .58em; color: var(--muted); }
+
+.ll-box.head-node { border-color: var(--blue); }
+.ll-box.tail-node { border-color: var(--purple); }
+.ll-box.solo-node { border-color: var(--gold); }
+.ll-box.leaving   { background: #150505; border-color: var(--red); color: var(--red); animation: fadeOut .45s ease forwards; }
+.ll-box.arrived   { background: #061410; border-color: var(--green); color: var(--green); animation: popIn .35s ease; }
+
+.ll-arrow {
+  color: var(--muted); font-size: 1em;
+  padding: 0 3px; transition: color .35s;
+  margin-bottom: 0; flex-shrink: 0;
+}
+.ll-arrow.changing { color: var(--gold); }
+
+.ll-null {
+  background: var(--s2); border: 1px dashed var(--border);
+  border-radius: 6px; padding: 4px 10px;
+  font-size: .7em; color: var(--muted); flex-shrink: 0;
+}
+
+.ll-empty-msg {
+  font-size: .78em; color: var(--muted); font-style: italic;
+  padding: 16px 0;
+}
+
+/* ── stats row ─────────────────────────────────────────────────────── */
+.stats-row {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 8px; margin-top: 18px;
+}
+.stat {
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: 8px; padding: 10px 8px; text-align: center;
+}
+.stat-val { font-size: 1.6em; font-weight: 700; color: var(--gold); }
+.stat-lbl { font-size: .62em; color: var(--muted); letter-spacing:.05em; margin-top: 2px; }
+
+/* ── log ───────────────────────────────────────────────────────────── */
+.log-area {
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: 8px; padding: 12px 16px;
+  font-size: .77em; line-height: 2;
+  min-height: 64px; max-height: 110px; overflow-y: auto;
+}
+.log-line       { color: var(--muted); }
+.log-line.arr   { color: var(--blue); }
+.log-line.ll    { color: var(--purple); }
+.log-line.done  { color: var(--green); font-weight: 700; }
+.log-line.warn  { color: var(--gold); }
+.log-line.bad   { color: var(--red); }
+
+/* ── insight ───────────────────────────────────────────────────────── */
+.insight {
+  font-family: 'Lora', serif; font-style: italic;
+  font-size: .9em; line-height: 1.75; color: var(--text);
+  border-left: 4px solid var(--gold);
+  padding: 0.8em 1.2em; background: #120e00;
+  border-radius: 0 8px 8px 0; margin-bottom: 16px;
+}
+
+.compare-table { width: 100%; border-collapse: collapse; font-size: .8em; }
+.compare-table th {
+  background: var(--s2) !important; color: var(--blue) !important;
+  padding: 8px 14px !important; text-align: left !important;
+  border-bottom: 2px solid var(--border) !important;
+}
+.compare-table td {
+  padding: 8px 14px !important;
+  border-bottom: 1px solid #1c2128 !important;
+  background: var(--bg) !important; color: var(--text) !important;
+}
+.compare-table tr:last-child td { border-bottom: none !important; }
+.good { color: var(--green) !important; font-weight:700; }
+.bad  { color: var(--red)   !important; font-weight:700; }
+.ok   { color: var(--gold)  !important; font-weight:700; }
+
+.note {
+  background: var(--s2); border: 1px solid var(--border);
+  border-radius: 8px; padding: 12px 16px;
+  font-size: .78em; color: var(--muted);
+  line-height: 1.7; margin-top: 14px;
+}
+.note strong { color: var(--text); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="tag">CS Orientation · Widget 05</div>
+  <h1>Queue via Array vs. Linked List</h1>
+  <div class="subtitle">Same queue. Different containers. Profoundly different costs.</div>
+</div>
+
+<!-- Controls -->
+<div class="card">
+  <div class="controls">
+    <div class="ctrl-group">
+      <div class="ctrl-label">VALUE TO ENQUEUE</div>
+      <input type="text" id="valInput" value="P121" maxlength="6" placeholder="P121">
+    </div>
+    <button class="btn btn-enqueue" id="enqBtn" onclick="runOp('enqueue')">+ ENQUEUE</button>
+    <button class="btn btn-dequeue" id="deqBtn" onclick="runOp('dequeue')">− DEQUEUE</button>
+    <button class="btn btn-reset"   id="rstBtn" onclick="resetAll()">↺ Reset</button>
+    <div style="margin-left:auto; font-size:.72em; color:var(--muted); line-height:1.6;">
+      ENQUEUE → adds to rear<br>DEQUEUE → removes from front
+    </div>
+  </div>
+</div>
+
+<!-- Two panels -->
+<div class="panels">
+
+  <!-- ARRAY QUEUE -->
+  <div class="panel">
+    <div class="panel-head">
+      <div>
+        <div class="panel-title">📦 Array Queue</div>
+        <div class="panel-sub">Contiguous slots · Front fixed at index 0</div>
+      </div>
+      <div class="cost-pill" id="arrCost">—</div>
+    </div>
+
+    <div class="arr-wrap">
+      <div class="arr-labels" id="arrLabels"></div>
+      <div class="arr-slots" id="arrSlots"></div>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat">
+        <div class="stat-val" id="arrOpCost">—</div>
+        <div class="stat-lbl">LAST OP</div>
+      </div>
+      <div class="stat">
+        <div class="stat-val" id="arrShifts">0</div>
+        <div class="stat-lbl">TOTAL SHIFTS</div>
+      </div>
+      <div class="stat">
+        <div class="stat-val" id="arrSize">3</div>
+        <div class="stat-lbl">QUEUE SIZE</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LINKED LIST QUEUE -->
+  <div class="panel">
+    <div class="panel-head">
+      <div>
+        <div class="panel-title">🔗 Linked List Queue</div>
+        <div class="panel-sub">HEAD = front · TAIL = rear · Two pointers</div>
+      </div>
+      <div class="cost-pill" id="llCost">—</div>
+    </div>
+
+    <div class="ll-wrap">
+      <div class="ll-nodes" id="llNodes"></div>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat">
+        <div class="stat-val" id="llOpCost">—</div>
+        <div class="stat-lbl">LAST OP</div>
+      </div>
+      <div class="stat">
+        <div class="stat-val" id="llPtrOps">0</div>
+        <div class="stat-lbl">TOTAL PTR OPS</div>
+      </div>
+      <div class="stat">
+        <div class="stat-val" id="llSize">3</div>
+        <div class="stat-lbl">QUEUE SIZE</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Log -->
+<div class="card" style="padding:16px 22px;">
+  <div style="font-size:.7em; color:var(--muted); letter-spacing:.08em; margin-bottom:8px;">OPERATION LOG</div>
+  <div class="log-area" id="logArea">
+    <div class="log-line">← ENQUEUE adds to the rear. DEQUEUE removes from the front. Watch the costs diverge.</div>
+  </div>
+</div>
+
+<!-- Insight + table -->
+<div class="card">
+  <div class="insight">
+    A queue demands two things: add to the rear, remove from the front. For a linked list with a tail pointer, both are O(1) — change one pointer each time. For a naive array, adding to the rear is fine — but removing from the front forces every remaining element to shift left. One DEQUEUE on an array with n elements costs n−1 moves.
+  </div>
+
+  <table class="compare-table">
+    <thead>
+      <tr>
+        <th>Queue Operation</th>
+        <th>Array</th>
+        <th>Linked List</th>
+        <th>Winner</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>ENQUEUE (add to rear)</td>
+        <td class="good">O(1) — place at rear</td>
+        <td class="good">O(1) — update tail.next + tail</td>
+        <td style="color:var(--muted)">Tie</td>
+      </tr>
+      <tr>
+        <td>DEQUEUE (remove from front)</td>
+        <td class="bad">O(n) — shift all left</td>
+        <td class="good">O(1) — move head pointer</td>
+        <td class="good">Linked List ✓</td>
+      </tr>
+      <tr>
+        <td>Memory per element</td>
+        <td class="good">Just the value</td>
+        <td class="bad">Value + one pointer</td>
+        <td class="good">Array ✓</td>
+      </tr>
+      <tr>
+        <td>Capacity limit</td>
+        <td class="bad">Fixed at creation</td>
+        <td class="good">Grows dynamically</td>
+        <td class="good">Linked List ✓</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="note">
+    <strong>There IS an O(1) array queue:</strong> the <em>circular buffer</em> — keep two indices, front and rear, and wrap them around the array. Both ENQUEUE and DEQUEUE become O(1). But it requires careful index arithmetic and a fixed capacity. The linked list gives you O(1) naturally, without the complexity. This is why most queue implementations in systems programming use a linked list — or a linked list of fixed-size chunks for cache efficiency.
+    <br><br>
+    <strong>In our BFS contact trace:</strong> we need to DEQUEUE frequently (once per person traced) and ENQUEUE frequently (once per contact discovered). Both being O(1) is not optional at scale — it's what makes BFS run in O(V + E) time.
+  </div>
+</div>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────────────
+const INITIAL  = ['P101', 'P103', 'P108'];
+const MAX_ARR  = 7;
+const STEP_MS  = 420;
+
+let arrQueue   = [...INITIAL];
+let llQueue    = [...INITIAL];
+let arrShifts  = 0;
+let llPtrOps   = 0;
+let busy       = false;
+
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+// ── Logging ────────────────────────────────────────────────────────────────
+function log(msg, cls = '') {
+  const area = document.getElementById('logArea');
+  const line = document.createElement('div');
+  line.className = `log-line ${cls}`;
+  line.textContent = msg;
+  area.appendChild(line);
+  area.scrollTop = area.scrollHeight;
+}
+function clearLog() { document.getElementById('logArea').innerHTML = ''; }
+
+// ── Cost pills ─────────────────────────────────────────────────────────────
+function setCost(id, text, cls) {
+  const el = document.getElementById(id);
+  el.textContent = text; el.className = `cost-pill ${cls}`;
+}
+function setOpCost(arrId, llId, arrTxt, llTxt, arrCls, llCls) {
+  document.getElementById(arrId).textContent = arrTxt;
+  document.getElementById(llId).textContent  = llTxt;
+}
+
+// ── ARRAY rendering ────────────────────────────────────────────────────────
+function renderArray(frontMark = 0, rearMark = null, states = {}) {
+  const slots  = document.getElementById('arrSlots');
+  const labels = document.getElementById('arrLabels');
+  slots.innerHTML = ''; labels.innerHTML = '';
+
+  const rear = rearMark !== null ? rearMark : arrQueue.length - 1;
+
+  for (let i = 0; i < MAX_ARR; i++) {
+    // label
+    const lbl = document.createElement('div');
+    lbl.className = 'arr-label-slot';
+    if (arrQueue.length > 0) {
+      if (i === 0 && i === rear)          lbl.classList.add('both'),  lbl.textContent = '▼ F/R';
+      else if (i === 0)                   lbl.classList.add('front'), lbl.textContent = '▼ FRONT';
+      else if (i === rear && i < arrQueue.length) lbl.classList.add('rear'), lbl.textContent = '▼ REAR';
+    }
+    labels.appendChild(lbl);
+
+    // slot
+    const slot = document.createElement('div');
+    slot.className = 'arr-slot';
+
+    const box = document.createElement('div');
+    box.className = 'arr-box' + (i >= arrQueue.length ? ' empty' : '');
+    box.id = `arr-box-${i}`;
+    box.textContent = i < arrQueue.length ? arrQueue[i] : '';
+
+    if (i === 0 && arrQueue.length > 0)     box.classList.add('front-marker');
+    if (i === rear && i < arrQueue.length && i !== 0) box.classList.add('rear-marker');
+    if (states[i]) { box.classList.remove('empty'); box.classList.add(states[i]); }
+
+    const idx = document.createElement('div');
+    idx.className = 'arr-idx'; idx.textContent = `[${i}]`;
+
+    slot.appendChild(box); slot.appendChild(idx);
+    slots.appendChild(slot); labels.appendChild(lbl);
+  }
+  // fix: labels was appended twice in loop, rebuild
+  rebuildLabels(rear);
+  document.getElementById('arrSize').textContent  = arrQueue.length;
+  document.getElementById('arrShifts').textContent = arrShifts;
+}
+
+function rebuildLabels(rear) {
+  const labels = document.getElementById('arrLabels');
+  labels.innerHTML = '';
+  for (let i = 0; i < MAX_ARR; i++) {
+    const lbl = document.createElement('div');
+    lbl.className = 'arr-label-slot';
+    if (arrQueue.length > 0) {
+      if (i === 0 && i === rear && rear === 0)   { lbl.classList.add('both');  lbl.textContent = '▼ F&R'; }
+      else if (i === 0)                           { lbl.classList.add('front'); lbl.textContent = '▼ FRONT'; }
+      else if (i === rear && i < arrQueue.length) { lbl.classList.add('rear');  lbl.textContent = '▼ REAR'; }
+    }
+    labels.appendChild(lbl);
+  }
+}
+
+function setArrState(i, cls) {
+  const b = document.getElementById(`arr-box-${i}`);
+  if (!b) return;
+  b.className = 'arr-box';
+  if (i >= arrQueue.length) b.classList.add('empty');
+  else if (i === 0) b.classList.add('front-marker');
+  else if (i === arrQueue.length - 1) b.classList.add('rear-marker');
+  if (cls) b.classList.add(cls);
+}
+
+// ── LINKED LIST rendering ──────────────────────────────────────────────────
+function renderLL(states = {}) {
+  const container = document.getElementById('llNodes');
+  container.innerHTML = '';
+
+  if (llQueue.length === 0) {
+    const msg = document.createElement('div');
+    msg.className = 'll-empty-msg'; msg.textContent = 'Queue is empty.';
+    container.appendChild(msg);
+    document.getElementById('llSize').textContent   = 0;
+    document.getElementById('llPtrOps').textContent = llPtrOps;
+    return;
+  }
+
+  llQueue.forEach((val, i) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'll-node-wrap';
+
+    const box = document.createElement('div');
+    box.className = 'll-box';
+    box.id = `ll-box-${i}`;
+
+    const isHead = i === 0;
+    const isTail = i === llQueue.length - 1;
+    if (isHead && isTail) box.classList.add('solo-node');
+    else if (isHead)      box.classList.add('head-node');
+    else if (isTail)      box.classList.add('tail-node');
+    if (states[i])        box.classList.add(states[i]);
+
+    const valDiv = document.createElement('div');
+    valDiv.className = 'll-val'; valDiv.textContent = val;
+
+    const ptrDiv = document.createElement('div');
+    ptrDiv.className = 'll-ptr';
+    ptrDiv.textContent = isTail ? '→ NULL' : '→ next';
+
+    // label overlay
+    const roleDiv = document.createElement('div');
+    roleDiv.className = 'll-ptr';
+    roleDiv.style.color = isHead && isTail ? 'var(--gold)'
+                        : isHead           ? 'var(--blue)'
+                        : isTail           ? 'var(--purple)' : 'transparent';
+    roleDiv.textContent = isHead && isTail ? 'HEAD/TAIL'
+                        : isHead           ? 'HEAD'
+                        : isTail           ? 'TAIL' : '';
+
+    box.appendChild(valDiv);
+    box.appendChild(ptrDiv);
+
+    const nodeCont = document.createElement('div');
+    nodeCont.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:3px;';
+    nodeCont.appendChild(box);
+    nodeCont.appendChild(roleDiv);
+
+    wrap.appendChild(nodeCont);
+    container.appendChild(wrap);
+
+    // arrow
+    const arrow = document.createElement('div');
+    arrow.className = 'll-arrow'; arrow.id = `ll-arrow-${i}`;
+    if (states[`a${i}`]) arrow.classList.add(states[`a${i}`]);
+    arrow.textContent = '→';
+    container.appendChild(arrow);
+  });
+
+  // NULL
+  const nullEl = document.createElement('div');
+  nullEl.className = 'll-null'; nullEl.textContent = 'NULL';
+  container.appendChild(nullEl);
+
+  document.getElementById('llSize').textContent   = llQueue.length;
+  document.getElementById('llPtrOps').textContent = llPtrOps;
+}
+
+function setLLState(i, cls) {
+  const b = document.getElementById(`ll-box-${i}`);
+  if (!b) return;
+  b.className = 'll-box';
+  if (i === 0 && i === llQueue.length - 1) b.classList.add('solo-node');
+  else if (i === 0)                         b.classList.add('head-node');
+  else if (i === llQueue.length - 1)        b.classList.add('tail-node');
+  if (cls) b.classList.add(cls);
+}
+function setLLArrow(i, cls) {
+  const a = document.getElementById(`ll-arrow-${i}`);
+  if (a) { a.className = 'll-arrow'; if (cls) a.classList.add(cls); }
+}
+
+// ── Main execute ───────────────────────────────────────────────────────────
+async function runOp(op) {
+  if (busy) return;
+  const val = document.getElementById('valInput').value.trim() || 'P121';
+
+  if (op === 'enqueue' && arrQueue.length >= MAX_ARR) {
+    log('⚠ Array queue is full (max 7). DEQUEUE first or Reset.', 'warn'); return;
+  }
+  if (op === 'dequeue' && arrQueue.length === 0) {
+    log('⚠ Queue is empty. Nothing to DEQUEUE.', 'warn'); return;
+  }
+
+  busy = true;
+  ['enqBtn','deqBtn','rstBtn'].forEach(id => document.getElementById(id).disabled = true);
+  clearLog();
+
+  if (op === 'enqueue') await doEnqueue(val);
+  else                  await doDequeue();
+
+  ['enqBtn','deqBtn','rstBtn'].forEach(id => document.getElementById(id).disabled = false);
+  busy = false;
+}
+
+// ── ENQUEUE ────────────────────────────────────────────────────────────────
+async function doEnqueue(val) {
+  log(`ENQUEUE "${val}"`, 'warn');
+
+  // Both animations run concurrently
+  await Promise.all([ animateArrEnqueue(val), animateLLEnqueue(val) ]);
+
+  arrQueue.push(val); llQueue.push(val);
+  llPtrOps += 2; // tail.next + tail pointer
+
+  renderArray(); renderLL();
+
+  setCost('arrCost', 'O(1)', 'good');
+  setCost('llCost',  'O(1)', 'good');
+  document.getElementById('arrOpCost').textContent = 'O(1)';
+  document.getElementById('llOpCost').textContent  = 'O(1)';
+  document.getElementById('llPtrOps').textContent  = llPtrOps;
+
+  log(`Array: placed at index ${arrQueue.length - 1} — 1 step.`, 'arr');
+  log(`Linked List: tail.next → new node, tail → new node — 2 pointer ops.`, 'll');
+  log(`Both are O(1). No difference yet — the divergence is in DEQUEUE.`, 'done');
+}
+
+async function animateArrEnqueue(val) {
+  const idx = arrQueue.length;
+  const box = document.getElementById(`arr-box-${idx}`);
+  if (box) {
+    box.textContent = val;
+    box.classList.remove('empty');
+    box.classList.add('enqueuing');
+    rebuildLabels(idx);
+  }
+  await sleep(STEP_MS * 1.5);
+}
+
+async function animateLLEnqueue(val) {
+  // Flash tail arrow
+  const tailIdx = llQueue.length - 1;
+  setLLArrow(tailIdx, 'changing');
+  log(`[LL] tail.next → new node "${val}"`, 'll');
+  await sleep(STEP_MS);
+  setLLArrow(tailIdx, null);
+  await sleep(STEP_MS * 0.5);
+}
+
+// ── DEQUEUE ────────────────────────────────────────────────────────────────
+async function doDequeue() {
+  const n      = arrQueue.length;
+  const removed = arrQueue[0];
+  log(`DEQUEUE — removing "${removed}" from front`, 'warn');
+
+  await Promise.all([ animateArrDequeue(n), animateLLDequeue() ]);
+
+  arrQueue.shift(); llQueue.shift();
+  arrShifts += n - 1;
+  llPtrOps  += 1;
+
+  renderArray(); renderLL();
+
+  const arrCls = n - 1 === 0 ? 'good' : 'bad';
+  setCost('arrCost', n - 1 === 0 ? 'O(1)*' : `O(n) — ${n-1} shift${n-1!==1?'s':''}`, arrCls);
+  setCost('llCost',  'O(1)', 'good');
+  document.getElementById('arrOpCost').textContent = n - 1 === 0 ? '1 step' : `${n-1} shifts`;
+  document.getElementById('llOpCost').textContent  = '1 ptr op';
+  document.getElementById('arrShifts').textContent = arrShifts;
+  document.getElementById('llPtrOps').textContent  = llPtrOps;
+
+  if (n - 1 > 0) {
+    log(`Array: removed "${removed}", then shifted ${n-1} element${n-1!==1?'s':''} left. Total shifts so far: ${arrShifts}.`, 'arr');
+  } else {
+    log(`Array: removed last element — no shifting needed this time.`, 'arr');
+  }
+  log(`Linked List: HEAD pointer → next node. Done in 1 step. Total ptr ops: ${llPtrOps}.`, 'll');
+  if (n > 2) {
+    log(`Gap so far: array has done ${arrShifts} shifts. Linked list has done ${llPtrOps} ptr ops.`, 'done');
+  } else {
+    log(`Done.`, 'done');
+  }
+}
+
+async function animateArrDequeue(n) {
+  // Mark front element as leaving
+  const frontBox = document.getElementById('arr-box-0');
+  if (frontBox) frontBox.classList.add('leaving');
+  log(`[Array] Removing FRONT (index 0)…`, 'arr');
+  await sleep(STEP_MS);
+
+  // Cascade shift left
+  if (n > 1) {
+    log(`[Array] Shifting ${n-1} element${n-1!==1?'s':''} left…`, 'arr');
+    for (let i = 0; i < n - 1; i++) {
+      const box = document.getElementById(`arr-box-${i}`);
+      if (box) {
+        box.textContent = arrQueue[i + 1];
+        box.classList.remove('leaving', 'front-marker', 'rear-marker', 'empty');
+        box.classList.add('shifting');
+        await sleep(STEP_MS * 0.55);
+        box.classList.remove('shifting');
+      }
+    }
+    // Clear last slot
+    const lastBox = document.getElementById(`arr-box-${n-1}`);
+    if (lastBox) { lastBox.textContent = ''; lastBox.classList.add('empty'); }
+  }
+  await sleep(STEP_MS * 0.5);
+}
+
+async function animateLLDequeue() {
+  setLLState(0, 'leaving');
+  log(`[LL] HEAD → HEAD.next. One pointer change.`, 'll');
+  setLLArrow(0, 'changing');
+  await sleep(STEP_MS * 2.2);
+}
+
+// ── RESET ──────────────────────────────────────────────────────────────────
+function resetAll() {
+  if (busy) return;
+  arrQueue  = [...INITIAL]; llQueue = [...INITIAL];
+  arrShifts = 0; llPtrOps = 0;
+  renderArray(); renderLL();
+  setCost('arrCost','—',''); setCost('llCost','—','');
+  document.getElementById('arrOpCost').textContent = '—';
+  document.getElementById('llOpCost').textContent  = '—';
+  clearLog();
+  log('← Structures reset. Try several ENQUEUEs then several DEQUEUEs and watch the costs diverge.', '');
+}
+
+// ── INIT ───────────────────────────────────────────────────────────────────
+renderArray(); renderLL();
+</script>
+</body>
+</html>

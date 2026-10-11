@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stack & Queue · CS Orientation</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Lora:ital,wght@0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0d1117; --surface: #161b22; --border: #30363d;
+    --gold: #f0b429; --blue: #79c0ff; --green: #7ee787;
+    --red: #ff7b72; --purple: #bc8cff; --text: #e6edf3; --muted: #8b949e;
+  }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    min-height: 100vh; display: flex; flex-direction: column;
+    align-items: center; padding: 40px 20px;
+  }
+  .header { text-align: center; margin-bottom: 36px; }
+  .tag { font-size: 11px; color: var(--muted); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 8px; }
+  h1 { font-size: 2.2em; color: var(--gold); letter-spacing: -0.03em; margin-bottom: 6px; }
+  .subtitle { font-family: 'Lora', serif; font-style: italic; color: var(--muted); font-size: 1em; }
+
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; width: 100%; max-width: 900px; }
+
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 24px;
+  }
+
+  .card-title {
+    font-size: 1.1em; color: var(--gold); margin-bottom: 4px;
+  }
+  .card-sub {
+    font-size: 0.75em; color: var(--muted); margin-bottom: 20px;
+  }
+
+  .ds-visual {
+    min-height: 280px; display: flex; flex-direction: column;
+    align-items: center; justify-content: flex-end;
+    gap: 4px; padding: 16px 0; position: relative;
+  }
+
+  .queue-visual {
+    flex-direction: row; align-items: center;
+    justify-content: flex-start; overflow-x: auto;
+    min-height: 100px;
+  }
+
+  .stack-slot, .queue-slot {
+    width: 120px; height: 46px;
+    border-radius: 8px; display: flex; align-items: center;
+    justify-content: center; font-size: 0.9em; font-weight: 700;
+    border: 2px solid var(--border); background: var(--bg);
+    color: var(--text); transition: all 0.3s ease;
+    flex-shrink: 0;
+  }
+
+  .queue-slot { width: 90px; height: 60px; flex-direction: column; gap: 4px; font-size: 0.8em; }
+
+  .slot-entering {
+    animation: slideDown 0.3s ease;
+    border-color: var(--green) !important;
+    background: #0f2a14 !important;
+    color: var(--green) !important;
+  }
+
+  .slot-top {
+    border-color: var(--gold);
+    background: #2a2000;
+    color: var(--gold);
+  }
+
+  .slot-front { border-color: var(--blue); background: #0d2137; color: var(--blue); }
+  .slot-rear  { border-color: var(--purple); background: #1a0d2e; color: var(--purple); }
+
+  .slot-leaving { animation: fadeOut 0.3s ease forwards; }
+
+  @keyframes slideDown {
+    from { opacity: 0; transform: translateY(-20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeOut {
+    from { opacity: 1; transform: scale(1); }
+    to   { opacity: 0; transform: scale(0.8); }
+  }
+
+  .label-badge {
+    font-size: 0.6em; color: var(--muted); letter-spacing: 0.1em;
+    margin-top: 2px;
+  }
+
+  .empty-msg {
+    color: var(--muted); font-size: 0.8em; font-style: italic;
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  .controls { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+
+  input[type="text"] {
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text);
+    font-family: 'JetBrains Mono', monospace; font-size: 0.9em;
+    padding: 8px 12px; width: 110px; outline: none;
+    transition: border-color 0.2s;
+  }
+  input[type="text"]:focus { border-color: var(--gold); }
+
+  button {
+    background: var(--gold); border: none; border-radius: 8px;
+    color: #0d1117; cursor: pointer;
+    font-family: 'JetBrains Mono', monospace; font-size: 0.8em;
+    font-weight: 700; padding: 8px 14px;
+    transition: opacity 0.2s, transform 0.1s;
+  }
+  button:hover { opacity: 0.85; transform: translateY(-1px); }
+  button.pop { background: var(--red); color: #fff; }
+  button.clear { background: var(--surface); border: 1px solid var(--border); color: var(--muted); }
+
+  .log {
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: 8px; padding: 10px 14px;
+    font-size: 0.75em; color: var(--muted); line-height: 1.8;
+    margin-top: 14px; min-height: 60px; max-height: 80px;
+    overflow-y: auto;
+  }
+  .log .ok { color: var(--green); }
+  .log .err { color: var(--red); }
+  .log .info { color: var(--blue); }
+
+  .insight-box {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 20px 24px;
+    width: 100%; max-width: 900px; margin-top: 0;
+    font-family: 'Lora', serif;
+  }
+
+  .question {
+    background: linear-gradient(135deg, #1a1000, var(--bg));
+    border-left: 4px solid var(--gold);
+    border-radius: 0 8px 8px 0; padding: 14px 18px;
+    font-style: italic; color: var(--text);
+    line-height: 1.6; font-size: 0.95em; margin-bottom: 10px;
+  }
+
+  .question strong { color: var(--gold); font-style: normal; }
+
+  .real-world {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 14px;
+  }
+
+  .rw-item {
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: 8px; padding: 12px;
+  }
+
+  .rw-title { color: var(--gold); font-size: 0.8em; margin-bottom: 6px; font-family: 'JetBrains Mono', monospace; }
+  .rw-list { font-size: 0.78em; color: var(--muted); line-height: 1.8; list-style: none; }
+  .rw-list li::before { content: '→ '; color: var(--blue); }
+
+  .arrow {
+    font-size: 1.2em; color: var(--muted); padding: 0 4px;
+  }
+
+  .queue-wrapper {
+    display: flex; align-items: center; gap: 4px;
+    overflow-x: auto; padding: 8px 0; width: 100%;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="tag">CS Orientation · Widget 02</div>
+  <h1>Stack & Queue</h1>
+  <div class="subtitle">Two containers. Opposite personalities.</div>
+</div>
+
+<div class="grid">
+
+  <!-- STACK -->
+  <div class="card">
+    <div class="card-title">📚 Stack</div>
+    <div class="card-sub">LIFO — Last In, First Out</div>
+
+    <div class="ds-visual" id="stackVis">
+      <div class="empty-msg" id="stackEmpty">empty</div>
+    </div>
+
+    <div class="controls">
+      <input type="text" id="stackInput" placeholder="value" maxlength="8">
+      <button onclick="stackPush()">PUSH</button>
+      <button class="pop" onclick="stackPop()">POP</button>
+      <button class="clear" onclick="stackClear()">CLEAR</button>
+    </div>
+
+    <div class="log" id="stackLog">
+      <span class="info">Stack ready. Push items onto it.</span>
+    </div>
+  </div>
+
+  <!-- QUEUE -->
+  <div class="card">
+    <div class="card-title">🚶 Queue</div>
+    <div class="card-sub">FIFO — First In, First Out</div>
+
+    <div class="ds-visual queue-visual" id="queueVis" style="min-height:120px;">
+      <div class="empty-msg" id="queueEmpty">empty</div>
+    </div>
+
+    <div class="controls">
+      <input type="text" id="queueInput" placeholder="value" maxlength="8">
+      <button onclick="queueEnqueue()">ENQUEUE</button>
+      <button class="pop" onclick="queueDequeue()">DEQUEUE</button>
+      <button class="clear" onclick="queueClear()">CLEAR</button>
+    </div>
+
+    <div class="log" id="queueLog">
+      <span class="info">Queue ready. Enqueue items into it.</span>
+    </div>
+  </div>
+</div>
+
+<!-- Insight card -->
+<div class="insight-box" style="margin-top: 20px; max-width: 900px; width: 100%;">
+  <div class="question">
+    <strong>🤔 Your browser's Back button — Stack or Queue?</strong><br>
+    When you visit A → B → C and press Back twice, you get C → B → A. That's LIFO.
+  </div>
+  <div class="question">
+    <strong>🤔 A function calls itself endlessly, with no base case. What happens?</strong><br>
+    Each call pushes a frame onto the <em>call stack</em>. With no termination, the stack grows until memory runs out. Stack Overflow.
+  </div>
+
+  <div class="real-world">
+    <div class="rw-item">
+      <div class="rw-title">STACK in the wild</div>
+      <ul class="rw-list">
+        <li>Browser Back / Forward</li>
+        <li>Undo / Redo (Ctrl+Z)</li>
+        <li>Function call stack</li>
+        <li>Balanced parentheses checker</li>
+        <li>Expression evaluation</li>
+      </ul>
+    </div>
+    <div class="rw-item">
+      <div class="rw-title">QUEUE in the wild</div>
+      <ul class="rw-list">
+        <li>Print job spooler</li>
+        <li>OS process scheduler</li>
+        <li>Network packet routing</li>
+        <li>BFS graph traversal</li>
+        <li>Keyboard input buffer</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<script>
+  let stack = [];
+  let queue = [];
+  const MAX = 7;
+
+  // ── STACK ──────────────────────────────────────────────────────────────────
+
+  function stackPush() {
+    const val = document.getElementById('stackInput').value.trim() || `Item${stack.length + 1}`;
+    if (stack.length >= MAX) { addLog('stackLog', 'Stack overflow! Max size reached.', 'err'); return; }
+    stack.push(val);
+    document.getElementById('stackInput').value = '';
+    renderStack(true);
+    addLog('stackLog', `PUSH "${val}" → top of stack.`, 'ok');
+  }
+
+  function stackPop() {
+    if (!stack.length) { addLog('stackLog', 'Stack underflow! Nothing to pop.', 'err'); return; }
+    const val = stack.pop();
+    renderStack(false, val);
+    addLog('stackLog', `POP "${val}" ← removed from top.`, 'info');
+  }
+
+  function stackClear() { stack = []; renderStack(); addLog('stackLog', 'Stack cleared.', 'info'); }
+
+  function renderStack(animateTop = false) {
+    const vis = document.getElementById('stackVis');
+    const empty = document.getElementById('stackEmpty');
+    vis.innerHTML = '';
+    vis.appendChild(empty);
+
+    if (!stack.length) { empty.style.display = 'block'; return; }
+    empty.style.display = 'none';
+
+    // render bottom → top (bottom is first in DOM, top is last)
+    stack.forEach((val, i) => {
+      const slot = document.createElement('div');
+      slot.className = 'stack-slot';
+      slot.textContent = val;
+
+      const isTop = i === stack.length - 1;
+      if (isTop) slot.classList.add('slot-top');
+      if (isTop && animateTop) slot.classList.add('slot-entering');
+
+      const label = document.createElement('div');
+      label.className = 'label-badge';
+      if (isTop) label.textContent = '← TOP';
+
+      const wrapper = document.createElement('div');
+      wrapper.style.display = 'flex';
+      wrapper.style.alignItems = 'center';
+      wrapper.style.gap = '8px';
+      wrapper.appendChild(slot);
+      wrapper.appendChild(label);
+
+      vis.insertBefore(wrapper, empty);
+    });
+  }
+
+  // ── QUEUE ──────────────────────────────────────────────────────────────────
+
+  function queueEnqueue() {
+    const val = document.getElementById('queueInput').value.trim() || `Item${queue.length + 1}`;
+    if (queue.length >= MAX) { addLog('queueLog', 'Queue is full!', 'err'); return; }
+    queue.push(val);
+    document.getElementById('queueInput').value = '';
+    renderQueue(true);
+    addLog('queueLog', `ENQUEUE "${val}" → added to rear.`, 'ok');
+  }
+
+  function queueDequeue() {
+    if (!queue.length) { addLog('queueLog', 'Queue is empty! Nothing to dequeue.', 'err'); return; }
+    const val = queue.shift();
+    renderQueue();
+    addLog('queueLog', `DEQUEUE "${val}" ← removed from front.`, 'info');
+  }
+
+  function queueClear() { queue = []; renderQueue(); addLog('queueLog', 'Queue cleared.', 'info'); }
+
+  function renderQueue(animateRear = false) {
+    const vis = document.getElementById('queueVis');
+    const empty = document.getElementById('queueEmpty');
+    vis.innerHTML = '';
+    vis.appendChild(empty);
+
+    if (!queue.length) { empty.style.display = 'block'; return; }
+    empty.style.display = 'none';
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'queue-wrapper';
+
+    queue.forEach((val, i) => {
+      const slot = document.createElement('div');
+      slot.className = 'queue-slot';
+
+      const isFront = i === 0;
+      const isRear  = i === queue.length - 1;
+
+      if (isFront) slot.classList.add('slot-front');
+      else if (isRear) slot.classList.add('slot-rear');
+      if (isRear && animateRear) slot.classList.add('slot-entering');
+
+      const valDiv = document.createElement('div');
+      valDiv.textContent = val;
+
+      const label = document.createElement('div');
+      label.className = 'label-badge';
+      if (isFront && isRear) label.textContent = 'FRONT & REAR';
+      else if (isFront) label.textContent = 'FRONT';
+      else if (isRear)  label.textContent = 'REAR';
+
+      slot.appendChild(valDiv);
+      slot.appendChild(label);
+      wrapper.appendChild(slot);
+
+      if (i < queue.length - 1) {
+        const arrow = document.createElement('span');
+        arrow.className = 'arrow';
+        arrow.textContent = '→';
+        wrapper.appendChild(arrow);
+      }
+    });
+
+    vis.appendChild(wrapper);
+  }
+
+  // ── LOG ────────────────────────────────────────────────────────────────────
+
+  function addLog(id, msg, cls = '') {
+    const log = document.getElementById(id);
+    const line = document.createElement('div');
+    line.className = cls;
+    line.textContent = msg;
+    log.appendChild(line);
+    log.scrollTop = log.scrollHeight;
+  }
+
+  // ── ENTER KEY ──────────────────────────────────────────────────────────────
+
+  document.getElementById('stackInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') stackPush();
+  });
+  document.getElementById('queueInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') queueEnqueue();
+  });
+
+  // ── PRELOAD ────────────────────────────────────────────────────────────────
+  renderStack();
+  renderQueue();
+</script>
+</body>
+</html>

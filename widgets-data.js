@@ -1,8 +1,152 @@
 // DSA Interactive Hub - Widgets Data Manifest
-// Generated on: 2026-10-11 09:03:06
+// Generated on: 2026-10-11 20:25:45
 // DO NOT EDIT DIRECTLY: Run 'update_widgets.py' or 'update-widgets.bat' to re-index!
 
 const DSA_WIDGETS = [
+  {
+    "id": "merge_sort",
+    "filename": "widgets/merge_sort.html",
+    "title": "Merge sort, step by step",
+    "subtitle": "Merge sort, step by step",
+    "stamp": "GENERAL DSA",
+    "category": "General DSA",
+    "categoryIcon": "📚",
+    "categoryColor": "#c89b3c",
+    "description": "Merge sort keeps splitting the array in half until every piece holds one element, then merges the pieces back together in sorted order. Type any numbers below to watch it happen.",
+    "tags": [
+      "Binary Search",
+      "General DSA",
+      "Pointers"
+    ],
+    "sizeKb": 28.2,
+    "linesCount": 539,
+    "estimatedMinutes": 10,
+    "lastModified": "Oct 11, 2026",
+    "timestamp": 1791730417
+  },
+  {
+    "id": "qimplementaion",
+    "filename": "widgets/qimplementaion.html",
+    "title": "Queue: Array vs Linked List · CS Orientation",
+    "subtitle": "Queue via Array vs. Linked List",
+    "stamp": "STACKS & QUEUES",
+    "category": "Stacks & Queues",
+    "categoryIcon": "🥞",
+    "categoryColor": "#f2cc8f",
+    "description": "Interactive visualizer and field study exploring Queue: Array vs Linked List · CS Orientation.",
+    "tags": [
+      "Pointers",
+      "Stacks & Queues",
+      "Two Pointers"
+    ],
+    "sizeKb": 29.9,
+    "linesCount": 763,
+    "estimatedMinutes": 15,
+    "lastModified": "Oct 11, 2026",
+    "timestamp": 1791730416
+  },
+  {
+    "id": "linked_list",
+    "filename": "widgets/linked_list.html",
+    "title": "Linked List Operations",
+    "subtitle": "Interactive C++ Explorer",
+    "stamp": "Interactive C++ Explorer",
+    "category": "Linked Lists",
+    "categoryIcon": "🔗",
+    "categoryColor": "#c89b3c",
+    "description": "MCA511-2 · UNIT 2 · LINKED LISTS",
+    "tags": [
+      "Linked Lists",
+      "Pointers"
+    ],
+    "sizeKb": 27.8,
+    "linesCount": 710,
+    "estimatedMinutes": 15,
+    "lastModified": "Oct 11, 2026",
+    "timestamp": 1791730416
+  },
+  {
+    "id": "linearvsbinary",
+    "filename": "widgets/linearvsbinary.html",
+    "title": "Search Race",
+    "subtitle": "Linear vs Binary Search",
+    "stamp": "Linear vs Binary Search",
+    "category": "Complexity & Analysis",
+    "categoryIcon": "⏱️",
+    "categoryColor": "#6ea8dd",
+    "description": "MCA511-2 · UNIT 1 · SEARCHING ALGORITHMS",
+    "tags": [
+      "Binary Search",
+      "Complexity & Analysis",
+      "Linear Search",
+      "Pointers"
+    ],
+    "sizeKb": 11.4,
+    "linesCount": 327,
+    "estimatedMinutes": 10,
+    "lastModified": "Oct 11, 2026",
+    "timestamp": 1791730416
+  },
+  {
+    "id": "aray_operation",
+    "filename": "widgets/aray_operation.html",
+    "title": "Array Operations",
+    "subtitle": "Interactive C++ Explorer",
+    "stamp": "Interactive C++ Explorer",
+    "category": "Complexity & Analysis",
+    "categoryIcon": "⏱️",
+    "categoryColor": "#6ea8dd",
+    "description": "MCA511-2 · UNIT 1 · ARRAYS OPERATIONS",
+    "tags": [
+      "Complexity & Analysis",
+      "Pointers"
+    ],
+    "sizeKb": 16.5,
+    "linesCount": 471,
+    "estimatedMinutes": 10,
+    "lastModified": "Oct 11, 2026",
+    "timestamp": 1791730416
+  },
+  {
+    "id": "quick_sort",
+    "filename": "widgets/quick_sort.html",
+    "title": "Quick Sort (last element pivot), step by step",
+    "subtitle": "Quick Sort with the last element as pivot",
+    "stamp": "GENERAL DSA",
+    "category": "General DSA",
+    "categoryIcon": "📚",
+    "categoryColor": "#c89b3c",
+    "description": "Watch the array move in the live animation, then read every move of i and j in its own box below. Each box explains what was compared and why.",
+    "tags": [
+      "General DSA",
+      "Pointers"
+    ],
+    "sizeKb": 27.5,
+    "linesCount": 515,
+    "estimatedMinutes": 10,
+    "lastModified": "Oct 11, 2026",
+    "timestamp": 1791730416
+  },
+  {
+    "id": "stack_queue",
+    "filename": "widgets/stack_queue.html",
+    "title": "Stack & Queue · CS Orientation",
+    "subtitle": "Stack & Queue",
+    "stamp": "STACKS & QUEUES",
+    "category": "Stacks & Queues",
+    "categoryIcon": "🥞",
+    "categoryColor": "#f2cc8f",
+    "description": "Interactive visualizer and field study exploring Stack & Queue · CS Orientation.",
+    "tags": [
+      "Pointers",
+      "Stacks & Queues"
+    ],
+    "sizeKb": 14.6,
+    "linesCount": 413,
+    "estimatedMinutes": 10,
+    "lastModified": "Oct 11, 2026",
+    "timestamp": 1791730416
+  },
   {
     "id": "quicksort-visualizer",
     "filename": "widgets/quicksort-visualizer.html",
