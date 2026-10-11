@@ -300,7 +300,21 @@ def scan_and_generate():
     output_js_path = current_dir / "widgets-data.js"
     json_str = json.dumps(widgets, indent=2, ensure_ascii=False)
 
-    js_content = f"""// DSA Interactive Hub - Widgets Data Manifest
+    # Check if data actually changed to avoid spurious timestamp-only commits
+    data_changed = True
+    if output_js_path.exists():
+        try:
+            old_content = output_js_path.read_text(encoding="utf-8")
+            old_match = re.search(r'const\s+DSA_WIDGETS\s*=\s*(\[\s*[\s\S]*?\]);', old_content)
+            if old_match:
+                old_data = json.loads(old_match.group(1))
+                if old_data == widgets:
+                    data_changed = False
+        except Exception:
+            data_changed = True
+
+    if data_changed:
+        js_content = f"""// DSA Interactive Hub - Widgets Data Manifest
 // Generated on: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 // DO NOT EDIT DIRECTLY: Run 'update_widgets.py' or 'update-widgets.bat' to re-index!
 
@@ -314,13 +328,16 @@ if (typeof module !== 'undefined' && module.exports) {{
   module.exports = DSA_WIDGETS;
 }}
 """
+        with open(output_js_path, "w", encoding="utf-8") as f:
+            f.write(js_content)
+        print(f"\n=======================================================")
+        print(f"  SUCCESS: {len(widgets)} widgets indexed into {output_js_path.name}!")
+        print(f"=======================================================\n")
+    else:
+        print(f"\n=======================================================")
+        print(f"  INDEX UP-TO-DATE: {len(widgets)} widgets unchanged in {output_js_path.name}.")
+        print(f"=======================================================\n")
 
-    with open(output_js_path, "w", encoding="utf-8") as f:
-        f.write(js_content)
-
-    print(f"\n=======================================================")
-    print(f"  SUCCESS: {len(widgets)} widgets indexed into {output_js_path.name}!")
-    print(f"=======================================================\n")
     return widgets
 
 def sync_to_github(widgets, current_dir=None):

@@ -316,7 +316,26 @@ function scanAndGenerate() {
   }
 
   const outputJsPath = path.join(currentDir, 'widgets-data.js');
-  const jsContent = `// DSA Interactive Hub - Widgets Data Manifest
+
+  // Check if data actually changed to avoid spurious timestamp-only commits
+  let dataChanged = true;
+  if (fs.existsSync(outputJsPath)) {
+    try {
+      const oldContent = fs.readFileSync(outputJsPath, 'utf8');
+      const match = oldContent.match(/const\s+DSA_WIDGETS\s*=\s*(\[\s*[\s\S]*?\]);/);
+      if (match) {
+        const oldData = JSON.parse(match[1]);
+        if (JSON.stringify(oldData) === JSON.stringify(widgets)) {
+          dataChanged = false;
+        }
+      }
+    } catch (err) {
+      dataChanged = true;
+    }
+  }
+
+  if (dataChanged) {
+    const jsContent = `// DSA Interactive Hub - Widgets Data Manifest
 // Generated on: ${new Date().toISOString().replace('T', ' ').slice(0, 19)}
 // DO NOT EDIT DIRECTLY: Run 'update_widgets.py' or 'update-widgets.bat' to re-index!
 
@@ -330,11 +349,16 @@ if (typeof module !== 'undefined' && module.exports) {
   module.exports = DSA_WIDGETS;
 }
 `;
+    fs.writeFileSync(outputJsPath, jsContent, 'utf8');
+    console.log(`\n=======================================================`);
+    console.log(`  SUCCESS: ${widgets.length} widgets indexed into widgets-data.js!`);
+    console.log(`=======================================================\n`);
+  } else {
+    console.log(`\n=======================================================`);
+    console.log(`  INDEX UP-TO-DATE: ${widgets.length} widgets unchanged in widgets-data.js.`);
+    console.log(`=======================================================\n`);
+  }
 
-  fs.writeFileSync(outputJsPath, jsContent, 'utf8');
-  console.log(`\n=======================================================`);
-  console.log(`  SUCCESS: ${widgets.length} widgets indexed into widgets-data.js!`);
-  console.log(`=======================================================\n`);
   return widgets;
 }
 
