@@ -341,6 +341,12 @@ function scanAndGenerate() {
       }
       meta.subfolder = subfolder;
 
+      // Prefix id with subfolder slug to guarantee uniqueness across folders
+      if (subfolder) {
+        const folderSlug = subfolder.replace(/[^a-zA-Z0-9_-]/g, '_').toLowerCase();
+        meta.id = `${folderSlug}_${meta.id}`;
+      }
+
       widgets.push(meta);
       const subLabel = subfolder ? ` [Subfolder: ${subfolder}]` : '';
       console.log(`  + Indexed [${meta.category}]${subLabel}: ${meta.title} (${meta.filename})`);
@@ -447,10 +453,18 @@ function syncToGithub(widgets, currentDir = __dirname) {
     const otherFiles = [];
 
     for (const line of stagedLines) {
-      const parts = line.split(/\s+/);
-      if (parts.length < 2) continue;
-      const statusCode = parts[0];
-      const fileRel = parts.slice(1).join(' ').replace(/\\/g, '/');
+      const tabs = line.split('\t');
+      let statusCode = '';
+      let fileRel = '';
+      if (tabs.length >= 2) {
+        statusCode = tabs[0];
+        fileRel = (statusCode.startsWith('R') && tabs.length >= 3 ? tabs[2] : tabs[1]).replace(/\\/g, '/');
+      } else {
+        const parts = line.split(/\s+/);
+        if (parts.length < 2) continue;
+        statusCode = parts[0];
+        fileRel = parts.slice(1).join(' ').replace(/\\/g, '/');
+      }
       const fname = path.basename(fileRel);
 
       const isWidget = (fileRel.startsWith('widgets/') || fileRel.endsWith('.html')) && !excludedFiles.has(fname.toLowerCase());

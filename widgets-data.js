@@ -1,10 +1,10 @@
 // DSA Interactive Hub - Widgets Data Manifest
-// Generated on: 2026-10-11 23:17:48
+// Generated on: 2026-10-11 23:21:13
 // DO NOT EDIT DIRECTLY: Run 'update_widgets.py' or 'update-widgets.bat' to re-index!
 
 const DSA_WIDGETS = [
   {
-    "id": "stack_queue",
+    "id": "aiml_stack_queue",
     "filename": "widgets/AIML/stack_queue.html",
     "title": "Stack & Queue · CS Orientation",
     "subtitle": "Stack & Queue",
@@ -25,7 +25,7 @@ const DSA_WIDGETS = [
     "subfolder": "AIML"
   },
   {
-    "id": "reverse-palindrome-checker",
+    "id": "mca_b_reverse-palindrome-checker",
     "filename": "widgets/MCA B/reverse-palindrome-checker.html",
     "title": "Optimal Linked List Palindrome Check",
     "subtitle": "7 Elements (Odd) 8 Elements (Even) Default Cases",
@@ -48,7 +48,7 @@ const DSA_WIDGETS = [
     "subfolder": "MCA B"
   },
   {
-    "id": "quicksort-visualizer",
+    "id": "mca_a_quicksort-visualizer",
     "filename": "widgets/MCA A/quicksort-visualizer.html",
     "title": "Quick Sort, step by step",
     "subtitle": "Quick Sort, one step at a time",
@@ -71,7 +71,7 @@ const DSA_WIDGETS = [
     "subfolder": "MCA A"
   },
   {
-    "id": "quick_sort",
+    "id": "aiml_quick_sort",
     "filename": "widgets/AIML/quick_sort.html",
     "title": "Quick Sort (last element pivot), step by step",
     "subtitle": "Quick Sort with the last element as pivot",
@@ -94,7 +94,7 @@ const DSA_WIDGETS = [
     "subfolder": "AIML"
   },
   {
-    "id": "qimplementaion",
+    "id": "aiml_qimplementaion",
     "filename": "widgets/AIML/qimplementaion.html",
     "title": "Queue: Array vs Linked List · CS Orientation",
     "subtitle": "Queue via Array vs. Linked List",
@@ -116,7 +116,7 @@ const DSA_WIDGETS = [
     "subfolder": "AIML"
   },
   {
-    "id": "merge_sort",
+    "id": "aiml_merge_sort",
     "filename": "widgets/AIML/merge_sort.html",
     "title": "Merge sort, step by step",
     "subtitle": "Merge sort, step by step",
@@ -139,7 +139,7 @@ const DSA_WIDGETS = [
     "subfolder": "AIML"
   },
   {
-    "id": "linked_list",
+    "id": "aiml_linked_list",
     "filename": "widgets/AIML/linked_list.html",
     "title": "Linked List Operations",
     "subtitle": "Interactive C++ Explorer",
@@ -160,7 +160,7 @@ const DSA_WIDGETS = [
     "subfolder": "AIML"
   },
   {
-    "id": "linearvsbinary",
+    "id": "aiml_linearvsbinary",
     "filename": "widgets/AIML/linearvsbinary.html",
     "title": "Search Race",
     "subtitle": "Linear vs Binary Search",
@@ -183,7 +183,7 @@ const DSA_WIDGETS = [
     "subfolder": "AIML"
   },
   {
-    "id": "aray_vs_linked",
+    "id": "aiml_aray_vs_linked",
     "filename": "widgets/AIML/aray_vs_linked.html",
     "title": "Array vs Linked List · CS Orientation",
     "subtitle": "Array vs. Linked List",
@@ -205,7 +205,7 @@ const DSA_WIDGETS = [
     "subfolder": "AIML"
   },
   {
-    "id": "aray_operation",
+    "id": "aiml_aray_operation",
     "filename": "widgets/AIML/aray_operation.html",
     "title": "Array Operations",
     "subtitle": "Interactive C++ Explorer",

@@ -281,10 +281,13 @@ def scan_and_generate():
     html_files = []
     # 1. Scan widgets/ subfolder recursively if present
     if widgets_subfolder.exists() and widgets_subfolder.is_dir():
-        html_files.extend([
-            f for f in widgets_subfolder.rglob("*.html")
-            if f.name.lower() not in excluded_files and not f.name.startswith(".")
-        ])
+        for f in widgets_subfolder.rglob("*.html"):
+            parts = f.relative_to(widgets_subfolder).parts
+            if any(p.startswith(".") for p in parts):
+                continue
+            if f.name.lower() in excluded_files:
+                continue
+            html_files.append(f)
 
     # 2. Also scan root directory for any widgets
     root_files = [
@@ -310,6 +313,11 @@ def scan_and_generate():
                 if len(rel_to_widgets.parts) > 1:
                     subfolder = rel_to_widgets.parts[0]
             meta["subfolder"] = subfolder
+
+            # Prefix id with subfolder slug to guarantee uniqueness across folders
+            if subfolder:
+                folder_slug = re.sub(r'[^a-zA-Z0-9_-]', '_', subfolder).lower()
+                meta["id"] = f"{folder_slug}_{meta['id']}"
 
             widgets.append(meta)
             sub_label = f" [Subfolder: {subfolder}]" if subfolder else ""
@@ -421,11 +429,19 @@ def sync_to_github(widgets, current_dir=None):
         other_files = []
 
         for line in staged_lines:
-            parts = line.split(maxsplit=1)
-            if len(parts) != 2:
-                continue
-            status_code = parts[0]
-            file_rel = parts[1].replace("\\", "/")
+            tabs = line.split('\t')
+            if len(tabs) >= 2:
+                status_code = tabs[0]
+                if status_code.startswith("R") and len(tabs) >= 3:
+                    file_rel = tabs[2].replace("\\", "/")
+                else:
+                    file_rel = tabs[1].replace("\\", "/")
+            else:
+                parts = line.split(maxsplit=1)
+                if len(parts) != 2:
+                    continue
+                status_code, file_rel = parts[0], parts[1].replace("\\", "/")
+
             fname = Path(file_rel).name
 
             is_widget = (file_rel.startswith("widgets/") or file_rel.endswith(".html")) and fname.lower() not in excluded_files
