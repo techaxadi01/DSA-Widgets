@@ -1,5 +1,5 @@
 // DSA Interactive Hub - Widgets Data Manifest
-// Generated on: 2026-10-11 20:25:45
+// Generated on: 2026-10-11 20:41:07
 // DO NOT EDIT DIRECTLY: Run 'update_widgets.py' or 'update-widgets.bat' to re-index!
 
 const DSA_WIDGETS = [
@@ -8,15 +8,16 @@ const DSA_WIDGETS = [
     "filename": "widgets/merge_sort.html",
     "title": "Merge sort, step by step",
     "subtitle": "Merge sort, step by step",
-    "stamp": "GENERAL DSA",
-    "category": "General DSA",
-    "categoryIcon": "📚",
-    "categoryColor": "#c89b3c",
+    "stamp": "SEARCHING & SORTING",
+    "category": "Searching & Sorting",
+    "categoryIcon": "⚡",
+    "categoryColor": "#e07a5f",
     "description": "Merge sort keeps splitting the array in half until every piece holds one element, then merges the pieces back together in sorted order. Type any numbers below to watch it happen.",
     "tags": [
-      "Binary Search",
-      "General DSA",
-      "Pointers"
+      "Divide & Conquer",
+      "Pointers",
+      "Searching & Sorting",
+      "Sorting"
     ],
     "sizeKb": 28.2,
     "linesCount": 539,
@@ -112,14 +113,16 @@ const DSA_WIDGETS = [
     "filename": "widgets/quick_sort.html",
     "title": "Quick Sort (last element pivot), step by step",
     "subtitle": "Quick Sort with the last element as pivot",
-    "stamp": "GENERAL DSA",
-    "category": "General DSA",
-    "categoryIcon": "📚",
-    "categoryColor": "#c89b3c",
+    "stamp": "SEARCHING & SORTING",
+    "category": "Searching & Sorting",
+    "categoryIcon": "⚡",
+    "categoryColor": "#e07a5f",
     "description": "Watch the array move in the live animation, then read every move of i and j in its own box below. Each box explains what was compared and why.",
     "tags": [
-      "General DSA",
-      "Pointers"
+      "Divide & Conquer",
+      "Pointers",
+      "Searching & Sorting",
+      "Sorting"
     ],
     "sizeKb": 27.5,
     "linesCount": 515,
@@ -158,9 +161,10 @@ const DSA_WIDGETS = [
     "categoryColor": "#e07a5f",
     "description": "Watch how Quick Sort splits an array around a pivot. The pivot is always the first element of the current sub-array, and every move of i and j gets its own box with an explanation.",
     "tags": [
+      "Divide & Conquer",
       "Pointers",
       "Searching & Sorting",
-      "Visual Sim"
+      "Sorting"
     ],
     "sizeKb": 22.0,
     "linesCount": 444,
@@ -202,9 +206,9 @@ const DSA_WIDGETS = [
     "description": "Speed limit's 100. I'm on a motorcycle, law-abiding, never over it. You're on the roadside — no radar gun, just your eyes.",
     "tags": [
       "Big-O",
-      "Binary Search",
       "Complexity & Analysis",
-      "Dynamic Memory"
+      "Dynamic Memory",
+      "Pointers"
     ],
     "sizeKb": 22.1,
     "linesCount": 492,
@@ -268,9 +272,9 @@ const DSA_WIDGETS = [
     "description": "Two strategies, one vault of numbers. Before you see who wins — predict it yourself.",
     "tags": [
       "Big-O",
-      "Binary Search",
       "Complexity & Analysis",
-      "Pointers"
+      "Pointers",
+      "Two Pointers"
     ],
     "sizeKb": 18.8,
     "linesCount": 597,

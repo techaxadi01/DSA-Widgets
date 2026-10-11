@@ -63,11 +63,16 @@ CATEGORY_DEFS = [
         "icon": "⚡",
         "color": "#e07a5f",
         "title_keywords": [
-            r"binary[-_\s]search", r"linear[-_\s]search", r"quicksort", r"mergesort",
-            r"bubble[-_\s]sort", r"insertion[-_\s]sort", r"selection[-_\s]sort", r"sorting"
+            r"binary[-_\s]search", r"linear[-_\s]search",
+            r"quick[-_\s]*sort", r"merge[-_\s]*sort",
+            r"bubble[-_\s]*sort", r"insertion[-_\s]*sort", r"selection[-_\s]*sort",
+            r"heap[-_\s]*sort", r"radix[-_\s]*sort", r"counting[-_\s]*sort",
+            r"quicksort", r"mergesort", r"heapsort", r"bubblesort",
+            r"sorting", r"\bsort\b"
         ],
         "content_keywords": [
-            r"pivot element", r"partition", r"midpoint", r"sorted array", r"divide and conquer"
+            r"pivot element", r"partition", r"midpoint", r"sorted array", r"divide and conquer",
+            r"merge sort", r"quick sort", r"sub-array", r"subarray", r"merging"
         ]
     },
     {
@@ -226,8 +231,10 @@ def extract_metadata(file_path):
         ("Dynamic Memory", [r"malloc", r"heap", r"calloc", r"free"]),
         ("Pointers", [r"pointer", r"dereference", r"struct\s+node"]),
         ("Big-O", [r"big-o", r"big\s*o", r"asymptotic", r"time\s*complexity"]),
-        ("Binary Search", [r"binary[-_\s]search", r"log\s*n"]),
-        ("Linear Search", [r"linear[-_\s]search", r"linear\s+scan"]),
+        ("Binary Search", [r"binary[-_\s]*search"]),
+        ("Linear Search", [r"linear[-_\s]*search", r"linear\s+scan"]),
+        ("Sorting", [r"quick[-_\s]*sort", r"merge[-_\s]*sort", r"bubble[-_\s]*sort", r"insertion[-_\s]*sort", r"selection[-_\s]*sort", r"sorting", r"\bsort\b"]),
+        ("Divide & Conquer", [r"divide[-_\s]*and[-_\s]*conquer", r"split\s*the\s*array", r"merge[-_\s]*sort", r"quick[-_\s]*sort"]),
         ("Stack vs Heap", [r"stack\s+zone", r"heap\s+zone", r"zone-stack"]),
         ("Edge Cases", [r"nullbox", r"edge\s*case", r"even-length", r"odd-length"]),
         ("Visual Sim", [r"btnplay", r"btnnext", r"code-panel", r"visualizer"])

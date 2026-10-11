@@ -57,13 +57,17 @@ const CATEGORY_DEFS = [
     icon: "⚡",
     color: "#e07a5f",
     title_keywords: [
-      /\bbinary[-_\s]search\b/i, /\blinear[-_\s]search\b/i, /\bquicksort\b/i,
-      /\bmergesort\b/i, /\bbubble[-_\s]sort\b/i, /\binsertion[-_\s]sort\b/i,
-      /\bselection[-_\s]sort\b/i, /\bsorting\b/i
+      /\bbinary[-_\s]search\b/i, /\blinear[-_\s]search\b/i,
+      /\bquick[-_\s]*sort\b/i, /\bmerge[-_\s]*sort\b/i,
+      /\bbubble[-_\s]*sort\b/i, /\binsertion[-_\s]*sort\b/i, /\bselection[-_\s]*sort\b/i,
+      /\bheap[-_\s]*sort\b/i, /\bradix[-_\s]*sort\b/i, /\bcounting[-_\s]*sort\b/i,
+      /\bquicksort\b/i, /\bmergesort\b/i, /\bheapsort\b/i, /\bbubblesort\b/i,
+      /\bsorting\b/i, /\bsort\b/i
     ],
     content_keywords: [
       /\bpivot element\b/i, /\bpartition\b/i, /\bmidpoint\b/i,
-      /\bsorted array\b/i, /\bdivide and conquer\b/i
+      /\bsorted array\b/i, /\bdivide and conquer\b/i,
+      /\bmerge sort\b/i, /\bquick sort\b/i, /\bsub-array\b/i, /\bsubarray\b/i, /\bmerging\b/i
     ]
   },
   {
@@ -237,8 +241,10 @@ function extractMetadata(filePath) {
     ["Dynamic Memory", [/malloc/i, /heap/i, /calloc/i, /free/i]],
     ["Pointers", [/pointer/i, /dereference/i, /struct\s+node/i]],
     ["Big-O", [/big-o/i, /big\s*o/i, /asymptotic/i, /time\s*complexity/i]],
-    ["Binary Search", [/binary[-_\s]search/i, /log\s*n/i]],
-    ["Linear Search", [/linear[-_\s]search/i, /linear\s+scan/i]],
+    ["Binary Search", [/binary[-_\s]*search/i]],
+    ["Linear Search", [/linear[-_\s]*search/i, /linear\s+scan/i]],
+    ["Sorting", [/quick[-_\s]*sort/i, /merge[-_\s]*sort/i, /bubble[-_\s]*sort/i, /insertion[-_\s]*sort/i, /selection[-_\s]*sort/i, /sorting/i, /\bsort\b/i]],
+    ["Divide & Conquer", [/divide[-_\s]*and[-_\s]*conquer/i, /split\s*the\s*array/i, /merge[-_\s]*sort/i, /quick[-_\s]*sort/i]],
     ["Stack vs Heap", [/stack\s+zone/i, /heap\s+zone/i, /zone-stack/i]],
     ["Edge Cases", [/nullbox/i, /edge\s*case/i, /even-length/i, /odd-length/i]],
     ["Visual Sim", [/btnplay/i, /btnnext/i, /code-panel/i, /visualizer/i]]
