@@ -1,8 +1,29 @@
 // DSA Interactive Hub - Widgets Data Manifest
-// Generated on: 2026-10-11 20:41:07
+// Generated on: 2026-10-11 21:41:26
 // DO NOT EDIT DIRECTLY: Run 'update_widgets.py' or 'update-widgets.bat' to re-index!
 
 const DSA_WIDGETS = [
+  {
+    "id": "aray_vs_linked",
+    "filename": "widgets/aray_vs_linked.html",
+    "title": "Array vs Linked List · CS Orientation",
+    "subtitle": "Array vs. Linked List",
+    "stamp": "LINKED LISTS",
+    "category": "Linked Lists",
+    "categoryIcon": "🔗",
+    "categoryColor": "#c89b3c",
+    "description": "Interactive visualizer and field study exploring Array vs Linked List · CS Orientation.",
+    "tags": [
+      "Linked Lists",
+      "Pointers",
+      "Two Pointers"
+    ],
+    "sizeKb": 31.0,
+    "linesCount": 853,
+    "estimatedMinutes": 15,
+    "lastModified": "Oct 11, 2026",
+    "timestamp": 1791735035
+  },
   {
     "id": "merge_sort",
     "filename": "widgets/merge_sort.html",

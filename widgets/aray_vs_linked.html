@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Array vs Linked List · CS Orientation</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Lora:ital,wght@0,600;1,400&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:      #0d1117;
+  --surface: #161b22;
+  --surface2:#1c2128;
+  --border:  #30363d;
+  --gold:    #f0b429;
+  --blue:    #79c0ff;
+  --green:   #7ee787;
+  --red:     #ff7b72;
+  --purple:  #bc8cff;
+  --text:    #e6edf3;
+  --muted:   #8b949e;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'JetBrains Mono', monospace;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 36px 20px 60px;
+}
+
+/* ── header ────────────────────────────────────────────────────────────── */
+.header { text-align: center; margin-bottom: 32px; }
+.tag { font-size: 11px; color: var(--muted); letter-spacing: .18em; text-transform: uppercase; margin-bottom: 8px; }
+h1 { font-size: 2.1em; color: var(--gold); letter-spacing: -.03em; margin-bottom: 6px; }
+.subtitle { font-family: 'Lora', serif; font-style: italic; color: var(--muted); font-size: .95em; }
+
+/* ── cards ─────────────────────────────────────────────────────────────── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 22px 26px;
+  width: 100%;
+  max-width: 980px;
+  margin-bottom: 18px;
+}
+
+/* ── controls ──────────────────────────────────────────────────────────── */
+.controls { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+
+.op-tabs {
+  display: flex; gap: 4px;
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: 8px; padding: 4px;
+}
+.op-tab {
+  padding: 7px 16px; border-radius: 6px; cursor: pointer;
+  font-size: .78em; color: var(--muted);
+  border: none; background: none;
+  font-family: 'JetBrains Mono', monospace;
+  transition: all .2s; white-space: nowrap;
+}
+.op-tab.active { background: var(--surface2); color: var(--gold); border: 1px solid var(--border); }
+
+.ctrl-label { font-size: .72em; color: var(--muted); letter-spacing: .06em; white-space: nowrap; }
+
+input[type="number"], input[type="text"] {
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: 8px; color: var(--text);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: .9em; padding: 8px 12px;
+  outline: none; transition: border-color .2s;
+  width: 90px;
+}
+input:focus { border-color: var(--gold); }
+
+.run-btn {
+  background: var(--gold); border: none; border-radius: 8px;
+  color: #0d1117; cursor: pointer;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: .82em; font-weight: 700; padding: 9px 20px;
+  transition: opacity .2s, transform .1s; white-space: nowrap;
+}
+.run-btn:hover { opacity: .85; transform: translateY(-1px); }
+.run-btn:disabled { opacity: .35; pointer-events: none; }
+.run-btn.reset { background: var(--surface2); border: 1px solid var(--border); color: var(--text); }
+
+/* ── structures grid ───────────────────────────────────────────────────── */
+.structures-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  width: 100%;
+  max-width: 980px;
+  margin-bottom: 18px;
+}
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 22px;
+}
+
+.panel-header {
+  display: flex; justify-content: space-between;
+  align-items: center; margin-bottom: 18px;
+}
+
+.panel-title { font-size: 1em; color: var(--gold); }
+.panel-sub   { font-size: .72em; color: var(--muted); margin-top: 2px; }
+
+.cost-pill {
+  font-size: .75em; padding: 4px 12px;
+  border-radius: 20px; border: 1px solid var(--border);
+  color: var(--muted); background: var(--bg);
+  transition: all .4s;
+  font-weight: 700;
+}
+.cost-pill.good { border-color: var(--green); color: var(--green); background: #0a1f0e; }
+.cost-pill.bad  { border-color: var(--red);   color: var(--red);   background: #1a0808; }
+.cost-pill.med  { border-color: var(--gold);  color: var(--gold);  background: #1a1000; }
+
+/* ── steps counter ─────────────────────────────────────────────────────── */
+.steps-row {
+  display: flex; justify-content: space-between;
+  align-items: center; margin-top: 16px;
+  font-size: .75em; color: var(--muted);
+}
+.steps-val { font-size: 1.6em; font-weight: 700; color: var(--gold); }
+
+/* ── ARRAY visual ──────────────────────────────────────────────────────── */
+.array-track {
+  display: flex; gap: 5px;
+  align-items: flex-end;
+  min-height: 110px;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+}
+
+.arr-cell {
+  display: flex; flex-direction: column; align-items: center; gap: 5px;
+  flex-shrink: 0;
+}
+
+.arr-box {
+  width: 60px; height: 56px;
+  border-radius: 8px;
+  border: 2px solid var(--border);
+  background: var(--bg);
+  display: flex; align-items: center; justify-content: center;
+  font-size: .78em; font-weight: 700; color: var(--text);
+  transition: all .35s ease;
+  position: relative; overflow: hidden;
+}
+
+.arr-idx {
+  font-size: .62em; color: var(--muted);
+}
+
+/* array cell states */
+.arr-box.empty    { opacity: .25; border-style: dashed; }
+.arr-box.shifting { background: #2a1800 !important; border-color: var(--gold) !important; color: var(--gold) !important; animation: slideRight .35s ease; }
+.arr-box.shifting-left { background: #2a1800 !important; border-color: var(--gold) !important; color: var(--gold) !important; animation: slideLeft .35s ease; }
+.arr-box.active   { background: #2a2000; border-color: var(--gold); color: var(--gold); transform: scale(1.08); }
+.arr-box.found    { background: #0a1f0e; border-color: var(--green); color: var(--green); transform: scale(1.1); }
+.arr-box.deleting { background: #1a0808; border-color: var(--red); color: var(--red); animation: fadeOut .5s ease forwards; }
+.arr-box.inserted { background: #0a1f0e; border-color: var(--green); color: var(--green); animation: popIn .4s ease; }
+
+@keyframes slideRight { from { transform: translateX(-10px); } to { transform: translateX(0); } }
+@keyframes slideLeft  { from { transform: translateX(10px);  } to { transform: translateX(0); } }
+@keyframes popIn      { from { transform: scale(.5); opacity:0; } to { transform: scale(1); opacity:1; } }
+@keyframes fadeOut    { to   { opacity: 0; transform: scale(.8); } }
+
+/* ── LINKED LIST visual ────────────────────────────────────────────────── */
+.ll-track {
+  display: flex; align-items: center; gap: 0;
+  min-height: 110px; flex-wrap: wrap;
+  gap: 2px;
+}
+
+.ll-node-wrap { display: flex; align-items: center; }
+
+.ll-node {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  flex-shrink: 0;
+}
+
+.ll-box {
+  width: 70px; height: 56px;
+  border-radius: 8px;
+  border: 2px solid var(--border);
+  background: var(--bg);
+  display: flex; align-items: center; justify-content: center;
+  font-size: .78em; font-weight: 700; color: var(--text);
+  transition: all .35s ease;
+  flex-direction: column; gap: 2px;
+}
+
+.ll-box .val  { font-weight: 700; }
+.ll-box .ptr  { font-size: .58em; color: var(--muted); }
+
+.ll-label { font-size: .6em; color: var(--muted); }
+
+.ll-arrow {
+  display: flex; align-items: center;
+  color: var(--muted); font-size: 1.1em;
+  padding: 0 2px; transition: color .3s;
+  margin-bottom: 18px;
+}
+.ll-arrow.changing { color: var(--gold); }
+
+.ll-head-label {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 4px; margin-right: 2px;
+}
+.ll-head-box {
+  background: #2a2000; border: 2px solid var(--gold);
+  border-radius: 6px; padding: 4px 8px;
+  font-size: .7em; color: var(--gold); font-weight: 700;
+  margin-bottom: 18px;
+}
+
+.ll-null {
+  display: flex; align-items: center;
+  background: var(--surface2); border: 1px dashed var(--border);
+  border-radius: 6px; padding: 4px 10px;
+  font-size: .7em; color: var(--muted);
+  margin-bottom: 18px;
+}
+
+/* linked list node states */
+.ll-box.traversing { background: #0d1f37; border-color: var(--blue); color: var(--blue); }
+.ll-box.found      { background: #0a1f0e; border-color: var(--green); color: var(--green); transform: scale(1.08); }
+.ll-box.deleting   { background: #1a0808; border-color: var(--red); color: var(--red); animation: fadeOut .5s ease forwards; }
+.ll-box.inserted   { background: #0a1f0e; border-color: var(--green); color: var(--green); animation: popIn .4s ease; }
+.ll-box.target     { background: #2a2000; border-color: var(--gold); color: var(--gold); }
+
+/* ── log ───────────────────────────────────────────────────────────────── */
+.log-area {
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: 8px; padding: 14px 16px;
+  font-size: .78em; line-height: 1.9;
+  min-height: 70px; max-height: 120px;
+  overflow-y: auto; margin-top: 0;
+}
+.log-line        { color: var(--muted); }
+.log-line.array  { color: var(--blue); }
+.log-line.ll     { color: var(--purple); }
+.log-line.done   { color: var(--green); font-weight: 700; }
+.log-line.warn   { color: var(--gold); }
+
+/* ── insight ───────────────────────────────────────────────────────────── */
+.insight {
+  background: linear-gradient(135deg, #1a1000, var(--bg));
+  border: 1px solid var(--gold); border-radius: 8px;
+  padding: 16px 20px;
+  font-family: 'Lora', serif; font-style: italic;
+  font-size: .92em; line-height: 1.7; color: var(--text);
+}
+
+/* ── comparison table ──────────────────────────────────────────────────── */
+.compare-table {
+  width: 100%; border-collapse: collapse; font-size: .8em; margin-top: 14px;
+}
+.compare-table th {
+  background: var(--surface2) !important; color: var(--blue) !important;
+  padding: 7px 14px !important; text-align: left !important;
+  border-bottom: 2px solid var(--border) !important;
+}
+.compare-table td {
+  padding: 7px 14px !important; border-bottom: 1px solid #1c2128 !important;
+  background: var(--bg) !important; color: var(--text) !important;
+}
+.compare-table tr:last-child td { border-bottom: none !important; }
+.good { color: var(--green) !important; font-weight: 700; }
+.bad  { color: var(--red)   !important; font-weight: 700; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="tag">CS Orientation · Widget 05</div>
+  <h1>Array vs. Linked List</h1>
+  <div class="subtitle">Same data. Different containers. Completely different consequences.</div>
+</div>
+
+<!-- Controls -->
+<div class="card">
+  <div class="controls">
+    <div>
+      <div class="ctrl-label" style="margin-bottom:6px">OPERATION</div>
+      <div class="op-tabs">
+        <button class="op-tab active" onclick="setOp('insert')">INSERT</button>
+        <button class="op-tab" onclick="setOp('delete')">DELETE</button>
+        <button class="op-tab" onclick="setOp('access')">ACCESS</button>
+      </div>
+    </div>
+
+    <div id="valueCtrl">
+      <div class="ctrl-label" style="margin-bottom:6px">VALUE</div>
+      <input type="text" id="valInput" value="P105" maxlength="6" placeholder="P105">
+    </div>
+
+    <div>
+      <div class="ctrl-label" style="margin-bottom:6px">AT INDEX</div>
+      <input type="number" id="idxInput" value="2" min="0" max="6">
+    </div>
+
+    <button class="run-btn" id="runBtn" onclick="execute()">▶ Run</button>
+    <button class="run-btn reset" onclick="resetAll()">↺ Reset</button>
+  </div>
+</div>
+
+<!-- Structures -->
+<div class="structures-grid">
+
+  <!-- ARRAY -->
+  <div class="panel">
+    <div class="panel-header">
+      <div>
+        <div class="panel-title">📦 Array</div>
+        <div class="panel-sub">Fixed · Contiguous · Index-addressed</div>
+      </div>
+      <div class="cost-pill" id="arrayCost">—</div>
+    </div>
+    <div class="array-track" id="arrayVis"></div>
+    <div class="steps-row">
+      <span>Steps taken</span>
+      <span class="steps-val" id="arraySteps">—</span>
+    </div>
+  </div>
+
+  <!-- LINKED LIST -->
+  <div class="panel">
+    <div class="panel-header">
+      <div>
+        <div class="panel-title">🔗 Linked List</div>
+        <div class="panel-sub">Dynamic · Pointer-linked · Sequential</div>
+      </div>
+      <div class="cost-pill" id="llCost">—</div>
+    </div>
+    <div class="ll-track" id="llVis"></div>
+    <div class="steps-row">
+      <span>Steps taken</span>
+      <span class="steps-val" id="llSteps">—</span>
+    </div>
+  </div>
+
+</div>
+
+<!-- Log -->
+<div class="card" style="padding: 16px 22px;">
+  <div style="font-size:.72em; color:var(--muted); letter-spacing:.08em; margin-bottom:10px;">OPERATION LOG</div>
+  <div class="log-area" id="logArea">
+    <div class="log-line">← Choose an operation and press Run.</div>
+  </div>
+</div>
+
+<!-- Insight + table -->
+<div class="card">
+  <div class="insight" id="insightText">
+    The right data structure depends on which operation you need most. Arrays give you instant access to any element — but inserting in the middle forces every element after it to shift. Linked lists let you insert anywhere by changing just two pointers — but to find a specific position, you must walk from the beginning every time.
+  </div>
+  <table class="compare-table" style="margin-top:18px;">
+    <thead>
+      <tr><th>Operation</th><th>Array</th><th>Linked List</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Access element at index i</td><td class="good">O(1) — direct</td><td class="bad">O(n) — traverse</td></tr>
+      <tr><td>Insert at index i</td><td class="bad">O(n) — shift right</td><td class="bad">O(n) traverse + O(1) link</td></tr>
+      <tr><td>Insert at end (append)</td><td class="good">O(1) — if space exists</td><td class="good">O(1) — if tail pointer kept</td></tr>
+      <tr><td>Delete at index i</td><td class="bad">O(n) — shift left</td><td class="bad">O(n) traverse + O(1) unlink</td></tr>
+      <tr><td>Memory overhead</td><td class="good">None</td><td class="bad">One pointer per node</td></tr>
+      <tr><td>Size flexibility</td><td class="bad">Fixed at creation</td><td class="good">Grows dynamically</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────────────
+
+const INITIAL = ['P101', 'P103', 'P108', 'P112', 'P119'];
+const MAX_SIZE = 8;
+const STEP_MS  = 480;
+
+let arrData = [...INITIAL];
+let llData  = [...INITIAL];
+let currentOp = 'insert';
+let busy = false;
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+function log(msg, cls = '') {
+  const area = document.getElementById('logArea');
+  const line = document.createElement('div');
+  line.className = `log-line ${cls}`;
+  line.textContent = msg;
+  area.appendChild(line);
+  area.scrollTop = area.scrollHeight;
+}
+
+function clearLog() {
+  document.getElementById('logArea').innerHTML = '';
+}
+
+function setArraySteps(n) {
+  document.getElementById('arraySteps').textContent = n === null ? '—' : n;
+}
+function setLLSteps(n) {
+  document.getElementById('llSteps').textContent = n === null ? '—' : n;
+}
+
+function setCost(id, text, cls) {
+  const el = document.getElementById(id);
+  el.textContent = text;
+  el.className = `cost-pill ${cls}`;
+}
+
+// ── Operation selector ─────────────────────────────────────────────────────
+
+function setOp(op) {
+  currentOp = op;
+  document.querySelectorAll('.op-tab').forEach((b, i) => {
+    b.classList.toggle('active', ['insert','delete','access'][i] === op);
+  });
+  document.getElementById('valueCtrl').style.display = op === 'insert' ? 'block' : 'none';
+  updateInsight();
+}
+
+function updateInsight() {
+  const texts = {
+    insert: 'Inserting at position i: the Array must shift every element from i onward one slot to the right — that\'s O(n) moves in the worst case. The Linked List simply redirects two pointers — but it must traverse i nodes to reach the right position first.',
+    delete: 'Deleting at position i: the Array must shift every element after i one slot to the left — O(n) moves. The Linked List bypasses the node by changing one pointer — but again must traverse i nodes to find it.',
+    access: 'Accessing index i: the Array computes the memory address directly — one step, regardless of i. The Linked List must start at the Head and follow pointers one by one until it reaches node i. This is the clearest difference between the two.'
+  };
+  document.getElementById('insightText').textContent = texts[currentOp];
+}
+
+// ── ARRAY rendering ────────────────────────────────────────────────────────
+
+function renderArray(states = {}) {
+  const vis = document.getElementById('arrayVis');
+  vis.innerHTML = '';
+  for (let i = 0; i < MAX_SIZE; i++) {
+    const cell = document.createElement('div');
+    cell.className = 'arr-cell';
+    cell.id = `arr-cell-${i}`;
+
+    const box = document.createElement('div');
+    box.className = 'arr-box' + (i >= arrData.length ? ' empty' : '');
+    box.id = `arr-box-${i}`;
+    box.textContent = i < arrData.length ? arrData[i] : '';
+    if (states[i]) box.classList.add(states[i]);
+
+    const idx = document.createElement('div');
+    idx.className = 'arr-idx';
+    idx.textContent = `[${i}]`;
+
+    cell.appendChild(box);
+    cell.appendChild(idx);
+    vis.appendChild(cell);
+  }
+}
+
+function setArrBoxState(i, cls) {
+  const box = document.getElementById(`arr-box-${i}`);
+  if (box) {
+    box.className = 'arr-box';
+    if (i >= arrData.length) box.classList.add('empty');
+    if (cls) box.classList.add(cls);
+  }
+}
+
+function clearArrStates() {
+  for (let i = 0; i < MAX_SIZE; i++) {
+    const box = document.getElementById(`arr-box-${i}`);
+    if (box) {
+      box.className = 'arr-box';
+      if (i >= arrData.length) box.classList.add('empty');
+    }
+  }
+}
+
+// ── LINKED LIST rendering ──────────────────────────────────────────────────
+
+function renderLL(states = {}) {
+  const vis = document.getElementById('llVis');
+  vis.innerHTML = '';
+
+  // HEAD label
+  const headWrap = document.createElement('div');
+  headWrap.className = 'll-head-label';
+  const headBox = document.createElement('div');
+  headBox.className = 'll-head-box';
+  headBox.textContent = 'HEAD';
+  headWrap.appendChild(headBox);
+  vis.appendChild(headWrap);
+
+  // Arrow from HEAD
+  const ha = document.createElement('div');
+  ha.className = 'll-arrow';
+  ha.textContent = '→';
+  vis.appendChild(ha);
+
+  if (llData.length === 0) {
+    const nullEl = document.createElement('div');
+    nullEl.className = 'll-null';
+    nullEl.textContent = 'NULL';
+    vis.appendChild(nullEl);
+    return;
+  }
+
+  llData.forEach((val, i) => {
+    // Node wrapper
+    const wrap = document.createElement('div');
+    wrap.className = 'll-node-wrap';
+
+    const node = document.createElement('div');
+    node.className = 'll-node';
+
+    const box = document.createElement('div');
+    box.className = 'll-box';
+    box.id = `ll-box-${i}`;
+    if (states[i]) box.classList.add(states[i]);
+
+    const valDiv = document.createElement('div');
+    valDiv.className = 'val';
+    valDiv.textContent = val;
+
+    const ptrDiv = document.createElement('div');
+    ptrDiv.className = 'ptr';
+    ptrDiv.textContent = i < llData.length - 1 ? `→ next` : '→ NULL';
+
+    box.appendChild(valDiv);
+    box.appendChild(ptrDiv);
+
+    const label = document.createElement('div');
+    label.className = 'll-label';
+    label.textContent = `node[${i}]`;
+
+    node.appendChild(box);
+    node.appendChild(label);
+    wrap.appendChild(node);
+    vis.appendChild(wrap);
+
+    // Arrow to next (or NULL)
+    const arrow = document.createElement('div');
+    arrow.className = 'll-arrow';
+    arrow.id = `ll-arrow-${i}`;
+    arrow.textContent = '→';
+    if (states[`arrow_${i}`]) arrow.classList.add(states[`arrow_${i}`]);
+    vis.appendChild(arrow);
+  });
+
+  // NULL terminator
+  const nullEl = document.createElement('div');
+  nullEl.className = 'll-null';
+  nullEl.textContent = 'NULL';
+  vis.appendChild(nullEl);
+}
+
+function setLLBoxState(i, cls) {
+  const box = document.getElementById(`ll-box-${i}`);
+  if (box) {
+    box.className = 'll-box';
+    if (cls) box.classList.add(cls);
+  }
+}
+
+function setLLArrowState(i, cls) {
+  const arrow = document.getElementById(`ll-arrow-${i}`);
+  if (arrow) {
+    arrow.className = 'll-arrow';
+    if (cls) arrow.classList.add(cls);
+  }
+}
+
+function clearLLStates() {
+  llData.forEach((_, i) => {
+    setLLBoxState(i, null);
+    setLLArrowState(i, null);
+  });
+}
+
+// ── EXECUTE ────────────────────────────────────────────────────────────────
+
+async function execute() {
+  if (busy) return;
+
+  const idx = parseInt(document.getElementById('idxInput').value);
+  const val = document.getElementById('valInput').value.trim() || 'P105';
+  const n   = arrData.length;
+
+  // Validation
+  if (currentOp === 'insert') {
+    if (n >= MAX_SIZE) { log('⚠ Array is full (max 8 elements). Reset to continue.', 'warn'); return; }
+    if (idx < 0 || idx > n) { log(`⚠ Insert index must be between 0 and ${n}.`, 'warn'); return; }
+  } else {
+    if (n === 0) { log('⚠ Both structures are empty. Reset first.', 'warn'); return; }
+    if (idx < 0 || idx >= n) { log(`⚠ Index must be between 0 and ${n - 1}.`, 'warn'); return; }
+  }
+
+  busy = true;
+  document.getElementById('runBtn').disabled = true;
+  clearLog();
+  setArraySteps(null);
+  setLLSteps(null);
+  setCost('arrayCost', '—', '');
+  setCost('llCost', '—', '');
+  clearArrStates();
+  clearLLStates();
+
+  if (currentOp === 'insert')   await runInsert(idx, val);
+  else if (currentOp === 'delete') await runDelete(idx);
+  else                              await runAccess(idx);
+
+  busy = false;
+  document.getElementById('runBtn').disabled = false;
+}
+
+// ── INSERT ─────────────────────────────────────────────────────────────────
+
+async function runInsert(idx, val) {
+  const n = arrData.length;
+  log(`INSERT "${val}" at index ${idx}`, 'warn');
+
+  // Run both animations concurrently
+  await Promise.all([
+    animateArrayInsert(idx, val, n),
+    animateLLInsert(idx, val, n)
+  ]);
+
+  // Commit to data
+  arrData.splice(idx, 0, val);
+  llData.splice(idx, 0, val);
+
+  renderArray();
+  renderLL();
+
+  const arrSteps = n - idx + 1;
+  const llSteps  = idx + 2; // traverse + 2 pointer ops
+
+  setArraySteps(arrSteps);
+  setLLSteps(llSteps);
+
+  setCost('arrayCost', `O(n) — ${arrSteps} step${arrSteps !== 1 ? 's' : ''}`, 'bad');
+  setCost('llCost',   idx === 0 ? `O(1) — ${llSteps} ptr ops` : `O(n) — ${llSteps} steps`, idx === 0 ? 'good' : 'med');
+
+  log(`Array: shifted ${n - idx} element${n - idx !== 1 ? 's' : ''} right, then inserted.`, 'array');
+  log(`Linked List: traversed ${idx} node${idx !== 1 ? 's' : ''}, changed 2 pointers.`, 'll');
+  log(`Done. Both structures updated.`, 'done');
+}
+
+async function animateArrayInsert(idx, val, n) {
+  // Highlight insertion point
+  setArrBoxState(idx, 'active');
+  log(`[Array] Locating index ${idx}…`, 'array');
+  await sleep(STEP_MS);
+
+  // Shift elements right, from right to left
+  for (let i = n; i > idx; i--) {
+    const box = document.getElementById(`arr-box-${i}`);
+    if (box) {
+      box.textContent = arrData[i - 1];
+      box.classList.remove('empty');
+      box.classList.add('shifting');
+      await sleep(STEP_MS * 0.7);
+      box.classList.remove('shifting');
+    }
+  }
+
+  // Place new element
+  const newBox = document.getElementById(`arr-box-${idx}`);
+  if (newBox) {
+    newBox.textContent = val;
+    newBox.classList.remove('active');
+    newBox.classList.add('inserted');
+  }
+  await sleep(STEP_MS);
+}
+
+async function animateLLInsert(idx, val, n) {
+  if (idx === 0) {
+    log(`[LL] Inserting at head — change HEAD pointer.`, 'll');
+    setLLBoxState(0, 'target');
+    await sleep(STEP_MS);
+    setLLArrowState(-1, 'changing');
+    await sleep(STEP_MS * 1.5);
+  } else {
+    log(`[LL] Traversing to node ${idx - 1} to find insertion point…`, 'll');
+    for (let i = 0; i < idx; i++) {
+      setLLBoxState(i, 'traversing');
+      await sleep(STEP_MS * 0.8);
+    }
+    // Change pointer of node idx-1
+    log(`[LL] Node[${idx - 1}] found. Changing 2 pointers.`, 'll');
+    setLLBoxState(idx - 1, 'target');
+    setLLArrowState(idx - 1, 'changing');
+    await sleep(STEP_MS);
+    if (idx < n) {
+      setLLBoxState(idx, 'traversing');
+      setLLArrowState(idx, 'changing');
+    }
+    await sleep(STEP_MS);
+  }
+}
+
+// ── DELETE ─────────────────────────────────────────────────────────────────
+
+async function runDelete(idx) {
+  const n = arrData.length;
+  const delVal = arrData[idx];
+  log(`DELETE at index ${idx} (value: "${delVal}")`, 'warn');
+
+  await Promise.all([
+    animateArrayDelete(idx, n),
+    animateLLDelete(idx, n)
+  ]);
+
+  arrData.splice(idx, 1);
+  llData.splice(idx, 1);
+
+  renderArray();
+  renderLL();
+
+  const arrSteps = n - idx - 1 + 1;
+  const llSteps  = idx + 1;
+
+  setArraySteps(arrSteps);
+  setLLSteps(llSteps);
+
+  setCost('arrayCost', `O(n) — ${arrSteps} step${arrSteps !== 1 ? 's' : ''}`, n - idx > 2 ? 'bad' : 'med');
+  setCost('llCost', idx === 0 ? `O(1) — 1 ptr` : `O(n) — ${llSteps} steps`, idx === 0 ? 'good' : 'med');
+
+  log(`Array: removed "${delVal}", shifted ${n - idx - 1} element${n - idx - 1 !== 1 ? 's' : ''} left.`, 'array');
+  log(`Linked List: traversed ${idx} node${idx !== 1 ? 's' : ''}, bypassed the node.`, 'll');
+  log(`Done. Both structures updated.`, 'done');
+}
+
+async function animateArrayDelete(idx, n) {
+  setArrBoxState(idx, 'deleting');
+  log(`[Array] Marking index ${idx} for deletion…`, 'array');
+  await sleep(STEP_MS);
+
+  for (let i = idx; i < n - 1; i++) {
+    const box = document.getElementById(`arr-box-${i}`);
+    if (box) {
+      box.textContent = arrData[i + 1];
+      box.classList.remove('deleting');
+      box.classList.add('shifting-left');
+      await sleep(STEP_MS * 0.7);
+      box.classList.remove('shifting-left');
+    }
+  }
+
+  const lastBox = document.getElementById(`arr-box-${n - 1}`);
+  if (lastBox) {
+    lastBox.textContent = '';
+    lastBox.classList.add('empty');
+  }
+  await sleep(STEP_MS);
+}
+
+async function animateLLDelete(idx, n) {
+  if (idx === 0) {
+    log(`[LL] Deleting head — redirect HEAD pointer.`, 'll');
+    setLLBoxState(0, 'deleting');
+    setLLArrowState(0, 'changing');
+    await sleep(STEP_MS * 2);
+  } else {
+    log(`[LL] Traversing to node ${idx - 1}…`, 'll');
+    for (let i = 0; i < idx; i++) {
+      setLLBoxState(i, 'traversing');
+      await sleep(STEP_MS * 0.8);
+    }
+    log(`[LL] Bypassing node[${idx}] — redirect node[${idx - 1}]'s pointer.`, 'll');
+    setLLBoxState(idx, 'deleting');
+    setLLArrowState(idx - 1, 'changing');
+    await sleep(STEP_MS * 1.5);
+  }
+}
+
+// ── ACCESS ─────────────────────────────────────────────────────────────────
+
+async function runAccess(idx) {
+  log(`ACCESS index ${idx}`, 'warn');
+
+  await Promise.all([
+    animateArrayAccess(idx),
+    animateLLAccess(idx)
+  ]);
+
+  setArraySteps(1);
+  setLLSteps(idx + 1);
+
+  setCost('arrayCost', `O(1) — 1 step`, 'good');
+  setCost('llCost', `O(n) — ${idx + 1} step${idx + 1 !== 1 ? 's' : ''}`, idx > 2 ? 'bad' : 'med');
+
+  log(`Array: computed memory address directly. Accessed in 1 step.`, 'array');
+  log(`Linked List: followed ${idx + 1} pointer${idx + 1 !== 1 ? 's' : ''} from HEAD.`, 'll');
+  log(`"${arrData[idx]}" found at index ${idx}. This is why O(1) vs O(n) matters.`, 'done');
+}
+
+async function animateArrayAccess(idx) {
+  log(`[Array] Computing address: base + ${idx} × size → jump directly.`, 'array');
+  await sleep(STEP_MS * 0.5);
+  setArrBoxState(idx, 'found');
+  await sleep(STEP_MS * 2);
+}
+
+async function animateLLAccess(idx) {
+  log(`[LL] Starting at HEAD, following pointers…`, 'll');
+  for (let i = 0; i <= idx; i++) {
+    if (i > 0) setLLBoxState(i - 1, null);
+    setLLBoxState(i, i === idx ? 'found' : 'traversing');
+    if (i < idx) setLLArrowState(i, 'changing');
+    await sleep(STEP_MS * 0.85);
+  }
+  await sleep(STEP_MS);
+}
+
+// ── RESET ──────────────────────────────────────────────────────────────────
+
+function resetAll() {
+  if (busy) return;
+  arrData = [...INITIAL];
+  llData  = [...INITIAL];
+  renderArray();
+  renderLL();
+  setArraySteps(null);
+  setLLSteps(null);
+  setCost('arrayCost', '—', '');
+  setCost('llCost', '—', '');
+  clearLog();
+  log('← Structures reset. Choose an operation and press Run.', '');
+}
+
+// ── INIT ───────────────────────────────────────────────────────────────────
+
+setOp('insert');
+renderArray();
+renderLL();
+</script>
+</body>
+</html>
