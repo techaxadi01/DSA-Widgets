@@ -1,5 +1,5 @@
 // DSA Interactive Hub - Widgets Data Manifest
-// Generated on: 2026-10-11 08:59:26
+// Generated on: 2026-10-11 03:29:48
 // DO NOT EDIT DIRECTLY: Run 'update_widgets.py' or 'update-widgets.bat' to re-index!
 
 const DSA_WIDGETS = [
@@ -18,10 +18,10 @@ const DSA_WIDGETS = [
       "Searching & Sorting",
       "Visual Sim"
     ],
-    "sizeKb": 22.0,
-    "linesCount": 444,
+    "sizeKb": 22,
+    "linesCount": 445,
     "estimatedMinutes": 10,
-    "lastModified": "Oct 07, 2026",
+    "lastModified": "Oct 7, 2026",
     "timestamp": 1791386087
   },
   {
@@ -41,7 +41,7 @@ const DSA_WIDGETS = [
       "Two Pointers"
     ],
     "sizeKb": 63.9,
-    "linesCount": 1994,
+    "linesCount": 1995,
     "estimatedMinutes": 15,
     "lastModified": "Sep 22, 2026",
     "timestamp": 1790093960
@@ -63,7 +63,7 @@ const DSA_WIDGETS = [
       "Dynamic Memory"
     ],
     "sizeKb": 22.1,
-    "linesCount": 492,
+    "linesCount": 493,
     "estimatedMinutes": 10,
     "lastModified": "Sep 16, 2026",
     "timestamp": 1789579062
@@ -85,7 +85,7 @@ const DSA_WIDGETS = [
       "Pointers"
     ],
     "sizeKb": 15.5,
-    "linesCount": 381,
+    "linesCount": 382,
     "estimatedMinutes": 10,
     "lastModified": "Sep 16, 2026",
     "timestamp": 1789579058
@@ -107,7 +107,7 @@ const DSA_WIDGETS = [
       "Two Pointers"
     ],
     "sizeKb": 14.8,
-    "linesCount": 373,
+    "linesCount": 374,
     "estimatedMinutes": 10,
     "lastModified": "Sep 16, 2026",
     "timestamp": 1789579057
@@ -129,7 +129,7 @@ const DSA_WIDGETS = [
       "Pointers"
     ],
     "sizeKb": 18.8,
-    "linesCount": 597,
+    "linesCount": 598,
     "estimatedMinutes": 15,
     "lastModified": "Sep 16, 2026",
     "timestamp": 1789579054
@@ -151,7 +151,7 @@ const DSA_WIDGETS = [
       "Pointers"
     ],
     "sizeKb": 19.1,
-    "linesCount": 476,
+    "linesCount": 477,
     "estimatedMinutes": 10,
     "lastModified": "Sep 16, 2026",
     "timestamp": 1789579049
