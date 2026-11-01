@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>3Sum: sort and two pointers visualizer</title>
+<style>
+:root{--bg:#faf9f5;--sf:#f1efe8;--sf2:#fff;--bd:rgba(0,0,0,.18);--tx:#1f1e1d;--tx2:#5f5e5a;--ac:#E6F1FB;--act:#0C447C;--acb:#378ADD;--wn:#FAEEDA;--wnb:#BA7517;--wnt:#633806;--ok:#EAF3DE;--okb:#639922;--okt:#27500A;--dg:#A32D2D;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1f1e1d;--sf:#2c2c2a;--sf2:#262624;--bd:rgba(255,255,255,.22);--tx:#f1efe8;--tx2:#b4b2a9;--ac:#0C447C;--act:#B5D4F4;--acb:#85B7EB;--wn:#633806;--wnb:#EF9F27;--wnt:#FAC775;--ok:#27500A;--okb:#97C459;--okt:#C0DD97;--dg:#F09595;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#1f1e1d;--sf:#2c2c2a;--sf2:#262624;--bd:rgba(255,255,255,.22);--tx:#f1efe8;--tx2:#b4b2a9;--ac:#0C447C;--act:#B5D4F4;--acb:#85B7EB;--wn:#633806;--wnb:#EF9F27;--wnt:#FAC775;--ok:#27500A;--okb:#97C459;--okt:#C0DD97;--dg:#F09595;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+main{max-width:760px;margin:0 auto;padding:20px 16px 40px}
+h1{font-size:22px;font-weight:500;margin:0 0 4px}
+h2{font-size:16px;font-weight:500;margin:22px 0 6px}
+.sub{color:var(--tx2);font-size:14px;margin:0 0 18px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+button,input{font:inherit;font-size:14px;color:var(--tx);background:var(--sf2);border:1px solid var(--bd);border-radius:8px;padding:7px 12px}
+button{cursor:pointer}
+button:hover{background:var(--sf)}
+input{flex:1;min-width:200px}
+.lbl{font-size:12px;color:var(--tx2);margin:0 0 6px}
+.leg{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--tx2);margin:0 12px 6px 0}
+.sw{width:12px;height:12px;border-radius:3px;border:1px solid var(--bd)}
+.cell{flex:1;min-width:40px;padding:10px 4px;border:1px solid var(--bd);border-radius:8px;text-align:center;background:var(--sf2);font-size:16px}
+.tag{flex:1;min-width:40px;text-align:center;font-size:12px;color:var(--tx2);min-height:18px}
+.chip{padding:5px 10px;border:1px solid var(--okb);border-radius:8px;background:var(--ok);color:var(--okt);font-size:13px}
+.code{font:13px/1.7 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:var(--sf);border-radius:8px;padding:10px 12px;margin:0;overflow-x:auto}
+.ln{display:block;padding:0 6px;border-radius:4px;white-space:pre}
+.on{background:var(--ac);color:var(--act)}
+#msg{background:var(--sf);border-radius:8px;padding:12px 14px;font-size:14px;margin:0 0 12px;min-height:66px}
+#eq{font-size:15px;margin:0 0 14px;min-height:26px}
+.notes{font-size:14px;color:var(--tx2)}
+.notes b{color:var(--tx);font-weight:500}
+.notes li{margin:0 0 6px}
+</style>
+</head>
+<body>
+<main>
+<h1>3Sum: sort and two pointers</h1>
+<p class="sub">LeetCode 15. Find all unique triplets that add up to 0. Step through the code and watch the three pointers move.</p>
+
+<div class="row" style="margin:0 0 16px">
+  <button id="prev">&larr; Back</button>
+  <button id="next">Next &rarr;</button>
+  <button id="play"><span id="playtxt">Auto play</span></button>
+  <button id="reset">Reset</button>
+  <span id="count" style="font-size:13px;color:var(--tx2);margin-left:auto"></span>
+</div>
+
+<div class="row" style="margin-bottom:6px">
+  <label for="inp" style="font-size:13px;color:var(--tx2)">nums</label>
+  <input id="inp" type="text" value="-1, 0, 1, 2, -1, -4">
+  <button id="apply">Load</button>
+</div>
+<div id="err" style="font-size:13px;color:var(--dg);min-height:20px"></div>
+
+<div style="margin:0 0 8px">
+  <span class="leg"><span class="sw" style="background:var(--ac)"></span>i (fixed number)</span>
+  <span class="leg"><span class="sw" style="background:var(--wn)"></span>left</span>
+  <span class="leg"><span class="sw" style="background:var(--ok)"></span>right</span>
+</div>
+
+<div style="overflow-x:auto">
+<div style="min-width:320px">
+<div id="cells" style="display:flex;gap:6px;margin:0 0 2px"></div>
+<div id="tags" style="display:flex;gap:6px;margin:0 0 2px"></div>
+<div id="idx" style="display:flex;gap:6px;margin:0 0 14px"></div>
+</div>
+</div>
+
+<div id="eq"></div>
+
+<p class="lbl">result (unique triplets found so far)</p>
+<div id="res" style="display:flex;gap:6px;flex-wrap:wrap;min-height:34px;margin:0 0 14px"></div>
+
+<div id="msg" aria-live="polite"></div>
+
+<pre class="code" id="code"></pre>
+
+<div class="notes">
+<h2>How it works</h2>
+<ul>
+<li><b>Sort first.</b> Sorting costs O(n log n) and unlocks everything else. It places equal numbers side by side, so duplicates are easy to skip, and it tells us which pointer to move.</li>
+<li><b>Fix one number, then solve a 2Sum.</b> For each <code>i</code>, we need two numbers after it that add to <code>-nums[i]</code>. <code>left</code> starts just after <code>i</code> and <code>right</code> starts at the end.</li>
+<li><b>Move by size.</b> If the total is too small, only moving <code>left</code> right can raise it. If the total is too big, only moving <code>right</code> left can lower it. If it is 0, we record the triplet and move both.</li>
+<li><b>Skip duplicates.</b> We skip a repeated <code>nums[i]</code>, and after a match we skip repeated values at <code>left</code> and <code>right</code>, so no triplet is recorded twice.</li>
+<li><b>Why <code>range(n - 2)</code>.</b> The last two positions cannot start a triplet, because <code>left</code> and <code>right</code> need two more slots.</li>
+<li><b>Cost.</b> O(n²) time: n choices of <code>i</code>, and each two-pointer sweep is O(n). Extra space is O(1) apart from the output (plus whatever the sort uses).</li>
+</ul>
+<h2>Edge cases to try</h2>
+<p>Load <code>0, 0, 0, 0</code> (one triplet, not four), <code>1, 2, 3</code> (no triplet), <code>-2, 0, 1, 1, 2</code> (duplicate 1s), and <code>0, 0</code> (too short, nothing happens).</p>
+<h2>Questions to think about</h2>
+<ol>
+<li>If we removed the sort, which exact decision (moving <code>left</code> or <code>right</code>) would stop being justified?</li>
+<li>After a match we move both pointers. Why would moving only one of them be pointless or wasteful?</li>
+<li>What triplet would be recorded twice if we deleted the check on <code>nums[i]</code>? Try <code>-1, -1, 0, 1, 2</code>.</li>
+<li>Why does the duplicate skip for <code>left</code> and <code>right</code> run only after a match, not after every move?</li>
+<li>Could you stop the outer loop early once <code>nums[i] &gt; 0</code>? Why or why not?</li>
+</ol>
+</div>
+</main>
+
+<script>
+var CODE=['nums.sort()','for i in range(n - 2):','    if i > 0 and nums[i] == nums[i - 1]:','        continue','    left = i + 1','    right = n - 1','    while left < right:','        total = nums[i] + nums[left] + nums[right]','        if total == 0:','            result.append([nums[i], nums[left], nums[right]])','            left += 1','            right -= 1','            while left < right and nums[left] == nums[left - 1]:','                left += 1','            while left < right and nums[right] == nums[right + 1]:','                right -= 1','        elif total < 0:','            left += 1','        else:','            right -= 1'];
+var HL={start:[1],sort:[1],skipi:[3,4],init:[5,6],less:[8,17,18],more:[8,19,20],found:[8,9,10,11,12],skipL:[13,14],skipR:[15,16],done:[]};
+var codeEl=document.getElementById('code');
+codeEl.innerHTML=CODE.map(function(c,k){return '<span class="ln" id="l'+(k+1)+'">'+c.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</span>'}).join('');
+var T=[],steps=[],s=0,timer=null;
+function build(orig){
+  var out=[],a=orig.slice().sort(function(x,y){return x-y}),n=a.length,res=[];
+  function P(type,i,l,r,t,text,arr){out.push({type:type,arr:arr||a,i:i,l:l,r:r,t:t,res:res.map(function(x){return x.slice()}),text:text});}
+  P('start',-1,-1,-1,null,'Start: this is the input as given. The first line of the code sorts it. Press Next.',orig);
+  P('sort',-1,-1,-1,null,'Sorted ascending. Equal numbers are now neighbours, and we can reason about whether a sum is too small or too big.');
+  for(var i=0;i<n-2;i++){
+    if(i>0&&a[i]===a[i-1]){P('skipi',i,-1,-1,null,'nums['+i+'] = '+a[i]+' equals the previous value, so every triplet starting here was already found. Skip it.');continue;}
+    var l=i+1,r=n-1;
+    P('init',i,l,r,null,'Fix nums['+i+'] = '+a[i]+'. Put left right after it (index '+l+') and right at the end (index '+r+'). We now look for two numbers that add to '+(-a[i])+'.');
+    while(l<r){
+      var t=a[i]+a[l]+a[r];
+      if(t===0){
+        res.push([a[i],a[l],a[r]]);
+        P('found',i,l,r,t,'Total is 0, so ['+a[i]+', '+a[l]+', '+a[r]+'] is a triplet. Record it, then move both pointers inward.');
+        l++;r--;
+        while(l<r&&a[l]===a[l-1]){P('skipL',i,l,r,null,'nums[left] = '+a[l]+' repeats the previous value. Skip it so we do not record the same triplet again.');l++;}
+        while(l<r&&a[r]===a[r+1]){P('skipR',i,l,r,null,'nums[right] = '+a[r]+' repeats the value after it. Skip it to avoid a duplicate triplet.');r--;}
+      }else if(t<0){
+        P('less',i,l,r,t,'Total '+t+' is below 0, so it is too small. Only a bigger number helps, so move left one step right.');l++;
+      }else{
+        P('more',i,l,r,t,'Total '+t+' is above 0, so it is too big. Only a smaller number helps, so move right one step left.');r--;
+      }
+    }
+  }
+  P('done',-1,-1,-1,null,'Done. '+(res.length?res.length+' unique triplet(s) found.':'No triplet adds up to 0, so the result is empty.'));
+  return out;
+}
+function render(){
+  var st=steps[s],a=st.arr,n=a.length,c='',tg='',ix='';
+  for(var k=0;k<n;k++){
+    var sty='',tag='';
+    if(k===st.i){sty='background:var(--ac);border-color:var(--acb);color:var(--act)';tag='i';}
+    else if(k===st.l){sty='background:var(--wn);border-color:var(--wnb);color:var(--wnt)';tag='left';}
+    else if(k===st.r){sty='background:var(--ok);border-color:var(--okb);color:var(--okt)';tag='right';}
+    c+='<div class="cell" style="'+sty+'">'+a[k]+'</div>';
+    tg+='<div class="tag">'+tag+'</div>';
+    ix+='<div class="tag">'+k+'</div>';
+  }
+  document.getElementById('cells').innerHTML=c;
+  document.getElementById('tags').innerHTML=tg;
+  document.getElementById('idx').innerHTML=ix;
+  var eq='<span style="color:var(--tx2)">Nothing to add yet.</span>';
+  if(st.i>=0&&st.l>=0&&st.r>=0){
+    var tot=a[st.i]+a[st.l]+a[st.r];
+    var verdict=tot===0?'<b style="color:var(--okt)">equals 0</b>':tot<0?'<b>too small, move left</b>':'<b>too big, move right</b>';
+    eq='('+a[st.i]+') + ('+a[st.l]+') + ('+a[st.r]+') = <b>'+tot+'</b> &nbsp; '+verdict;
+  }
+  document.getElementById('eq').innerHTML=eq;
+  var rh='';
+  if(!st.res.length)rh='<span style="font-size:13px;color:var(--tx2);padding:6px 0">empty</span>';
+  st.res.forEach(function(x){rh+='<div class="chip">['+x.join(', ')+']</div>'});
+  document.getElementById('res').innerHTML=rh;
+  document.getElementById('msg').textContent=st.text;
+  for(var l=1;l<=CODE.length;l++)document.getElementById('l'+l).className='ln';
+  (HL[st.type]||[]).forEach(function(x){document.getElementById('l'+x).className='ln on'});
+  document.getElementById('count').textContent='Step '+s+' of '+(steps.length-1);
+}
+function stop(){if(timer){clearInterval(timer);timer=null;}document.getElementById('playtxt').textContent='Auto play';}
+function load(arr){T=arr;steps=build(T);s=0;stop();render();}
+document.getElementById('next').onclick=function(){stop();if(s<steps.length-1){s++;render();}};
+document.getElementById('prev').onclick=function(){stop();if(s>0){s--;render();}};
+document.getElementById('reset').onclick=function(){stop();s=0;render();};
+document.getElementById('play').onclick=function(){
+  if(timer){stop();return;}
+  if(s>=steps.length-1)s=0;
+  document.getElementById('playtxt').textContent='Pause';
+  timer=setInterval(function(){if(s<steps.length-1){s++;render();}else{stop();}},1000);
+  render();
+};
+document.getElementById('apply').onclick=function(){
+  var raw=document.getElementById('inp').value.split(',').map(function(x){return x.trim()});
+  var nums=raw.map(Number);
+  var bad=raw.some(function(x,k){return x===''||isNaN(nums[k])||nums[k]%1!==0||nums[k]<-20||nums[k]>20});
+  var e=document.getElementById('err');
+  if(bad||nums.length<1||nums.length>12){e.textContent='Enter 1 to 12 whole numbers between -20 and 20, separated by commas.';return;}
+  e.textContent='';load(nums);
+};
+document.getElementById('inp').oninput=function(){document.getElementById('err').textContent=''};
+load([-1,0,1,2,-1,-4]);
+</script>
+</body>
+</html>

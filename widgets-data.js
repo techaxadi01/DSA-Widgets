@@ -1,8 +1,54 @@
 // DSA Interactive Hub - Widgets Data Manifest
-// Generated on: 2026-10-11 23:31:53
+// Generated on: 2026-11-01 22:18:35
 // DO NOT EDIT DIRECTLY: Run 'update_widgets.py' or 'update-widgets.bat' to re-index!
 
 const DSA_WIDGETS = [
+  {
+    "id": "0__leetcode_3Sum__sort_and_two_pointers_visualizer",
+    "filename": "widgets/0. LeetCode/3Sum_ sort and two pointers visualizer.html",
+    "title": "3Sum: sort and two pointers visualizer",
+    "subtitle": "3Sum: sort and two pointers",
+    "stamp": "SEARCHING & SORTING",
+    "category": "Searching & Sorting",
+    "categoryIcon": "⚡",
+    "categoryColor": "#e07a5f",
+    "description": "LeetCode 15. Find all unique triplets that add up to 0. Step through the code and watch the three pointers move.",
+    "tags": [
+      "Edge Cases",
+      "Pointers",
+      "Searching & Sorting",
+      "Sorting"
+    ],
+    "sizeKb": 12.5,
+    "linesCount": 191,
+    "estimatedMinutes": 5,
+    "lastModified": "Oct 31, 2026",
+    "timestamp": 1793465664,
+    "subfolder": "0. LeetCode"
+  },
+  {
+    "id": "0__leetcode_Daily_Temperatures__monotonic_stack_visualizer_1_",
+    "filename": "widgets/0. LeetCode/Daily Temperatures_ monotonic stack visualizer(1).html",
+    "title": "Daily Temperatures: monotonic stack visualizer",
+    "subtitle": "Daily Temperatures: monotonic stack",
+    "stamp": "STACKS & QUEUES",
+    "category": "Stacks & Queues",
+    "categoryIcon": "🥞",
+    "categoryColor": "#f2cc8f",
+    "description": "LeetCode 739. Step through the solution and watch the stack, the temperatures, and the answers change.",
+    "tags": [
+      "Edge Cases",
+      "Pointers",
+      "Stacks & Queues",
+      "Visual Sim"
+    ],
+    "sizeKb": 10.0,
+    "linesCount": 168,
+    "estimatedMinutes": 5,
+    "lastModified": "Oct 31, 2026",
+    "timestamp": 1793418331,
+    "subfolder": "0. LeetCode"
+  },
   {
     "id": "aiml_stack_queue",
     "filename": "widgets/AIML/stack_queue.html",
