@@ -1,8 +1,54 @@
 // DSA Interactive Hub - Widgets Data Manifest
-// Generated on: 2026-11-01 22:18:35
+// Generated on: 2026-11-14 17:42:30
 // DO NOT EDIT DIRECTLY: Run 'update_widgets.py' or 'update-widgets.bat' to re-index!
 
 const DSA_WIDGETS = [
+  {
+    "id": "0__leetcode_Sliding_Window_Maximum__heap_visualizer",
+    "filename": "widgets/0. LeetCode/Sliding Window Maximum_ heap visualizer.html",
+    "title": "Sliding Window Maximum: heap visualizer",
+    "subtitle": "Sliding Window Maximum: heap",
+    "stamp": "MEMORY & ARCHITECTURE",
+    "category": "Memory & Architecture",
+    "categoryIcon": "🧠",
+    "categoryColor": "#3f8f84",
+    "description": "LeetCode 239. Report the maximum of every window of size k. Step through the heap solution and watch entries get pushed, expire, and get popped.",
+    "tags": [
+      "Dynamic Memory",
+      "Edge Cases",
+      "Memory & Architecture",
+      "Pointers"
+    ],
+    "sizeKb": 13.9,
+    "linesCount": 208,
+    "estimatedMinutes": 5,
+    "lastModified": "Nov 14, 2026",
+    "timestamp": 1794658314,
+    "subfolder": "0. LeetCode"
+  },
+  {
+    "id": "0__leetcode_Product_of_Array_Except_Self__prefix_and_suffix_visualizer",
+    "filename": "widgets/0. LeetCode/Product of Array Except Self_ prefix and suffix visualizer.html",
+    "title": "Product of Array Except Self: prefix and suffix visualizer",
+    "subtitle": "Product of Array Except Self",
+    "stamp": "GENERAL DSA",
+    "category": "General DSA",
+    "categoryIcon": "📚",
+    "categoryColor": "#c89b3c",
+    "description": "LeetCode 238. For each position, find the product of all the other numbers, without division. Step through the two passes and watch res and p change.",
+    "tags": [
+      "Edge Cases",
+      "General DSA",
+      "Pointers",
+      "Visual Sim"
+    ],
+    "sizeKb": 11.7,
+    "linesCount": 180,
+    "estimatedMinutes": 5,
+    "lastModified": "Nov 12, 2026",
+    "timestamp": 1794454102,
+    "subfolder": "0. LeetCode"
+  },
   {
     "id": "0__leetcode_3Sum__sort_and_two_pointers_visualizer",
     "filename": "widgets/0. LeetCode/3Sum_ sort and two pointers visualizer.html",

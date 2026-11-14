@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sliding Window Maximum: heap visualizer</title>
+<style>
+:root{--bg:#faf9f5;--sf:#f1efe8;--sf2:#fff;--bd:rgba(0,0,0,.18);--tx:#1f1e1d;--tx2:#5f5e5a;--ac:#E6F1FB;--act:#0C447C;--acb:#378ADD;--wn:#FAEEDA;--wnb:#BA7517;--wnt:#633806;--ok:#EAF3DE;--okb:#639922;--okt:#27500A;--dgb:#FCEBEB;--dgt:#791F1F;--dg:#A32D2D;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1f1e1d;--sf:#2c2c2a;--sf2:#262624;--bd:rgba(255,255,255,.22);--tx:#f1efe8;--tx2:#b4b2a9;--ac:#0C447C;--act:#B5D4F4;--acb:#85B7EB;--wn:#633806;--wnb:#EF9F27;--wnt:#FAC775;--ok:#27500A;--okb:#97C459;--okt:#C0DD97;--dgb:#501313;--dgt:#F7C1C1;--dg:#F09595;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#1f1e1d;--sf:#2c2c2a;--sf2:#262624;--bd:rgba(255,255,255,.22);--tx:#f1efe8;--tx2:#b4b2a9;--ac:#0C447C;--act:#B5D4F4;--acb:#85B7EB;--wn:#633806;--wnb:#EF9F27;--wnt:#FAC775;--ok:#27500A;--okb:#97C459;--okt:#C0DD97;--dgb:#501313;--dgt:#F7C1C1;--dg:#F09595;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+main{max-width:760px;margin:0 auto;padding:20px 16px 40px}
+h1{font-size:22px;font-weight:500;margin:0 0 4px}
+h2{font-size:16px;font-weight:500;margin:22px 0 6px}
+.sub{color:var(--tx2);font-size:14px;margin:0 0 18px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+button,input{font:inherit;font-size:14px;color:var(--tx);background:var(--sf2);border:1px solid var(--bd);border-radius:8px;padding:7px 12px}
+button{cursor:pointer}
+button:hover{background:var(--sf)}
+input{flex:1;min-width:180px}
+input.k{flex:0 0 64px;min-width:0}
+.lbl{font-size:12px;color:var(--tx2);margin:0 0 6px}
+.leg{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--tx2);margin:0 12px 6px 0}
+.sw{width:12px;height:12px;border-radius:3px;border:1px solid var(--bd)}
+.grid{display:flex;gap:6px;margin:0 0 4px}
+.cell{flex:1;min-width:40px;padding:10px 4px;border:1px solid var(--bd);border-radius:8px;text-align:center;background:var(--sf2);font-size:16px}
+.tag{flex:1;min-width:40px;text-align:center;font-size:12px;color:var(--tx2)}
+.hp{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 14px;min-height:54px}
+.hc{display:flex;flex-direction:column;align-items:center;gap:2px}
+.chip{padding:6px 10px;border:1px solid var(--bd);border-radius:8px;background:var(--sf2);font-size:14px;white-space:nowrap}
+.code{font:13px/1.7 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:var(--sf);border-radius:8px;padding:10px 12px;margin:0;overflow-x:auto}
+.ln{display:block;padding:0 6px;border-radius:4px;white-space:pre}
+.on{background:var(--ac);color:var(--act)}
+#msg{background:var(--sf);border-radius:8px;padding:12px 14px;font-size:14px;margin:0 0 12px;min-height:84px}
+.notes{font-size:14px;color:var(--tx2)}
+.notes b{color:var(--tx);font-weight:500}
+.notes li{margin:0 0 6px}
+</style>
+</head>
+<body>
+<main>
+<h1>Sliding Window Maximum: heap</h1>
+<p class="sub">LeetCode 239. Report the maximum of every window of size k. Step through the heap solution and watch entries get pushed, expire, and get popped.</p>
+
+<div class="row" style="margin:0 0 16px">
+  <button id="prev">&larr; Back</button>
+  <button id="next">Next &rarr;</button>
+  <button id="play"><span id="playtxt">Auto play</span></button>
+  <button id="reset">Reset</button>
+  <span id="count" style="font-size:13px;color:var(--tx2);margin-left:auto"></span>
+</div>
+
+<div class="row" style="margin-bottom:6px">
+  <label for="inp" style="font-size:13px;color:var(--tx2)">nums</label>
+  <input id="inp" type="text" value="1, 3, -1, -3, 5, 3, 6, 7">
+  <label for="kin" style="font-size:13px;color:var(--tx2)">k</label>
+  <input id="kin" class="k" type="text" value="3">
+  <button id="apply">Load</button>
+</div>
+<div id="err" style="font-size:13px;color:var(--dg);min-height:20px"></div>
+
+<div style="margin:0 0 8px">
+  <span class="leg"><span class="sw" style="background:var(--ac)"></span>current index i</span>
+  <span class="leg"><span class="sw" style="background:var(--wn)"></span>inside the window</span>
+  <span class="leg"><span class="sw" style="background:var(--ok)"></span>the maximum recorded</span>
+</div>
+
+<div style="overflow-x:auto">
+<div style="min-width:320px">
+<p class="lbl">nums (the window covers the last k numbers up to i)</p>
+<div class="grid" id="nums"></div>
+<div class="grid" id="idx" style="margin-bottom:14px"></div>
+</div>
+</div>
+
+<p class="lbl">heap, as stored in the heapq array: entries are (-num, index), the top is position 0, and the children of position j sit at 2j+1 and 2j+2</p>
+<div class="hp" id="heap"></div>
+<div style="margin:0 0 10px;font-size:12px;color:var(--tx2)">
+  <span class="leg"><span class="sw" style="background:var(--ac)"></span>top of heap</span>
+  <span class="leg"><span class="sw" style="background:var(--dgb)"></span>expired top, about to be popped</span>
+  <span class="leg"><span class="sw" style="border-style:dashed;border-color:var(--dg)"></span>expired but buried (still in heap)</span>
+</div>
+
+<p class="lbl">res (the answer so far)</p>
+<div class="hp" id="res" style="min-height:34px"></div>
+
+<div id="msg" aria-live="polite"></div>
+
+<pre class="code" id="code"></pre>
+
+<div class="notes">
+<h2>How it works</h2>
+<ul>
+<li><b>A max-heap from a min-heap.</b> Python’s <code>heapq</code> always keeps the smallest item on top. Storing <code>-num</code> flips the order, so the largest number becomes the smallest entry and rises to the top. We negate it again when reading the answer.</li>
+<li><b>Why store the index.</b> The heap alone cannot tell which numbers have left the window. Pairing each value with its index lets us ask whether the top is expired: <code>index &lt;= i - k</code> means it is no longer among the last k numbers.</li>
+<li><b>Lazy deletion.</b> We do not search the heap for expired entries. We only check the top. An expired entry buried deeper is harmless, because it cannot affect the answer until it reaches the top, and then the <code>while</code> loop removes it. The dashed chips show this.</li>
+<li><b>Why while, not if.</b> Several expired entries can stack up at the top, so one pop may not be enough.</li>
+<li><b>Why the heap is never empty.</b> We push index <code>i</code> just before the check, and <code>i &gt; i - k</code> always (since k is at least 1), so the loop always stops.</li>
+<li><b>Cost.</b> Each number is pushed and popped at most once, and each heap operation is O(log n), so time is O(n log n). Space is O(n), because buried expired entries stay in the heap. A monotonic deque solves the problem in O(n) time and O(k) space.</li>
+<li>The code uses <code>heapq</code>, which needs <code>import heapq</code> at the top. LeetCode adds this for you.</li>
+</ul>
+<h2>Edge cases to try</h2>
+<p>Try <code>5, 5, 5, 5</code> with k = 2 (ties), <code>9, 8, 7, 6</code> with k = 2 (the max keeps expiring), <code>1, 2, 3, 4</code> with k = 4 (a single window), and <code>4, 2</code> with k = 1 (every number is its own window).</p>
+<h2>Questions to think about</h2>
+<ol>
+<li>Python compares tuples left to right. When two numbers are equal, which entry ends up on top, the older or the newer, and what does that mean for when it expires?</li>
+<li>Why is it safe to leave an expired entry buried in the heap? Under what condition does it start to matter?</li>
+<li>The heap can grow bigger than k. What input makes it grow the most, and what is its size at the end?</li>
+<li>Why is the first answer only added when <code>i &gt;= k - 1</code>? What does the heap look like in the steps before that?</li>
+<li>A deque version removes entries smaller than the new number instead of keeping them. Why is it safe to throw those away, when the heap keeps them?</li>
+</ol>
+</div>
+</main>
+
+<script>
+var CODE=['heap = []','res = []','for i, num in enumerate(nums):','    heapq.heappush(heap, (-num, i))','    while heap[0][1] <= i - k:','        heapq.heappop(heap)','    if i >= k - 1:','        res.append(-heap[0][0])','return res'];
+var HL={start:[1,2],push:[3,4],pop:[5,6],record:[5,7,8],warm:[5,7],done:[9]};
+document.getElementById('code').innerHTML=CODE.map(function(c,k){return '<span class="ln" id="l'+(k+1)+'">'+c.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</span>'}).join('');
+function lt(a,b){return a[0]<b[0]||(a[0]===b[0]&&a[1]<b[1]);}
+function siftdown(h,st,pos){var item=h[pos];while(pos>st){var pp=(pos-1)>>1,par=h[pp];if(lt(item,par)){h[pos]=par;pos=pp;continue;}break;}h[pos]=item;}
+function siftup(h,pos){var end=h.length,st=pos,item=h[pos],c=2*pos+1;while(c<end){var r=c+1;if(r<end&&!lt(h[c],h[r]))c=r;h[pos]=h[c];pos=c;c=2*pos+1;}h[pos]=item;siftdown(h,st,pos);}
+function hpush(h,x){h.push(x);siftdown(h,0,h.length-1);}
+function hpop(h){var last=h.pop();if(h.length){var r=h[0];h[0]=last;siftup(h,0);return r;}return last;}
+var T=[],K=1,steps=[],s=0,timer=null;
+function build(a,k){
+  var heap=[],res=[],out=[];
+  function S(type,i,pop,hit,text){out.push({type:type,i:i,pop:pop,hit:hit,text:text,heap:heap.map(function(x){return x.slice()}),res:res.slice(),nums:a,k:k});}
+  S('start',-1,false,-1,'Start: the heap and res are empty. We visit each number once, left to right, with window size k = '+k+'. Press Next.');
+  for(var i=0;i<a.length;i++){
+    hpush(heap,[-a[i],i]);
+    S('push',i,false,-1,'Push ('+(-a[i])+', '+i+') onto the heap, which is the number negated plus its index. Because heapq keeps the smallest entry on top, the largest number sits at the top.');
+    while(heap[0][1]<=i-k){
+      var t=heap[0];
+      S('pop',i,true,-1,'The top entry ('+t[0]+', '+t[1]+') has index '+t[1]+', and '+t[1]+' <= i - k = '+(i-k)+'. That number has slid out of the window, so pop it.');
+      hpop(heap);
+    }
+    var tp=heap[0];
+    if(i>=k-1){
+      res.push(-tp[0]);
+      S('record',i,false,tp[1],'The top entry ('+tp[0]+', '+tp[1]+') has index '+tp[1]+' > '+(i-k)+', so it is inside the window and the loop stops. The window is full (i >= k - 1), so append -('+tp[0]+') = '+(-tp[0])+' to res.');
+    }else{
+      S('warm',i,false,-1,'The top is inside the window, so the loop stops. But i = '+i+' is less than k - 1 = '+(k-1)+', so the first full window is not complete yet. Nothing is appended.');
+    }
+  }
+  S('done',a.length,false,-1,'Done. res = ['+res.join(', ')+']. That is one maximum for each of the '+res.length+' window(s).');
+  return out;
+}
+function render(){
+  var st=steps[s],a=st.nums,n=a.length,k=st.k,h1='',h2='';
+  for(var j=0;j<n;j++){
+    var sty='',lo=st.i-k+1;
+    if(st.i>=0&&st.i<n&&j>=lo&&j<=st.i)sty='background:var(--wn);border-color:var(--wnb);color:var(--wnt)';
+    if(j===st.hit)sty='background:var(--ok);border-color:var(--okb);color:var(--okt)';
+    if(j===st.i&&st.i<n)sty='background:var(--ac);border-color:var(--acb);color:var(--act)';
+    h1+='<div class="cell" style="'+sty+'">'+a[j]+'</div>';
+    h2+='<div class="tag">'+j+'</div>';
+  }
+  document.getElementById('nums').innerHTML=h1;
+  document.getElementById('idx').innerHTML=h2;
+  var hh='';
+  if(!st.heap.length)hh='<span style="font-size:13px;color:var(--tx2);padding:8px 0">empty</span>';
+  st.heap.forEach(function(e,p){
+    var expired=st.i>=0&&st.i<n&&e[1]<=st.i-k,sty='';
+    if(p===0)sty='background:var(--ac);border-color:var(--acb);color:var(--act)';
+    if(p===0&&st.pop)sty='background:var(--dgb);border-color:var(--dg);color:var(--dgt)';
+    else if(expired&&p>0)sty='border-style:dashed;border-color:var(--dg)';
+    hh+='<div class="hc"><div class="chip" style="'+sty+'">('+e[0]+', '+e[1]+')</div><div class="tag">'+p+'</div></div>';
+  });
+  document.getElementById('heap').innerHTML=hh;
+  var rh='';
+  if(!st.res.length)rh='<span style="font-size:13px;color:var(--tx2);padding:6px 0">empty</span>';
+  st.res.forEach(function(x){rh+='<div class="chip" style="background:var(--ok);border-color:var(--okb);color:var(--okt)">'+x+'</div>'});
+  document.getElementById('res').innerHTML=rh;
+  document.getElementById('msg').textContent=st.text;
+  for(var l=1;l<=CODE.length;l++)document.getElementById('l'+l).className='ln';
+  (HL[st.type]||[]).forEach(function(x){document.getElementById('l'+x).className='ln on'});
+  document.getElementById('count').textContent='Step '+s+' of '+(steps.length-1);
+}
+function stop(){if(timer){clearInterval(timer);timer=null;}document.getElementById('playtxt').textContent='Auto play';}
+function load(arr,k){T=arr;K=k;steps=build(arr,k);s=0;stop();render();}
+document.getElementById('next').onclick=function(){stop();if(s<steps.length-1){s++;render();}};
+document.getElementById('prev').onclick=function(){stop();if(s>0){s--;render();}};
+document.getElementById('reset').onclick=function(){stop();s=0;render();};
+document.getElementById('play').onclick=function(){
+  if(timer){stop();return;}
+  if(s>=steps.length-1)s=0;
+  document.getElementById('playtxt').textContent='Pause';
+  timer=setInterval(function(){if(s<steps.length-1){s++;render();}else{stop();}},1100);
+  render();
+};
+document.getElementById('apply').onclick=function(){
+  var raw=document.getElementById('inp').value.split(',').map(function(x){return x.trim()});
+  var nums=raw.map(Number);
+  var ks=document.getElementById('kin').value.trim();
+  var k=Number(ks);
+  var e=document.getElementById('err');
+  var bad=raw.some(function(x,j){return x===''||isNaN(nums[j])||nums[j]%1!==0||nums[j]<-20||nums[j]>20});
+  if(bad||nums.length<1||nums.length>12){e.textContent='Enter 1 to 12 whole numbers between -20 and 20, separated by commas.';return;}
+  if(ks===''||isNaN(k)||k%1!==0||k<1||k>nums.length){e.textContent='k must be a whole number from 1 to '+nums.length+'.';return;}
+  e.textContent='';load(nums,k);
+};
+document.getElementById('inp').oninput=function(){document.getElementById('err').textContent=''};
+document.getElementById('kin').oninput=function(){document.getElementById('err').textContent=''};
+load([1,3,-1,-3,5,3,6,7],3);
+</script>
+</body>
+</html>
