@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Priority queue visualizer</title>
+<style>
+:root{--bg:#f3f4ee;--card:#fff;--ink:#1b1d1a;--mut:#697064;--line:#dcded3;--line2:#aeb2a4;--acc:#3b6df0;--accbg:#e3ebfd;--ok:#14935b;--okbg:#d9f3e6;--cur:#d98a00;--curbg:#fdefc9;--bad:#d4403f;--badbg:#fbe3e2;--sh:0 1px 2px rgba(20,30,20,.06),0 6px 18px rgba(20,30,20,.06);color-scheme:light}
+@media (prefers-color-scheme:dark){:root{--bg:#121411;--card:#1c1f1a;--ink:#eceee6;--mut:#9aa092;--line:#32362e;--line2:#667060;--acc:#7aa2ff;--accbg:#1b2744;--ok:#3fcf8a;--okbg:#143427;--cur:#f2b441;--curbg:#3b2e0e;--bad:#ff7777;--badbg:#401d1d;--sh:0 1px 2px rgba(0,0,0,.4),0 6px 18px rgba(0,0,0,.35);color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:radial-gradient(900px 400px at 8% -5%,var(--accbg),transparent 60%),radial-gradient(800px 380px at 100% 0,var(--okbg),transparent 55%),var(--bg);background-attachment:fixed}
+main{max-width:1100px;margin:0 auto;padding:22px 16px 44px}
+h1{font-size:28px;margin:0;letter-spacing:-.02em;background:linear-gradient(90deg,var(--acc),var(--ok));-webkit-background-clip:text;background-clip:text;color:transparent;display:inline-block}
+.sub{color:var(--mut);margin:4px 0 16px}
+h4{margin:0 0 8px;font-size:11.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--mut)}
+.tabs,.seg{display:inline-flex;gap:4px;background:var(--card);border:1px solid var(--line);padding:4px;border-radius:12px;margin-bottom:14px;box-shadow:var(--sh)}
+.tabs button,.seg button{border:0;background:none;color:var(--mut);padding:8px 16px;border-radius:9px;font:inherit;font-weight:600;cursor:pointer}
+.tabs button.on,.seg button.on{background:linear-gradient(135deg,var(--acc),var(--ok));color:#fff}
+.seg{margin:0 0 12px;padding:3px}.seg button{padding:6px 13px;font-size:14px}
+.panel{display:none}.panel.on{display:block}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px;box-shadow:var(--sh)}
+.grid{display:flex;gap:14px;flex-wrap:wrap}.left{flex:1 1 590px;min-width:0}.right{flex:1 1 300px;min-width:0}
+.note p{margin:0 0 8px}.note p:last-child{margin:0}.note ul{margin:6px 0 0;padding-left:20px}.note li{margin-bottom:5px}
+svg{width:100%;height:auto;display:block}
+.cells{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;min-height:130px;padding-top:6px}
+.cell{width:50px;text-align:center;font-size:12px;color:var(--mut)}
+.cell .bw{height:64px;display:flex;align-items:flex-end}
+.cell .bar{width:100%;background:var(--line2);opacity:.55;border-radius:5px 5px 0 0;transition:height .3s}
+.vb{border:2px solid var(--line2);border-radius:10px;padding:5px 0;font-weight:800;font-size:16px;color:var(--ink);background:var(--card);margin-top:3px;transition:all .25s}
+.cell em{display:block;font-style:normal;color:var(--acc);font-weight:700;min-height:18px;font-size:11px}
+.cell.cur .vb{background:var(--curbg);border-color:var(--cur)}.cell.cur .bar{background:var(--cur);opacity:1}
+.cell.cmp .vb,.cell.min .vb{background:var(--accbg);border-color:var(--acc)}.cell.cmp .bar,.cell.min .bar{background:var(--acc);opacity:1}
+.cell.sw .vb{background:var(--okbg);border-color:var(--ok)}.cell.sw .bar{background:var(--ok);opacity:1}
+.cell.out .vb{background:var(--badbg);border-color:var(--bad)}.cell.out .bar{background:var(--bad);opacity:1}
+.cell.gap .vb{border-style:dashed;background:transparent;color:transparent}
+.te{stroke:var(--line2);stroke-width:2}.te.hot{stroke:var(--ok);stroke-width:3.5}
+.tn{fill:var(--card);stroke:var(--line2);stroke-width:2.5;filter:drop-shadow(0 3px 4px rgba(0,0,0,.14));transition:all .25s}
+.tn.cur{fill:var(--curbg);stroke:var(--cur)}.tn.cmp,.tn.min{fill:var(--accbg);stroke:var(--acc)}.tn.sw{fill:var(--okbg);stroke:var(--ok)}.tn.out{fill:var(--badbg);stroke:var(--bad)}
+.tv{font-size:15px;font-weight:800;text-anchor:middle;dominant-baseline:middle;fill:var(--ink)}
+.ti{font-size:10px;text-anchor:middle;fill:var(--mut)}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--mut);margin-top:6px}
+.legend i{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:5px;vertical-align:-1px;border:2px solid}
+.ops{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
+.ops input[type=number]{width:74px;padding:7px 8px;border:1px solid var(--line);border-radius:9px;background:var(--card);color:var(--ink);font:inherit;font-weight:600}
+button.b{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:9px;padding:7px 13px;font:inherit;font-weight:600;cursor:pointer;box-shadow:var(--sh)}
+button.b.p{background:var(--acc);border-color:var(--acc);color:#fff}button.b.g{background:var(--ok);border-color:var(--ok);color:#fff}
+button.b:disabled{opacity:.4;cursor:default}
+.ctrl{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+.ctrl input[type=range]{flex:1;min-width:110px;accent-color:var(--acc)}
+.ctrl select{padding:6px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit}
+.cnt{color:var(--mut);font-size:13px;min-width:80px;text-align:right}
+.msg{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--acc);border-radius:10px;padding:11px 14px;min-height:76px;box-shadow:var(--sh)}
+.msg.ok{border-left-color:var(--ok)}.msg.warn{border-left-color:var(--bad)}
+.kpis{display:flex;gap:10px}.kpi{flex:1;text-align:center;background:var(--bg);border-radius:10px;padding:8px 4px}
+.kpi b{display:block;font-size:26px;line-height:1.1;letter-spacing:-.02em}.kpi span{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.06em}
+.out{margin-top:8px;font-weight:700}.pill{display:inline-block;background:var(--badbg);color:var(--bad);border-radius:999px;padding:1px 10px;margin-left:4px}
+.code{font:12.5px/1.7 ui-monospace,Menlo,Consolas,monospace}
+.code div{white-space:pre;padding:0 8px;border-radius:6px;overflow-x:auto;border-left:3px solid transparent;min-height:21px}
+.code div.hl{background:var(--curbg);border-left-color:var(--cur)}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{padding:5px 7px;text-align:center;border-bottom:1px solid var(--line)}
+th{font-size:11.5px;color:var(--mut);font-weight:600}td:first-child,th:first-child{text-align:left}
+td.good{color:var(--ok);font-weight:700}td.bad{color:var(--bad);font-weight:700}
+.empty{color:var(--mut);font-size:13px}
+</style>
+</head>
+<body>
+<main>
+<h1>Priority queues</h1>
+<p class="sub">Same interface, two implementations. Run operations and compare how many comparisons and moves each one costs.</p>
+<div class="tabs"><button class="on" data-t="p1">1. Using arrays</button><button data-t="p2">2. Using a binary heap</button></div>
+
+<section class="panel on" id="p1">
+ <div class="card note"><p><b>Min-priority queue</b>: INSERT adds an item, EXTRACT-MIN removes the smallest, PEEK-MIN reads it. With a plain array you pick one of two bargains: keep it <b>unsorted</b> (cheap insert, costly search) or keep it <b>sorted</b> (costly insert, cheap search). Switch between them and try the same operations on both.</p></div>
+ <div id="v1"></div>
+ <div class="card note"><h4>Analysis</h4>
+  <table><tr><th>Array kind</th><th>INSERT</th><th>EXTRACT-MIN</th><th>PEEK-MIN</th><th>n inserts + n extracts</th></tr>
+  <tr><td>Unsorted</td><td class="good">Θ(1)</td><td class="bad">Θ(n)</td><td class="bad">Θ(n)</td><td>Θ(n²)</td></tr>
+  <tr><td>Sorted (descending)</td><td class="bad">Θ(n)</td><td class="good">Θ(1)</td><td class="good">Θ(1)</td><td>Θ(n²)</td></tr></table>
+  <ul>
+   <li><b>Unsorted.</b> INSERT writes to the next free slot. EXTRACT-MIN must compare against every item, so it always does n−1 comparisons, in the best case too. Removing the minimum is cheap afterwards: copy the last item into the hole.</li>
+   <li><b>Sorted descending.</b> The minimum sits at the end, so EXTRACT-MIN and PEEK-MIN just look at or pop the last cell. INSERT walks from the end and shifts every smaller item one slot right: up to n shifts, about n/2 on average.</li>
+   <li><b>Link to sorting.</b> Inserting all items and extracting them one by one is a sort. The unsorted array gives <i>selection sort</i>, the sorted array gives <i>insertion sort</i>. Both are Θ(n²).</li>
+   <li><b>Link to graphs.</b> Dijkstra and Prim with an unsorted array as the queue cost O(V²), since every extraction scans all vertices. Tab 2 shows how to do better.</li>
+  </ul>
+  <p class="empty">Cost model used in the counters: one comparison between two keys, one move = one array write (a swap counts as one move).</p></div>
+</section>
+
+<section class="panel" id="p2">
+ <div class="card note"><p><b>Binary min-heap.</b> A complete binary tree stored in an array: the parent of index <i>i</i> is ⌊(i−1)/2⌋, the children are 2i+1 and 2i+2. The rule is that every parent is ≤ its children, so the minimum is always at index 0. INSERT places the new item at the end and <b>sifts up</b>. EXTRACT-MIN moves the last item to the root and <b>sifts down</b>. The tree and the array below it are the same data.</p></div>
+ <div id="v2"></div>
+ <div class="card note"><h4>Analysis</h4>
+  <ul>
+   <li><b>Height.</b> A complete tree with n nodes has height ⌊log₂ n⌋. A sift moves along one root-to-leaf path and does a constant amount of work per level, so INSERT and EXTRACT-MIN are O(log n). Sift-up does 1 comparison per level, sift-down up to 2.</li>
+   <li><b>INSERT</b> is O(log n) in the worst case (new item is the smallest) but O(1) on average for random input, because most items are already near their final level.</li>
+   <li><b>BUILD-HEAP is O(n), not O(n log n).</b> About n/2^(h+1) nodes sit at height h and each sifts at most h levels, so the total is Σ h·n/2^(h+1) ≤ n. Try the Build heap button and count the moves.</li>
+   <li><b>Heapsort</b> = BUILD-HEAP + n EXTRACT-MINs = O(n log n), in place.</li>
+  </ul>
+  <table style="margin-top:10px"><tr><th>Structure</th><th>INSERT</th><th>EXTRACT-MIN</th><th>PEEK-MIN</th><th>Build from n items</th><th>Dijkstra / Prim</th></tr>
+  <tr><td>Unsorted array</td><td>Θ(1)</td><td>Θ(n)</td><td>Θ(n)</td><td>Θ(n)</td><td>O(V²)</td></tr>
+  <tr><td>Sorted array</td><td>Θ(n)</td><td>Θ(1)</td><td>Θ(1)</td><td>Θ(n log n)</td><td>O(V·E)</td></tr>
+  <tr><td>Binary heap</td><td class="good">O(log n)</td><td class="good">O(log n)</td><td class="good">Θ(1)</td><td class="good">Θ(n)</td><td class="good">O((V+E) log V)</td></tr></table>
+  <table style="margin-top:10px"><tr><th>n</th><th>10</th><th>1,000</th><th>1,000,000</th></tr>
+  <tr><td>Array scan, about n steps</td><td>10</td><td>1,000</td><td>1,000,000</td></tr>
+  <tr><td>Heap, about log₂ n levels</td><td>3</td><td>9</td><td>19</td></tr></table></div>
+</section>
+</main>
+
+<script>
+const CAPA=12,CAPH=15,rnd=(a,b)=>a+Math.floor(Math.random()*(b-a+1)),LBL={insert:'INSERT',extract:'EXTRACT-MIN',peek:'PEEK-MIN',build:'BUILD-HEAP'};
+function rec(a){const R={a,cmp:0,mov:0,steps:[],out:null};R.s=(line,msg,hl={})=>R.steps.push({arr:[...R.a],hl,line,msg,cmp:R.cmp,mov:R.mov,out:R.out});return R}
+const done=(R,t)=>R.s(-1,`Done: ${R.cmp} comparison${R.cmp===1?'':'s'}, ${R.mov} move${R.mov===1?'':'s'}. ${t}`);
+
+function unsortedEng(a0,op,x){
+ const R=rec([...a0]),a=R.a,n=a.length;
+ if(op==='insert'){if(n>=CAPA)return{err:`The demo holds at most ${CAPA} items.`};
+  R.s(-1,`INSERT(${x}) on an unsorted array.`);a.push(x);R.mov++;
+  R.s(1,`Write ${x} at index ${n} and increase n. No comparisons are needed.`,{[n]:'sw'});done(R,'That is Θ(1).');return{steps:R.steps}}
+ if(!n)return{err:'The queue is empty.'};
+ R.s(-1,`${LBL[op]}: with no ordering, the minimum can only be found by scanning every item.`);
+ let m=0;R.s(1,`Assume index 0 (${a[0]}) is the smallest so far.`,{0:'min'});
+ for(let i=1;i<n;i++){R.cmp++;
+  if(a[i]<a[m]){const o=a[m];m=i;R.s(4,`a[${i}] = ${a[i]} < ${o}: new smallest so far.`,{[i]:'min'})}
+  else R.s(3,`a[${i}] = ${a[i]} ≥ ${a[m]}: keep index ${m} as the smallest.`,{[m]:'min',[i]:'cur'})}
+ const v=a[m];R.out=v;
+ if(op==='peek'){R.s(5,`The minimum is ${v} at index ${m}. Peek leaves it in place.`,{[m]:'sw'});done(R,`The scan always costs n−1 = ${n-1} comparisons: Θ(n).`);return{steps:R.steps}}
+ R.s(5,`The minimum is ${v} at index ${m}. Remove it.`,{[m]:'out'});
+ const last=a[n-1];if(m!==n-1){a[m]=last;R.mov++}a.pop();
+ R.s(6,m!==n-1?`Copy the last item (${last}) into index ${m} and shrink n. Order does not matter, so nothing else shifts.`:`It was the last item, so just shrink n.`,m!==n-1?{[m]:'sw'}:{});
+ R.s(7,`Return ${v}.`);done(R,`The scan makes the cost Θ(n).`);return{steps:R.steps}}
+
+function sortedEng(a0,op,x){
+ const R=rec([...a0]),a=R.a,n=a.length;
+ if(op==='insert'){if(n>=CAPA)return{err:`The demo holds at most ${CAPA} items.`};
+  R.s(-1,`INSERT(${x}) into an array sorted in descending order (smallest at the end).`);
+  a.push(null);let j=n-1;R.s(1,`Open a gap at index ${n} and walk left from index ${j}, looking for ${x}'s place.`,{[n]:'gap'});
+  while(j>=0){R.cmp++;
+   if(a[j]<x){const v=a[j];R.s(2,`a[${j}] = ${v} < ${x}: ${v} has to end up after ${x}, so shift it right.`,{[j]:'cur'});a[j+1]=v;a[j]=null;R.mov++;R.s(3,`Shifted ${v} to index ${j+1}. The gap is now at index ${j}.`,{[j+1]:'sw',[j]:'gap'});j--}
+   else{R.s(2,`a[${j}] = ${a[j]} ≥ ${x}: stop. ${x} belongs right after index ${j}.`,{[j]:'sw'});break}}
+  a[j+1]=x;R.mov++;R.s(4,`Write ${x} into the gap at index ${j+1}.`,{[j+1]:'sw'});
+  done(R,`Every item smaller than ${x} had to shift, so INSERT is Θ(n) in the worst case.`);return{steps:R.steps}}
+ if(!n)return{err:'The queue is empty.'};
+ R.s(-1,`${LBL[op]}: the smallest item is always the last cell.`);const v=a[n-1];R.out=v;
+ if(op==='peek'){R.s(1,`The minimum is ${v}, read straight from index ${n-1}.`,{[n-1]:'sw'});done(R,'Θ(1).');return{steps:R.steps}}
+ R.s(1,`The minimum is ${v} at index ${n-1}.`,{[n-1]:'out'});a.pop();R.s(2,`Shrink n. Nothing shifts and nothing is compared. Return ${v}.`);done(R,'Θ(1).');return{steps:R.steps}}
+
+function sift(R,i,off){
+ const a=R.a;
+ for(;;){const n=a.length,l=2*i+1,r=l+1;let s=i;
+  R.s(off+2,`Sift down index ${i} (${a[i]}). `+(l<n?`Children: index ${l} = ${a[l]}${r<n?`, index ${r} = ${a[r]}`:''}.`:'It has no children, so it is already in place.'),{[i]:'cur',...(l<n?{[l]:'cmp'}:{}),...(r<n?{[r]:'cmp'}:{})});
+  if(l>=n)return;
+  R.cmp++;if(a[l]<a[s])s=l;
+  R.s(off+3,`Left child ${a[l]} < ${a[i]}? ${a[l]<a[i]?'Yes: the left child is the smallest so far.':'No.'}`,{[i]:'cur',[l]:'cmp'});
+  if(r<n){R.cmp++;const lt=a[r]<a[s];R.s(off+4,`Right child ${a[r]} < ${a[s]}? ${lt?'Yes: the right child is the smallest.':'No.'}`,{[s]:'min',[r]:'cmp',[i]:'cur'});if(lt)s=r}
+  if(s===i){R.s(off+5,`${a[i]} is not larger than its children: heap order holds here. Stop.`,{[i]:'sw'});return}
+  [a[i],a[s]]=[a[s],a[i]];R.mov++;
+  R.s(off+6,`Swap: ${a[i]} moves up to index ${i}, ${a[s]} moves down to index ${s}.`,{[i]:'sw',[s]:'sw'});i=s}}
+
+function heapEng(a0,op,x){
+ const R=rec([...a0]);let a=R.a;
+ if(op==='build'){R.a=a=Array.from({length:10},()=>rnd(1,99));R.s(-1,'Start with an arbitrary array of 10 numbers. It is not a heap yet.');
+  for(let i=(a.length>>1)-1;i>=0;i--){R.s(1,`i = ${i}: make the subtree rooted at index ${i} a heap by sifting ${a[i]} down. Leaves are already heaps, so we start at ⌊n/2⌋−1.`,{[i]:'cur'});sift(R,i,4)}
+  done(R,`That is ${R.cmp} comparisons and ${R.mov} swaps for n = ${a.length}: O(n), well below n log n.`);return{steps:R.steps}}
+ if(op==='insert'){const n=a.length;if(n>=CAPH)return{err:`The demo holds at most ${CAPH} items.`};
+  R.s(-1,`INSERT(${x}) into the min-heap.`);a.push(x);R.mov++;let i=n;
+  R.s(1,`Place ${x} at the end (index ${i}). This keeps the tree complete, but the heap order may now be broken.`,{[i]:'cur'});
+  while(i>0){const p=(i-1)>>1;R.cmp++;
+   if(a[p]>a[i]){R.s(2,`Parent (index ${p}) = ${a[p]} > ${a[i]}: out of order.`,{[i]:'cur',[p]:'cmp'});[a[p],a[i]]=[a[i],a[p]];R.mov++;R.s(3,`Swap: ${a[p]} moves up to index ${p}.`,{[p]:'sw',[i]:'sw'});i=p}
+   else{R.s(2,`Parent (index ${p}) = ${a[p]} ≤ ${a[i]}: heap order holds. Stop.`,{[i]:'sw',[p]:'cmp'});break}}
+  if(i===0)R.s(2,`${a[0]} reached the root. Stop.`,{0:'sw'});
+  done(R,`At most one comparison per level, so O(log n).`);return{steps:R.steps}}
+ if(!a.length)return{err:'The heap is empty.'};
+ const v=a[0];
+ if(op==='peek'){R.out=v;R.s(-1,'PEEK-MIN');R.s(1,`The minimum is always at the root: ${v}.`,{0:'sw'});done(R,'Θ(1).');return{steps:R.steps}}
+ R.out=v;R.s(-1,'EXTRACT-MIN on the min-heap.');R.s(1,`Save the minimum ${v} from the root.`,{0:'out'});
+ const last=a.pop();
+ if(a.length){a[0]=last;R.mov++;R.s(2,`Move the last item (${last}) to the root and shrink n. The root may now be too large.`,{0:'cur'});R.s(3,'Restore heap order by sifting the root down.',{0:'cur'});sift(R,0,6)}
+ else R.s(2,'That was the only item; the heap is empty.');
+ R.s(4,`Return ${v}.`);done(R,'One path from root to leaf, so O(log n).');return{steps:R.steps}}
+
+const SIFT=['SIFT-DOWN(h, i):','  loop:','    s ← i;  l ← 2i+1;  r ← 2i+2','    if l < n and h[l] < h[s]: s ← l','    if r < n and h[r] < h[s]: s ← r','    if s = i: stop','    swap h[i], h[s];  i ← s'];
+const KINDS1=[
+ {key:'u',label:'Unsorted array',eng:unsortedEng,init:[14,7,21,3,18,9],minTag:a=>-1,
+  fill:()=>{const s=new Set;while(s.size<6)s.add(rnd(1,60));return[...s]},
+  bounds:{insert:'Θ(1)',extract:'Θ(n)',peek:'Θ(n)'},
+  code:{insert:['INSERT(a, x):','  a[n] ← x','  n ← n + 1'],
+   extract:['EXTRACT-MIN(a):','  m ← 0','  for i ← 1 to n-1:','    if a[i] < a[m]:','      m ← i','  min ← a[m]','  a[m] ← a[n-1];  n ← n - 1','  return min'],
+   peek:['PEEK-MIN(a):','  m ← 0','  for i ← 1 to n-1:','    if a[i] < a[m]:','      m ← i','  return a[m]']}},
+ {key:'s',label:'Sorted array (descending)',eng:sortedEng,init:[21,18,14,9,7,3],minTag:a=>a.length-1,
+  fill:()=>{const s=new Set;while(s.size<6)s.add(rnd(1,60));return[...s].sort((x,y)=>y-x)},
+  bounds:{insert:'Θ(n)',extract:'Θ(1)',peek:'Θ(1)'},
+  code:{insert:['INSERT(a, x):      // a sorted descending','  j ← n - 1','  while j ≥ 0 and a[j] < x:','    a[j+1] ← a[j];  j ← j - 1','  a[j+1] ← x;  n ← n + 1'],
+   extract:['EXTRACT-MIN(a):','  min ← a[n-1]','  n ← n - 1','  return min'],peek:['PEEK-MIN(a):','  return a[n-1]']}}];
+const KINDS2=[{key:'h',label:'Binary min-heap',eng:heapEng,init:[3,7,9,14,18,21],minTag:a=>0,tree:true,
+ bounds:{insert:'O(log n)',extract:'O(log n)',peek:'Θ(1)',build:'O(n)'},
+ code:{insert:['INSERT(h, x):','  h[n] ← x;  i ← n;  n ← n + 1','  while i > 0 and h[parent(i)] > h[i]:','    swap h[i], h[parent(i)]','    i ← parent(i)'],
+  extract:['EXTRACT-MIN(h):','  min ← h[0]','  h[0] ← h[n-1];  n ← n - 1','  SIFT-DOWN(h, 0)','  return min',''].concat(SIFT),
+  peek:['PEEK-MIN(h):','  return h[0]'],
+  build:['BUILD-HEAP(h):','  for i ← ⌊n/2⌋ - 1 downto 0:','    SIFT-DOWN(h, i)',''].concat(SIFT)}}];
+
+function viz(root,kinds){
+ const K={};kinds.forEach(k=>K[k.key]={...k,arr:[...k.init],steps:null,i:0,log:[],op:'insert'});
+ let cur=kinds[0].key,timer=null,tree=!!kinds[0].tree;
+ const many=kinds.length>1,heap=!!kinds[0].tree;
+ root.innerHTML=`${many?'<div class="seg">'+kinds.map(k=>`<button data-k="${k.key}">${k.label}</button>`).join('')+'</div>':''}
+ <div class="grid"><div class="left"><div class="card">${heap?'<div class="tr"></div>':''}<div class="cells"></div>
+  <div class="legend"><span><i style="border-color:var(--cur);background:var(--curbg)"></i>being examined</span><span><i style="border-color:var(--acc);background:var(--accbg)"></i>smallest / compared</span><span><i style="border-color:var(--ok);background:var(--okbg)"></i>written / swapped</span><span><i style="border-color:var(--bad);background:var(--badbg)"></i>removed</span></div></div>
+  <div class="ops"><input type="number" min="1" max="99" placeholder="value"><button class="b p" data-o="insert">Insert</button><button class="b p" data-o="extract">Extract-min</button><button class="b" data-o="peek">Peek-min</button>${heap?'<button class="b g" data-o="build">Build heap (random)</button>':'<button class="b" data-o="fill">Random fill</button>'}<button class="b" data-o="reset">Reset</button></div>
+  <div class="ctrl"><button class="b" data-a="p">◀ Back</button><button class="b" data-a="n">Next ▶</button><button class="b" data-a="pl">Pause</button><input type="range" min="0" value="0"><select><option value="1500">Slow</option><option value="900" selected>Normal</option><option value="400">Fast</option></select><span class="cnt"></span></div>
+  <div class="msg"></div></div>
+  <div class="right"><div class="card"><h4>Cost of this operation</h4><div class="kpis"><div class="kpi"><b class="kn">0</b><span>items</span></div><div class="kpi"><b class="kc">0</b><span>comparisons</span></div><div class="kpi"><b class="km">0</b><span>moves</span></div></div><div class="bd empty" style="margin-top:8px"></div><div class="out"></div></div>
+  <div class="card"><h4 class="ct">Pseudocode</h4><div class="code"></div></div>
+  <div class="card"><h4>Operation log</h4><table class="lg"><tr><th>Op</th><th>n</th><th>cmp</th><th>moves</th><th>bound</th></tr></table></div></div></div>`;
+ const $=s=>root.querySelector(s),rng=$('input[type=range]'),inp=$('input[type=number]'),code=$('.code');
+ const stop=()=>{clearInterval(timer);timer=null;$('[data-a=pl]').textContent='Play'};
+ const k=()=>K[cur];
+ function snap(){const o=k();return o.steps?o.steps[o.i]:{arr:o.arr,hl:{},line:-1,msg:`Ready. ${many?'Using the '+o.label.toLowerCase()+'. ':''}Pick an operation.`,cmp:0,mov:0,out:null}}
+ const pos=i=>{const L=Math.floor(Math.log2(i+1)),j=i+1-(1<<L);return[(j+.5)/(1<<L)*680,34+L*66]};
+ function draw(){
+  const o=k(),s=snap(),a=s.arr,tg=o.minTag(a),mx=Math.max(1,...a.filter(v=>v!=null));
+  if(o.steps){rng.max=o.steps.length-1;rng.value=o.i;$('.cnt').textContent=`Step ${o.i} / ${o.steps.length-1}`}else{rng.max=0;rng.value=0;$('.cnt').textContent=''}
+  $('.cells').innerHTML=a.map((v,i)=>`<div class="cell ${s.hl[i]||''}${v==null?' gap':''}"><div class="bw"><div class="bar" style="height:${v==null?0:6+v/mx*58}px"></div></div><div class="vb">${v==null?'0':v}</div>${i}<em>${i===tg?'min':''}</em></div>`).join('')||'<span class="empty">empty</span>';
+  if(heap){let h='<svg viewBox="0 0 680 268">';
+   a.forEach((v,i)=>{if(i){const[x1,y1]=pos((i-1)>>1),[x2,y2]=pos(i);h+=`<line class="te${s.hl[i]&&s.hl[(i-1)>>1]?' hot':''}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>`}});
+   a.forEach((v,i)=>{const[x,y]=pos(i);h+=`<circle class="tn ${s.hl[i]||''}" cx="${x}" cy="${y}" r="21"/><text class="tv" x="${x}" y="${y+1}">${v}</text><text class="ti" x="${x+25}" y="${y+22}">${i}</text>`});
+   $('.tr').innerHTML=h+'</svg>'}
+  $('.msg').innerHTML=s.msg;$('.msg').className='msg'+(s.line===-1&&o.steps&&o.i>0?' ok':'');
+  $('.kn').textContent=a.filter(v=>v!=null).length;$('.kc').textContent=s.cmp;$('.km').textContent=s.mov;
+  $('.bd').textContent=o.steps?`Expected for ${LBL[o.op]}: ${o.bounds[o.op]}`:'Run an operation to see its cost.';
+  $('.out').innerHTML=s.out!=null?`Returned: <span class="pill">${s.out}</span>`:'';
+  const lines=o.code[o.op]||[];$('.ct').textContent='Pseudocode: '+LBL[o.op];
+  code.innerHTML=lines.map((l,i)=>`<div${i===s.line?' class="hl"':''}>${l.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</div>`).join('');
+  const lg=$('.lg');while(lg.rows.length>1)lg.deleteRow(1);
+  o.log.slice(-8).reverse().forEach(e=>{const r=lg.insertRow();r.innerHTML=`<td>${e.op}</td><td>${e.n}</td><td>${e.c}</td><td>${e.m}</td><td>${e.b}</td>`});
+  $('[data-a=p]').disabled=!o.steps||o.i===0;$('[data-a=n]').disabled=!o.steps||o.i>=o.steps.length-1;
+  root.querySelectorAll('.seg button').forEach(b=>b.classList.toggle('on',b.dataset.k===cur));
+ }
+ const go=i=>{const o=k();if(!o.steps)return;o.i=Math.max(0,Math.min(o.steps.length-1,i));draw()};
+ function play(){stop();$('[data-a=pl]').textContent='Pause';timer=setInterval(()=>{const o=k();if(!o.steps||o.i>=o.steps.length-1)return stop();go(o.i+1)},+$('select').value)}
+ function op(name){
+  const o=k();stop();
+  if(name==='reset'){o.arr=[...o.init];o.steps=null;o.i=0;o.log=[];return draw()}
+  if(name==='fill'){o.arr=o.fill();o.steps=null;o.i=0;return draw()}
+  let x=parseInt(inp.value);if(name==='insert'){if(!(x>=1&&x<=99))x=rnd(1,60);inp.value=''}
+  const n0=o.arr.length,r=o.eng(o.arr,name,x);
+  if(r.err){o.steps=null;o.i=0;draw();$('.msg').innerHTML=r.err;$('.msg').className='msg warn';return}
+  o.steps=r.steps;o.arr=r.steps.at(-1).arr;o.i=0;o.op=name;const f=r.steps.at(-1);
+  o.log.push({op:LBL[name]+(name==='insert'?' '+x:''),n:name==='build'?o.arr.length:n0,c:f.cmp,m:f.mov,b:o.bounds[name]});
+  draw();play()}
+ root.querySelectorAll('[data-o]').forEach(b=>b.onclick=()=>op(b.dataset.o));
+ root.querySelectorAll('.seg button').forEach(b=>b.onclick=()=>{stop();cur=b.dataset.k;draw()});
+ $('[data-a=p]').onclick=()=>{stop();go(k().i-1)};$('[data-a=n]').onclick=()=>{stop();go(k().i+1)};
+ $('[data-a=pl]').onclick=()=>{if(timer)return stop();const o=k();if(o.steps&&o.i>=o.steps.length-1)go(0);play()};
+ rng.oninput=()=>{stop();go(+rng.value)};inp.onkeydown=e=>{if(e.key==='Enter')op('insert')};
+ root._key=e=>{if(e==='ArrowRight'){stop();go(k().i+1)}if(e==='ArrowLeft'){stop();go(k().i-1)}};
+ draw();
+}
+viz(document.getElementById('v1'),KINDS1);viz(document.getElementById('v2'),KINDS2);
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{
+ document.querySelectorAll('.tabs button,.panel').forEach(x=>x.classList.remove('on'));
+ b.classList.add('on');document.getElementById(b.dataset.t).classList.add('on')});
+addEventListener('keydown',e=>{if(e.target.tagName==='INPUT'||e.target.tagName==='SELECT')return;const p=document.querySelector('.panel.on [id^=v]');if(p&&p._key)p._key(e.key)});
+</script>
+</body>
+</html>

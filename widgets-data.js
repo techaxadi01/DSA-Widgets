@@ -1,8 +1,98 @@
 // DSA Interactive Hub - Widgets Data Manifest
-// Generated on: 2026-11-14 17:42:30
+// Generated on: 2026-11-19 20:26:16
 // DO NOT EDIT DIRECTLY: Run 'update_widgets.py' or 'update-widgets.bat' to re-index!
 
 const DSA_WIDGETS = [
+  {
+    "id": "priority_queue_visualizer",
+    "filename": "widgets/priority_queue_visualizer.html",
+    "title": "Priority queue visualizer",
+    "subtitle": "Priority queues",
+    "stamp": "STACKS & QUEUES",
+    "category": "Stacks & Queues",
+    "categoryIcon": "🥞",
+    "categoryColor": "#f2cc8f",
+    "description": "Same interface, two implementations. Run operations and compare how many comparisons and moves each one costs.",
+    "tags": [
+      "Dynamic Memory",
+      "Pointers",
+      "Sorting",
+      "Stacks & Queues"
+    ],
+    "sizeKb": 25.4,
+    "linesCount": 265,
+    "estimatedMinutes": 5,
+    "lastModified": "Nov 19, 2026",
+    "timestamp": 1795100132,
+    "subfolder": ""
+  },
+  {
+    "id": "bst-visualizer",
+    "filename": "widgets/bst-visualizer.html",
+    "title": "Binary Search Tree",
+    "subtitle": "Search, Insert, Delete",
+    "stamp": "TREES",
+    "category": "Searching & Sorting",
+    "categoryIcon": "⚡",
+    "categoryColor": "#e07a5f",
+    "description": "Interactive visualizer and field study exploring Binary Search Tree.",
+    "tags": [
+      "Binary Search",
+      "Pointers",
+      "Searching & Sorting",
+      "Visual Sim"
+    ],
+    "sizeKb": 31.8,
+    "linesCount": 791,
+    "estimatedMinutes": 15,
+    "lastModified": "Nov 19, 2026",
+    "timestamp": 1795100127,
+    "subfolder": ""
+  },
+  {
+    "id": "dijkstra_trace_widget",
+    "filename": "widgets/dijkstra_trace_widget.html",
+    "title": "Dijkstra's algorithm: trace and negative cycle",
+    "subtitle": "Dijkstra's algorithm, traced step by step",
+    "stamp": "TREES & GRAPHS",
+    "category": "Trees & Graphs",
+    "categoryIcon": "🌲",
+    "categoryColor": "#81b29a",
+    "description": "Step with the buttons, the slider or the arrow keys. The right side shows the queue, the pseudocode line being executed and the distance table.",
+    "tags": [
+      "Dynamic Memory",
+      "Pointers",
+      "Trees & Graphs",
+      "Two Pointers"
+    ],
+    "sizeKb": 16.7,
+    "linesCount": 232,
+    "estimatedMinutes": 5,
+    "lastModified": "Nov 19, 2026",
+    "timestamp": 1795100123,
+    "subfolder": ""
+  },
+  {
+    "id": "Pointers_Structures_Explained",
+    "filename": "widgets/Pointers Structures Explained.html",
+    "title": "Pointers & Structures · Interactive CS Widget",
+    "subtitle": "Pointers + Structures",
+    "stamp": "MEMORY & ARCHITECTURE",
+    "category": "Memory & Architecture",
+    "categoryIcon": "🧠",
+    "categoryColor": "#3f8f84",
+    "description": "struct Student { int roll; float marks; }; struct Student s1 = {101, 87.5}; struct Student s2 = {202, 92.0}; struct Student *ptr; // pointer declaration ptr = s1; // store address of s1 printf(\"%d\", p...",
+    "tags": [
+      "Memory & Architecture",
+      "Pointers"
+    ],
+    "sizeKb": 10.6,
+    "linesCount": 162,
+    "estimatedMinutes": 5,
+    "lastModified": "Nov 19, 2026",
+    "timestamp": 1795100119,
+    "subfolder": ""
+  },
   {
     "id": "0__leetcode_Sliding_Window_Maximum__heap_visualizer",
     "filename": "widgets/0. LeetCode/Sliding Window Maximum_ heap visualizer.html",

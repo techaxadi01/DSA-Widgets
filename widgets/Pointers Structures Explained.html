@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pointers & Structures · Interactive CS Widget</title>
+<style>
+:root{
+  --bg:#0d1117;--surface:#161b22;--border:#30363d;--gold:#f0b429;
+  --blue:#79c0ff;--green:#7ee787;--red:#ff7b72;--purple:#bc8cff;
+  --text:#e6edf3;--muted:#8b949e;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font:15px/1.55 'JetBrains Mono',ui-monospace,Menlo,monospace;padding:28px 18px}
+.wrap{max-width:1100px;margin:auto}
+header{text-align:center;margin-bottom:28px}
+.tag{color:var(--muted);font-size:11px;letter-spacing:.15em;text-transform:uppercase}
+h1{color:var(--gold);font-size:clamp(1.5rem,4vw,2.4rem);margin:8px 0}
+.subtitle{color:var(--muted);font-family:Georgia,serif;font-style:italic;font-size:1.05rem}
+.grid{display:grid;grid-template-columns:1.1fr .9fr;gap:18px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;min-width:0}
+h2{color:var(--gold);font-size:1.05rem;margin-bottom:5px}
+.sub{color:var(--muted);font-size:.78rem;margin-bottom:16px}
+.memory{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.block{border:1px solid var(--border);border-radius:10px;background:var(--bg);padding:12px}
+.block.active{border-color:var(--green);box-shadow:0 0 0 1px #7ee78733}
+.addr{color:var(--purple);font-size:.78rem;margin-bottom:8px}
+.field{display:flex;justify-content:space-between;gap:8px;border-top:1px solid var(--border);padding:8px 2px}
+.field .name{color:var(--blue)} .field .val{color:var(--text);font-weight:bold}
+.pointerbox{margin-top:14px;border:1px solid var(--purple);background:#1a0d2e;border-radius:10px;padding:12px}
+.pointerbox strong{color:var(--purple)}
+.pointerline{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin:12px 0}
+.pointervar{border:2px solid var(--purple);border-radius:8px;padding:10px 14px;color:var(--purple);font-weight:bold}
+.arrow{font-size:1.5rem;color:var(--gold)}
+.target{border:2px dashed var(--green);border-radius:8px;padding:10px 14px;color:var(--green)}
+.controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+button,select{font:inherit;font-size:.8rem;border-radius:8px;padding:9px 12px;cursor:pointer}
+button{background:var(--gold);color:#0d1117;border:0;font-weight:bold}
+button.secondary{background:transparent;border:1px solid var(--border);color:var(--text)}
+button:disabled{opacity:.35;cursor:not-allowed}
+select{background:var(--bg);color:var(--text);border:1px solid var(--border)}
+.log{margin-top:12px;padding:10px 12px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--blue);min-height:54px;font-size:.8rem}
+pre{white-space:pre;overflow-x:auto;background:#080c12;border:1px solid var(--border);border-radius:9px;padding:14px;font-size:.8rem;line-height:1.8;color:#c9d1d9}
+code{color:var(--blue)}
+.line{display:block;padding:0 8px;border-left:3px solid transparent}
+.line.hl{background:#f0b42922;border-left-color:var(--gold);color:#fff}
+.explain{margin-top:14px;padding:14px;border-left:3px solid var(--gold);background:#211a08;border-radius:0 8px 8px 0;font-family:Georgia,serif;line-height:1.6}
+.explain b{color:var(--gold)}
+.steps{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0}
+.step{font-size:.7rem;border:1px solid var(--border);padding:5px 8px;border-radius:6px;color:var(--muted)}
+.step.on{color:var(--green);border-color:var(--green)}
+.bottom{margin-top:18px}
+.quiz{margin-top:18px}
+.quiz button{margin:5px 4px 0 0}
+@media(max-width:800px){.grid{grid-template-columns:1fr}.memory{grid-template-columns:1fr 1fr}}
+@media(max-width:480px){.memory{grid-template-columns:1fr}body{padding:18px 10px}.card{padding:14px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div class="tag">C Programming · Interactive Lecture Widget</div>
+  <h1>Pointers + Structures</h1>
+  <div class="subtitle">A pointer doesn’t hold the student record. It holds the address of the record.</div>
+</header>
+
+<div class="grid">
+  <section class="card">
+    <h2>1 · The structure lives in memory</h2>
+    <div class="sub">Two Student records, each with its own address.</div>
+    <div class="memory">
+      <div class="block" id="studentA">
+        <div class="addr">Address: 0x1000 · s1</div>
+        <div class="field"><span class="name">roll</span><span class="val">101</span></div>
+        <div class="field"><span class="name">marks</span><span class="val">87.5</span></div>
+      </div>
+      <div class="block" id="studentB">
+        <div class="addr">Address: 0x2000 · s2</div>
+        <div class="field"><span class="name">roll</span><span class="val">202</span></div>
+        <div class="field"><span class="name">marks</span><span class="val">92.0</span></div>
+      </div>
+    </div>
+    <div class="pointerbox">
+      <strong>Pointer variable: ptr</strong>
+      <div class="pointerline">
+        <div class="pointervar" id="ptrValue">ptr = ???</div>
+        <span class="arrow">⟶</span>
+        <div class="target" id="ptrTarget">Not pointing anywhere yet</div>
+      </div>
+      <div style="font-size:.78rem;color:var(--muted)">The pointer stores an address. The structure fields remain in the structure.</div>
+    </div>
+    <div class="controls">
+      <button id="stepBtn">Start: declare pointer</button>
+      <button class="secondary" id="nextBtn" disabled>Next step →</button>
+      <button class="secondary" id="resetBtn">Reset</button>
+    </div>
+    <div class="steps" id="stepLabels">
+      <span class="step on">1 Declare</span><span class="step">2 Assign address</span><span class="step">3 Access field</span><span class="step">4 Change target</span>
+    </div>
+    <div class="log" id="log">Ready. Click “Start” to follow the pointer step by step.</div>
+  </section>
+
+  <section class="card">
+    <h2>2 · Watch the C code</h2>
+    <div class="sub">The highlighted line matches the current step.</div>
+<pre id="code"><span class="line">struct Student {</span><span class="line">    int roll;</span><span class="line">    float marks;</span><span class="line">};</span><span class="line"></span><span class="line">struct Student s1 = {101, 87.5};</span><span class="line">struct Student s2 = {202, 92.0};</span><span class="line"></span><span class="line">struct Student *ptr;       // pointer declaration</span><span class="line">ptr = &amp;s1;                 // store address of s1</span><span class="line">printf("%d", ptr-&gt;roll);   // access through ptr</span><span class="line">ptr = &amp;s2;                 // point to s2 instead</span><span class="line">printf("%d", ptr-&gt;roll);   // now reads s2.roll</span></pre>
+    <div class="explain" id="explain"><b>Key idea:</b> A structure groups fields. A pointer lets us reach that structure indirectly using its address.</div>
+    <div class="bottom">
+      <h2>Dot vs arrow</h2>
+      <pre><span class="line">s1.roll       // structure variable → dot</span><span class="line">ptr-&gt;roll      // structure pointer → arrow</span><span class="line">(*ptr).roll    // equivalent to ptr-&gt;roll</span></pre>
+    </div>
+  </section>
+</div>
+
+<section class="card quiz">
+  <h2>3 · Predict before revealing</h2>
+  <p id="question" style="margin:8px 0">After <code>ptr = &amp;s2;</code>, what does <code>ptr-&gt;roll</code> evaluate to?</p>
+  <div id="choices">
+    <button class="secondary" data-answer="101">101</button>
+    <button class="secondary" data-answer="202">202</button>
+    <button class="secondary" data-answer="0x2000">0x2000</button>
+  </div>
+  <div class="log" id="quizLog">Choose an answer.</div>
+</section>
+</div>
+
+<script>
+const lines=[...document.querySelectorAll('#code .line')];
+const blocks=[document.querySelector('#studentA'),document.querySelector('#studentB')];
+const ptrValue=document.querySelector('#ptrValue'), ptrTarget=document.querySelector('#ptrTarget');
+const log=document.querySelector('#log'), explain=document.querySelector('#explain');
+const labels=[...document.querySelectorAll('.step')];
+const start=document.querySelector('#stepBtn'),next=document.querySelector('#nextBtn');
+let stage=0;
+const info=[
+ {line:7,msg:'Step 1: Declare ptr. It is a pointer to struct Student. It exists, but it has not been assigned a valid target yet.',exp:'<b>Declaration:</b> <code>struct Student *ptr;</code> means ptr can store the address of a Student structure. It does not create another Student record.'},
+ {line:8,msg:'Step 2: &s1 means “the address of s1”. ptr now stores 0x1000 and points to Student s1.',exp:'<b>Address-of (&amp;):</b> <code>ptr = &amp;s1;</code> stores s1’s address in ptr. The arrow represents this address relationship.'},
+ {line:9,msg:'Step 3: ptr->roll follows the pointer to s1, then accesses its roll field. The result is 101.',exp:'<b>Arrow operator (->):</b> <code>ptr-&gt;roll</code> means “go to the structure ptr points to, then access roll”. It is equivalent to <code>(*ptr).roll</code>.'},
+ {line:10,msg:'Step 4: ptr now stores the address of s2 (0x2000). The structure records have not moved; only ptr’s target changed.',exp:'<b>Reassignment:</b> A pointer can point to another compatible structure. After <code>ptr = &amp;s2;</code>, <code>ptr-&gt;roll</code> gives 202.'}
+];
+function render(){
+ blocks.forEach((b,i)=>b.classList.toggle('active',stage>=1 && (stage===4?i===1:i===0)));
+ ptrValue.textContent=stage===0?'ptr = ???':stage===1?'ptr declared (unassigned)':stage<4?'ptr = 0x1000':'ptr = 0x2000';
+ ptrTarget.textContent=stage===0?'Not pointing anywhere yet':stage===1?'No target assigned yet':stage<4?'s1 · Student 101':'s2 · Student 202';
+ lines.forEach((l,i)=>l.classList.toggle('hl',stage>0 && i===info[Math.min(stage-1,3)].line));
+ labels.forEach((l,i)=>l.classList.toggle('on',i===Math.min(stage,3)));
+ start.disabled=stage>0; next.disabled=stage===0||stage>=4;
+ if(stage===0){log.textContent='Ready. Click “Start” to follow the pointer step by step.';explain.innerHTML='<b>Key idea:</b> A structure groups fields. A pointer lets us reach that structure indirectly using its address.';}
+ else {log.textContent=info[stage-1].msg;explain.innerHTML=info[stage-1].exp;}
+}
+start.onclick=()=>{stage=1;render();};
+next.onclick=()=>{if(stage<4){stage++;render();}};
+document.querySelector('#resetBtn').onclick=()=>{stage=0;render();};
+render();
+document.querySelectorAll('[data-answer]').forEach(b=>b.onclick=()=>{
+ const out=document.querySelector('#quizLog');
+ if(b.dataset.answer==='202') out.innerHTML='<span style="color:var(--green)">Correct!</span> ptr points to s2, and s2.roll is 202. The pointer stores the address; ptr->roll accesses the field.';
+ else out.innerHTML='<span style="color:var(--red)">Not quite.</span> ptr points to s2 at 0x2000. The arrow operator accesses s2.roll, which is 202.';
+});
+</script>
+</body>
+</html>

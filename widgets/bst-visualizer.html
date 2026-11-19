@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Binary Search Tree — Search, Insert, Delete</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Spectral:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#12100c; --panel:#1c1812; --panel-2:#221d15; --rule:#3a3226;
+    --ink:#ede3c8; --ink-dim:#b8ac8c; --gold:#c89b3c;
+    --rust:#c1502e; --rust-dim:#3a2118; --teal:#3f8f84; --teal-dim:#17322e;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; padding:26px 16px 60px; background:var(--bg); color:var(--ink);
+    font-family:'Spectral', Georgia, serif;
+  }
+  .wrap{max-width:1160px; margin:0 auto;}
+  header{border-bottom:1px solid var(--rule); padding-bottom:14px; margin-bottom:18px;}
+  .stamp{
+    font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.1em;
+    color:var(--gold); border:1px solid var(--rule); padding:3px 8px; border-radius:2px;
+    display:inline-block; margin-bottom:10px;
+  }
+  h1{font-size:26px; margin:0; font-weight:600;}
+
+  .tabs{display:flex; flex-wrap:wrap; gap:6px; margin-bottom:16px;}
+  .tab{
+    font-family:'IBM Plex Mono',monospace; font-size:12.5px; letter-spacing:.03em;
+    background:var(--panel-2); color:var(--ink-dim); border:1px solid var(--rule);
+    padding:8px 13px; border-radius:3px; cursor:pointer;
+  }
+  .tab.active{background:var(--panel); color:var(--gold); border-color:var(--gold);}
+
+  main{display:grid; grid-template-columns:1fr 340px; gap:14px;}
+  @media (max-width:860px){ main{grid-template-columns:1fr;} }
+
+  .stage{
+    background:var(--panel); border:1px solid var(--rule); border-radius:5px;
+    padding:18px; overflow-x:auto;
+  }
+  .canvas-outer{position:relative; margin:0 auto;}
+  .canvas-inner{position:absolute; top:0; left:0; transform-origin:0 0;}
+  .edge-layer{position:absolute; top:0; left:0;}
+  .node-layer{position:absolute; top:0; left:0;}
+
+  .bnode{
+    position:absolute; width:42px; height:42px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    background:var(--panel-2); border:2px solid var(--rule); color:var(--ink);
+    font-family:'IBM Plex Mono',monospace; font-size:14px; font-weight:700;
+    box-shadow:0 2px 6px rgba(0,0,0,.35);
+    transition:border-color .45s ease, background .45s ease, box-shadow .45s ease, transform .4s ease, opacity .5s ease;
+  }
+  .bnode.enter{opacity:0; transform:scale(.4);}
+  .bnode.leave{opacity:0; transform:scale(.5);}
+  .bnode.trail{border-color:var(--gold);}
+  .bnode.cur{transform:scale(1.18);}
+  .bnode.cur.c-gold{border-color:var(--gold); box-shadow:0 0 0 5px rgba(200,155,60,.3);}
+  .bnode.cur.c-teal{border-color:var(--teal); box-shadow:0 0 0 5px rgba(63,143,132,.32);}
+  .bnode.cur.c-rust{border-color:var(--rust); box-shadow:0 0 0 5px rgba(193,80,46,.32);}
+  .bnode.m-found, .bnode.m-new{border-color:var(--teal); background:var(--teal-dim);}
+  .bnode.m-del{border-color:var(--rust); background:var(--rust-dim);}
+  .bnode.m-dup{border-color:var(--rust);}
+  .bnode.m-child{border-color:var(--gold); border-style:dashed;}
+  .bnode.m-succ{border-color:var(--teal); border-style:dashed; background:var(--teal-dim);}
+  .bnode.m-flash{background:rgba(200,155,60,.25); border-color:var(--gold); box-shadow:0 0 0 5px rgba(200,155,60,.3);}
+
+  .bghost{
+    position:absolute; width:46px; height:26px; border-radius:7px;
+    border:1.5px dashed var(--gold); color:var(--gold); background:rgba(200,155,60,.06);
+    display:flex; align-items:center; justify-content:center;
+    font-family:'IBM Plex Mono',monospace; font-size:10px; font-weight:700; letter-spacing:.06em;
+    transition:opacity .4s ease;
+  }
+  .bghost.hidden{opacity:0;}
+
+  .bedge{stroke:var(--rule); stroke-width:2px; transition:stroke .45s ease, stroke-width .3s ease, opacity .45s ease;}
+  .bedge.trail{stroke:var(--gold); stroke-width:3px;}
+  .bedge.fresh, .bedge.gone{opacity:0;}
+
+  .stats{
+    font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--ink-dim);
+    letter-spacing:.06em; margin-top:10px; text-align:center;
+  }
+  .readout{
+    font-family:'IBM Plex Mono',monospace; font-size:14px; color:var(--gold);
+    min-height:42px; margin-top:12px; letter-spacing:.02em; line-height:1.5;
+  }
+  .legend{font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:var(--ink-dim); margin-top:10px; line-height:1.6;}
+  .controls{display:flex; align-items:center; gap:8px; margin-top:10px; flex-wrap:wrap;}
+  .klabel{font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--ink-dim); letter-spacing:.1em;}
+  input[type=number]{
+    width:90px; background:var(--panel-2); border:1px solid var(--rule); color:var(--ink);
+    font-family:'IBM Plex Mono',monospace; font-size:13px; padding:7px 8px; border-radius:3px;
+  }
+  button{
+    font-family:'IBM Plex Mono',monospace; font-size:12.5px; background:var(--panel-2);
+    color:var(--ink); border:1px solid var(--gold); padding:8px 14px; border-radius:3px; cursor:pointer;
+  }
+  button:hover{background:#2a2418;}
+  button:disabled{opacity:.35; cursor:not-allowed;}
+  .quiet-btn{border-color:var(--rule); color:var(--ink-dim);}
+  .chip{font-size:11.5px; padding:5px 10px;}
+  .chip b{color:var(--gold); font-weight:700;}
+  .step-counter{font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--ink-dim); margin-left:auto;}
+
+  .code-panel{
+    background:var(--panel); border:1px solid var(--rule); border-radius:5px;
+    padding:14px; display:flex; flex-direction:column; gap:10px; height:fit-content; overflow-x:auto;
+  }
+  .badge{
+    align-self:flex-start; font-family:'IBM Plex Mono',monospace; font-size:11px;
+    color:var(--bg); background:var(--rule); padding:3px 9px; border-radius:10px; font-weight:600;
+    cursor:pointer; user-select:none; letter-spacing:.05em;
+  }
+  .badge:hover{background:#4a4030;}
+  .badge.revealed{background:var(--gold); cursor:default;}
+  .code-line{
+    font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:var(--ink-dim);
+    white-space:pre; min-height:19px; padding:2px 6px; border-left:3px solid transparent; border-radius:2px;
+    transition:background .3s ease, color .3s ease, border-color .3s ease;
+  }
+  .code-line.current{background:var(--panel-2); border-color:var(--gold); color:var(--ink); font-weight:600;}
+  .code-annot{
+    position:relative; margin:5px 0 9px 12px; padding:7px 10px;
+    background:rgba(200,155,60,.08); border:1px solid var(--gold); border-radius:6px;
+    font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--ink); line-height:1.5; white-space:normal;
+  }
+  .code-annot b{color:var(--gold);}
+  .annot-arrow{
+    position:absolute; top:-6px; left:13px; width:10px; height:10px;
+    background:var(--panel); border-left:1px solid var(--gold); border-top:1px solid var(--gold);
+    transform:rotate(45deg);
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <span class="stamp">TREES</span>
+    <h1>Binary Search Tree</h1>
+  </header>
+
+  <div class="tabs" id="tabs"></div>
+
+  <main>
+    <div class="stage" id="stage">
+      <div class="canvas-outer" id="canvasOuter">
+        <div class="canvas-inner" id="canvasInner">
+          <svg class="edge-layer" id="edgeLayer"></svg>
+          <div class="node-layer" id="nodeLayer"></div>
+        </div>
+      </div>
+      <div class="stats" id="stats"></div>
+
+      <div class="readout" id="readout">READY</div>
+
+      <div class="controls">
+        <span class="klabel">KEY</span>
+        <input id="keyInput" type="number" min="0" max="999" placeholder="0–999">
+        <button id="btnRun">Search</button>
+        <button class="quiet-btn" id="btnResetTree">Reset tree</button>
+      </div>
+      <div class="controls" id="chips"></div>
+      <div class="controls">
+        <button id="btnPrev">&larr; Prev</button>
+        <button id="btnNext">Next &rarr;</button>
+        <button id="btnPlay">Play</button>
+        <span class="step-counter" id="stepCounter"></span>
+      </div>
+      <div class="legend">gold trail = path followed · teal = found / new · rust = being removed · dashed = candidate or successor</div>
+    </div>
+
+    <div class="code-panel">
+      <span class="badge" id="badge">REVEAL</span>
+      <div id="codeBlock"></div>
+    </div>
+  </main>
+</div>
+
+<script>
+(function(){
+  var DX = 46, DY = 66, MARG = 34, NR = 21, MAXN = 14;
+  var SEED = [50, 30, 70, 20, 40, 60, 80, 35, 45, 65];
+
+  /* ============================================================
+     TREE MODEL  (immutable snapshots: {root, nodes:{id:{key,l,r}}})
+     ============================================================ */
+  var uid = 1;
+  function emptyTree(){ return {root:null, nodes:{}}; }
+  function clone(t){
+    var n = {};
+    Object.keys(t.nodes).forEach(function(id){
+      var o = t.nodes[id]; n[id] = {key:o.key, l:o.l, r:o.r};
+    });
+    return {root:t.root, nodes:n};
+  }
+  function count(t){ return Object.keys(t.nodes).length; }
+  function insertRaw(t, key){
+    var id = uid++;
+    if (t.root == null){ t.root = id; t.nodes[id] = {key:key, l:null, r:null}; return id; }
+    var c = t.root;
+    while (true){
+      var n = t.nodes[c];
+      if (key === n.key) return null;
+      if (key < n.key){ if (n.l == null){ n.l = id; break; } c = n.l; }
+      else { if (n.r == null){ n.r = id; break; } c = n.r; }
+    }
+    t.nodes[id] = {key:key, l:null, r:null};
+    return id;
+  }
+  function seedTree(){
+    var t = emptyTree();
+    SEED.forEach(function(k){ insertRaw(t, k); });
+    return t;
+  }
+  function inorder(t){
+    var out = [];
+    (function walk(id){
+      if (id == null) return;
+      walk(t.nodes[id].l); out.push(t.nodes[id].key); walk(t.nodes[id].r);
+    })(t.root);
+    return out;
+  }
+  function spliceOut(t, id, parent, side, replacement){
+    var c = clone(t);
+    delete c.nodes[id];
+    if (parent == null) c.root = replacement;
+    else c.nodes[parent][side] = replacement;
+    return c;
+  }
+
+  /* ============================================================
+     FRAME BUILDERS
+     ============================================================ */
+  function frame(o){
+    var f = {tree:null, path:[], cur:null, curColor:'gold', marks:{}, ghost:null,
+             lines:[], readout:'', ann:null};
+    Object.keys(o).forEach(function(k){ f[k] = o[k]; });
+    return f;
+  }
+  function marks(){
+    var m = {};
+    for (var i = 0; i + 1 < arguments.length; i += 2){
+      if (arguments[i] != null) m[arguments[i]] = arguments[i+1];
+    }
+    return m;
+  }
+
+  function descend(base, key, frames, L, firstAnn){
+    var path = [], id = base.root, parent = null, side = null;
+    while (id != null){
+      var n = base.nodes[id];
+      path.push(id);
+      if (key === n.key) return {found:id, parent:parent, side:side, path:path};
+      var goLeft = key < n.key;
+      frames.push(frame({
+        tree:base, path:path.slice(), cur:id, lines: goLeft ? L.left : L.right,
+        readout: key + (goLeft ? ' < ' : ' > ') + n.key + '  →  go ' + (goLeft ? 'left' : 'right'),
+        ann: (frames.length === 0) ? firstAnn : null
+      }));
+      parent = id; side = goLeft ? 'l' : 'r';
+      id = goLeft ? n.l : n.r;
+    }
+    return {found:null, parent:parent, side:side, path:path};
+  }
+
+  function buildSearch(base, key){
+    var frames = [];
+    var r = descend(base, key, frames, {left:[2,3,4], right:[2,3,5]},
+      {afterIdx:3, text:'<b>Halving</b> — one comparison rules out a whole subtree, so only a single path from the root is ever followed.'});
+    if (r.found != null){
+      frames.push(frame({tree:base, path:r.path, cur:r.found, curColor:'teal',
+        marks:marks(r.found, 'found'), lines:[2], readout:key + ' = ' + key + '  →  found it'}));
+    } else {
+      frames.push(frame({tree:base, path:r.path, ghost:{parent:r.parent, side:r.side}, lines:[1],
+        readout:'NULL reached — ' + key + ' is not in the tree'}));
+    }
+    return frames;
+  }
+
+  function buildInsert(base, key){
+    if (count(base) >= MAXN)
+      return {error:'The tree is capped at ' + MAXN + ' nodes so it stays readable — try Delete or Reset tree.'};
+    var frames = [];
+    var r = descend(base, key, frames, {left:[3,4], right:[3,5,6]}, null);
+    if (r.found != null){
+      frames.push(frame({tree:base, path:r.path, cur:r.found, curColor:'rust',
+        marks:marks(r.found, 'dup'), lines:[3,5,7],
+        readout:key + ' is already in the tree — a BST keeps keys unique, nothing is inserted'}));
+      return frames;
+    }
+    frames.push(frame({tree:base, path:r.path, ghost:{parent:r.parent, side:r.side}, lines:[1],
+      readout:'NULL reached — this is where ' + key + ' belongs'}));
+    var t = clone(base), id = uid++;
+    t.nodes[id] = {key:key, l:null, r:null};
+    if (r.parent == null) t.root = id; else t.nodes[r.parent][r.side] = id;
+    frames.push(frame({tree:t, path:r.path.concat([id]), cur:id, curColor:'teal',
+      marks:marks(id, 'new'), lines:[1,2],
+      readout:'create the node and hook it to its parent — ' + key + ' is inserted',
+      ann:{afterIdx:2, text:'<b>Always a leaf</b> — the new key goes exactly where the failed search ended, so existing nodes never move.'}}));
+    return frames;
+  }
+
+  function buildDelete(base, key){
+    var frames = [];
+    var r = descend(base, key, frames, {left:[2,3], right:[2,4,5]}, null);
+    if (r.found == null){
+      frames.push(frame({tree:base, path:r.path, ghost:{parent:r.parent, side:r.side}, lines:[1],
+        readout:'NULL reached — ' + key + ' is not in the tree, nothing to delete'}));
+      return frames;
+    }
+    var id = r.found, n = base.nodes[id], path = r.path;
+    frames.push(frame({tree:base, path:path, cur:id, curColor:'rust', marks:marks(id, 'del'), lines:[6],
+      readout:'found ' + key + ' — now check how many children it has'}));
+
+    if (n.l == null && n.r == null){
+      frames.push(frame({tree:base, path:path, cur:id, curColor:'rust', marks:marks(id, 'del'), lines:[7,8],
+        readout:'no children — a leaf can simply be removed'}));
+      frames.push(frame({tree:spliceOut(base, id, r.parent, r.side, null), lines:[9,10],
+        readout:'free it — the parent’s pointer becomes NULL'}));
+    } else if (n.l == null){
+      var rk = base.nodes[n.r].key;
+      frames.push(frame({tree:base, path:path, cur:id, curColor:'rust', marks:marks(id, 'del', n.r, 'child'), lines:[7,8],
+        readout:'no left child — its right child (' + rk + ') will take its place'}));
+      frames.push(frame({tree:spliceOut(base, id, r.parent, r.side, n.r), lines:[9,10],
+        readout:'free it — the parent now points straight at ' + rk}));
+    } else if (n.r == null){
+      var lk = base.nodes[n.l].key;
+      frames.push(frame({tree:base, path:path, cur:id, curColor:'rust', marks:marks(id, 'del', n.l, 'child'), lines:[7,12,13],
+        readout:'no right child — its left child (' + lk + ') will take its place'}));
+      frames.push(frame({tree:spliceOut(base, id, r.parent, r.side, n.l), lines:[14,15],
+        readout:'free it — the parent now points straight at ' + lk}));
+    } else {
+      frames.push(frame({tree:base, path:path, cur:id, curColor:'rust', marks:marks(id, 'del'), lines:[7,12,17],
+        readout:'two children — it will take the key of its inorder successor: the smallest key in the right subtree',
+        ann:{afterIdx:17, text:'<b>Why the successor?</b> It is the next key in sorted order: bigger than everything on the left, smaller than the rest on the right. It can take this spot without breaking the BST rule.'}}));
+      var s = n.r, sp = id, sside = 'r', chain = [s];
+      frames.push(frame({tree:base, path:path.concat(chain), cur:s, curColor:'gold', marks:marks(id, 'del'), lines:[17],
+        readout:'start at the right child (' + base.nodes[s].key + ')'}));
+      while (base.nodes[s].l != null){
+        sp = s; sside = 'l'; s = base.nodes[s].l; chain.push(s);
+        frames.push(frame({tree:base, path:path.concat(chain), cur:s, curColor:'gold', marks:marks(id, 'del'), lines:[18],
+          readout:'go left — smaller keys live there (' + base.nodes[s].key + ')'}));
+      }
+      var skey = base.nodes[s].key;
+      frames.push(frame({tree:base, path:path.concat(chain), cur:s, curColor:'teal', marks:marks(id, 'del', s, 'succ'), lines:[18],
+        readout:'no left child — the successor is ' + skey}));
+      var t1 = clone(base);
+      t1.nodes[id].key = skey;
+      frames.push(frame({tree:t1, cur:id, curColor:'gold', marks:marks(id, 'flash', s, 'succ'), lines:[19],
+        readout:'copy ' + skey + ' into the node — ' + key + ' is gone from the tree'}));
+      frames.push(frame({tree:t1, cur:s, curColor:'rust', marks:marks(s, 'del'), lines:[20],
+        readout:'now delete the original ' + skey + ' from the right subtree — it has no left child, so this is the easy case'}));
+      frames.push(frame({tree:spliceOut(t1, s, sp, sside, t1.nodes[s].r), lines:[20],
+        readout:'free it — its right child, if it has one, moves up. Done.'}));
+    }
+    return frames;
+  }
+
+  function buildOp(op, key, tree){
+    if (op === 'search') return buildSearch(tree, key);
+    if (op === 'insert') return buildInsert(tree, key);
+    return buildDelete(tree, key);
+  }
+
+  /* ============================================================
+     CODE PANEL
+     ============================================================ */
+  var CODE = {
+    search: [
+      'Node *search(Node *r, int k) {',          // 0
+      '    if (r == NULL) return NULL;',        // 1
+      '    if (k == r->key) return r;',         // 2
+      '    if (k < r->key)',                    // 3
+      '        return search(r->left, k);',     // 4
+      '    return search(r->right, k);',        // 5
+      '}'                                       // 6
+    ],
+    insert: [
+      'Node *insert(Node *r, int k) {',         // 0
+      '    if (r == NULL)',                     // 1
+      '        return newNode(k);',             // 2
+      '    if (k < r->key)',                    // 3
+      '        r->left = insert(r->left, k);',  // 4
+      '    else if (k > r->key)',               // 5
+      '        r->right = insert(r->right, k);',// 6
+      '    return r;',                          // 7
+      '}'                                       // 8
+    ],
+    delete: [
+      'Node *del(Node *r, int k) {',            // 0
+      '    if (r == NULL) return NULL;',        // 1
+      '    if (k < r->key)',                    // 2
+      '        r->left = del(r->left, k);',     // 3
+      '    else if (k > r->key)',               // 4
+      '        r->right = del(r->right, k);',   // 5
+      '    else {',                             // 6
+      '        if (r->left == NULL) {',         // 7
+      '            Node *t = r->right;',        // 8
+      '            free(r);',                   // 9
+      '            return t;',                  // 10
+      '        }',                              // 11
+      '        if (r->right == NULL) {',        // 12
+      '            Node *t = r->left;',         // 13
+      '            free(r);',                   // 14
+      '            return t;',                  // 15
+      '        }',                              // 16
+      '        Node *s = r->right;',            // 17
+      '        while (s->left) s = s->left;',   // 18
+      '        r->key = s->key;',               // 19
+      '        r->right = del(r->right, s->key);', // 20
+      '    }',                                  // 21
+      '    return r;',                          // 22
+      '}'                                       // 23
+    ]
+  };
+
+  /* ============================================================
+     DOM + RENDERING
+     ============================================================ */
+  var stageEl = document.getElementById('stage');
+  var canvasOuter = document.getElementById('canvasOuter');
+  var canvasInner = document.getElementById('canvasInner');
+  var edgeLayer = document.getElementById('edgeLayer');
+  var nodeLayer = document.getElementById('nodeLayer');
+  var readout = document.getElementById('readout');
+  var statsEl = document.getElementById('stats');
+  var stepCounter = document.getElementById('stepCounter');
+  var codeBlock = document.getElementById('codeBlock');
+  var badge = document.getElementById('badge');
+  var tabsWrap = document.getElementById('tabs');
+  var keyInput = document.getElementById('keyInput');
+  var chipsWrap = document.getElementById('chips');
+
+  var els = {};        // node id -> {el, x, y}
+  var edgeEls = {};    // 'p>c' -> svg line
+  var edgeMeta = {};   // 'p>c' -> [p, c]
+  var ghostEl = null;
+  var curTree = emptyTree();
+  var anim = null, rafOn = false;
+
+  function easeInOut(p){ return p < .5 ? 2*p*p : 1 - Math.pow(-2*p + 2, 2)/2; }
+
+  function layout(t){
+    var pos = {}, idx = 0, maxD = 0;
+    (function walk(id, d){
+      if (id == null) return;
+      walk(t.nodes[id].l, d + 1);
+      pos[id] = {x: idx * DX, y: d * DY};
+      idx++;
+      if (d > maxD) maxD = d;
+      walk(t.nodes[id].r, d + 1);
+    })(t.root, 0);
+    var n = idx;
+    var contentW = MARG*2 + Math.max(n - 1, 0) * DX;
+    var w = Math.max(460, contentW);
+    var offX = (w - (Math.max(n - 1, 0) * DX)) / 2;
+    Object.keys(pos).forEach(function(id){
+      pos[id].x += offX;
+      pos[id].y += MARG;
+    });
+    var h = Math.max(300, MARG*2 + maxD * DY + 24);
+    return {pos:pos, w:w, h:h, n:n, levels:(n ? maxD + 1 : 0)};
+  }
+
+  function setPos(id, x, y){
+    var o = els[id];
+    if (!o) return;
+    o.x = x; o.y = y;
+    o.el.style.left = (x - NR) + 'px';
+    o.el.style.top = (y - NR) + 'px';
+  }
+
+  function updateEdges(){
+    Object.keys(edgeEls).forEach(function(k){
+      var m = edgeMeta[k], a = els[m[0]], b = els[m[1]];
+      if (!a || !b) return;
+      var ln = edgeEls[k];
+      ln.setAttribute('x1', a.x); ln.setAttribute('y1', a.y);
+      ln.setAttribute('x2', b.x); ln.setAttribute('y2', b.y);
+    });
+  }
+
+  function tick(now){
+    if (!anim){ rafOn = false; return; }
+    var p = Math.min(1, (now - anim.t0) / anim.dur);
+    var e = easeInOut(p);
+    Object.keys(anim.to).forEach(function(id){
+      var f = anim.from[id], t = anim.to[id];
+      setPos(id, f.x + (t.x - f.x) * e, f.y + (t.y - f.y) * e);
+    });
+    updateEdges();
+    if (p < 1) requestAnimationFrame(tick);
+    else { anim = null; rafOn = false; }
+  }
+
+  function startTween(target){
+    var from = {};
+    Object.keys(target).forEach(function(id){
+      from[id] = els[id] ? {x:els[id].x, y:els[id].y} : target[id];
+    });
+    anim = {from:from, to:target, t0:performance.now(), dur:900};
+    if (!rafOn){ rafOn = true; requestAnimationFrame(tick); }
+  }
+
+  function renderTree(f){
+    var t = f.tree;
+    curTree = t;
+    var L = layout(t);
+
+    // --- canvas size / scale
+    var avail = stageEl.clientWidth - 36;
+    var s = Math.max(0.45, Math.min(1, avail / L.w, 470 / L.h));
+    canvasInner.style.width = L.w + 'px'; canvasInner.style.height = L.h + 'px';
+    canvasInner.style.transform = 'scale(' + s + ')';
+    canvasOuter.style.width = (L.w * s) + 'px'; canvasOuter.style.height = (L.h * s) + 'px';
+    edgeLayer.setAttribute('width', L.w); edgeLayer.setAttribute('height', L.h);
+    nodeLayer.style.width = L.w + 'px'; nodeLayer.style.height = L.h + 'px';
+
+    // --- nodes
+    var present = {};
+    Object.keys(t.nodes).forEach(function(sid){
+      var id = Number(sid);
+      present[id] = true;
+      if (!els[id]){
+        var el = document.createElement('div');
+        el.className = 'bnode enter';
+        nodeLayer.appendChild(el);
+        els[id] = {el:el, x:L.pos[id].x, y:L.pos[id].y};
+        setPos(id, L.pos[id].x, L.pos[id].y);
+        (function(el){
+          requestAnimationFrame(function(){ requestAnimationFrame(function(){ el.classList.remove('enter'); }); });
+        })(el);
+      }
+      els[id].el.textContent = t.nodes[id].key;
+    });
+    Object.keys(els).forEach(function(sid){
+      var id = Number(sid);
+      if (!present[id]){
+        var el = els[id].el;
+        el.classList.add('leave');
+        setTimeout(function(){ if (el.parentNode) el.parentNode.removeChild(el); }, 600);
+        delete els[id];
+      }
+    });
+
+    // --- classes: trail / current / marks
+    var trail = {};
+    (f.path || []).forEach(function(id){ trail[id] = true; });
+    Object.keys(els).forEach(function(sid){
+      var id = Number(sid), el = els[id].el;
+      el.classList.remove('trail', 'cur', 'c-gold', 'c-teal', 'c-rust',
+        'm-found', 'm-new', 'm-del', 'm-dup', 'm-child', 'm-succ', 'm-flash');
+      if (trail[id]) el.classList.add('trail');
+      if (f.cur === id) el.classList.add('cur', 'c-' + f.curColor);
+      if (f.marks && f.marks[id]) el.classList.add('m-' + f.marks[id]);
+    });
+
+    // --- edges
+    var want = {};
+    Object.keys(t.nodes).forEach(function(sid){
+      var n = t.nodes[sid], p = Number(sid);
+      [n.l, n.r].forEach(function(c){ if (c != null) want[p + '>' + c] = [p, c]; });
+    });
+    Object.keys(edgeEls).forEach(function(k){
+      if (!want[k]){
+        var ln = edgeEls[k];
+        ln.classList.add('gone');
+        setTimeout(function(){ if (ln.parentNode) ln.parentNode.removeChild(ln); }, 600);
+        delete edgeEls[k]; delete edgeMeta[k];
+      }
+    });
+    Object.keys(want).forEach(function(k){
+      if (!edgeEls[k]){
+        var ln = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        ln.setAttribute('class', 'bedge fresh');
+        edgeLayer.appendChild(ln);
+        edgeEls[k] = ln; edgeMeta[k] = want[k];
+        (function(ln){
+          requestAnimationFrame(function(){ requestAnimationFrame(function(){ ln.classList.remove('fresh'); }); });
+        })(ln);
+      }
+    });
+    var onPath = {};
+    for (var i = 0; i + 1 < (f.path || []).length; i++) onPath[f.path[i] + '>' + f.path[i+1]] = true;
+    Object.keys(edgeEls).forEach(function(k){ edgeEls[k].classList.toggle('trail', !!onPath[k]); });
+
+    // --- tween nodes to their new slots
+    startTween(L.pos);
+    updateEdges();
+
+    // --- the NULL marker
+    if (!ghostEl){
+      ghostEl = document.createElement('div');
+      ghostEl.className = 'bghost hidden';
+      ghostEl.textContent = 'NULL';
+      nodeLayer.appendChild(ghostEl);
+    }
+    if (f.ghost){
+      var gx, gy;
+      if (f.ghost.parent == null){ gx = L.w / 2; gy = MARG; }
+      else {
+        var pp = L.pos[f.ghost.parent];
+        gx = pp.x + (f.ghost.side === 'l' ? -DX * 0.8 : DX * 0.8);
+        gy = pp.y + DY;
+      }
+      ghostEl.style.left = (gx - 23) + 'px'; ghostEl.style.top = (gy - 13) + 'px';
+      ghostEl.classList.remove('hidden');
+    } else {
+      ghostEl.classList.add('hidden');
+    }
+
+    statsEl.textContent = 'nodes ' + L.n + '  ·  height ' + L.levels;
+  }
+
+  function renderCode(op, current, annotation){
+    var lines = CODE[op];
+    codeBlock.innerHTML = '';
+    lines.forEach(function(text, idx){
+      var div = document.createElement('div');
+      div.className = 'code-line' + (current.indexOf(idx) !== -1 ? ' current' : '');
+      div.textContent = text;
+      codeBlock.appendChild(div);
+      if (annotation && annotation.afterIdx === idx){
+        var ann = document.createElement('div');
+        ann.className = 'code-annot';
+        ann.innerHTML = '<div class="annot-arrow"></div>' + annotation.text;
+        codeBlock.appendChild(ann);
+      }
+    });
+  }
+
+  /* ============================================================
+     STATE + CONTROLS
+     ============================================================ */
+  var op = 'search';
+  var baseTree = seedTree();
+  var frames = [], fIdx = 0;
+  var playing = false, playTimer = null;
+
+  function currentBase(){ return frames.length ? frames[frames.length - 1].tree : baseTree; }
+
+  function idleFrame(){
+    return frame({tree:baseTree, readout:'pick a key below, or type one and press ' + OPS[op].btn});
+  }
+
+  function showFrame(i){
+    if (!frames.length){
+      renderTree(idleFrame());
+      readout.textContent = idleFrame().readout;
+      renderCode(op, [], null);
+      stepCounter.textContent = '';
+      document.getElementById('btnPrev').disabled = true;
+      document.getElementById('btnNext').disabled = true;
+      document.getElementById('btnPlay').disabled = true;
+      return;
+    }
+    if (i < 0) i = 0;
+    if (i >= frames.length) i = frames.length - 1;
+    fIdx = i;
+    var f = frames[i];
+    renderTree(f);
+    readout.textContent = f.readout;
+    renderCode(op, f.lines, f.ann);
+    stepCounter.textContent = 'STEP ' + (i + 1) + '/' + frames.length;
+    document.getElementById('btnPrev').disabled = i <= 0;
+    document.getElementById('btnNext').disabled = i >= frames.length - 1;
+    document.getElementById('btnPlay').disabled = false;
+  }
+
+  function stopPlay(){
+    playing = false;
+    if (playTimer) clearInterval(playTimer);
+    playTimer = null;
+    document.getElementById('btnPlay').textContent = 'Play';
+  }
+  function startPlay(){
+    if (frames.length < 2) return;
+    playing = true;
+    document.getElementById('btnPlay').textContent = 'Pause';
+    playTimer = setInterval(function(){
+      if (fIdx >= frames.length - 1){ stopPlay(); return; }
+      showFrame(fIdx + 1);
+    }, 1500);
+  }
+
+  function runOp(key){
+    stopPlay();
+    var k = (key === undefined) ? parseInt(keyInput.value, 10) : key;
+    if (isNaN(k) || k < 0 || k > 999){
+      readout.textContent = 'enter a whole number between 0 and 999';
+      return;
+    }
+    keyInput.value = k;
+    baseTree = currentBase();
+    var built = buildOp(op, k, baseTree);
+    if (built.error){
+      frames = [];
+      showFrame(0);
+      readout.textContent = built.error;
+      return;
+    }
+    frames = built;
+    showFrame(0);
+    startPlay();
+  }
+
+  var OPS = {
+    search: {label:'Search', btn:'Search', badge:'O(h)  ·  O(log n) if balanced',
+             chips:[{k:45, h:'found'}, {k:65, h:'deep'}, {k:55, h:'not in tree'}]},
+    insert: {label:'Insert', btn:'Insert', badge:'O(h)  ·  O(log n) if balanced',
+             chips:[{k:55, h:'new leaf'}, {k:90, h:'right edge'}, {k:45, h:'duplicate'}]},
+    delete: {label:'Delete', btn:'Delete', badge:'O(h)  ·  O(log n) if balanced',
+             chips:[{k:20, h:'leaf'}, {k:60, h:'one child'}, {k:30, h:'two children'}, {k:50, h:'the root'}]}
+  };
+
+  function renderChips(){
+    chipsWrap.innerHTML = '';
+    OPS[op].chips.forEach(function(c){
+      var b = document.createElement('button');
+      b.className = 'quiet-btn chip';
+      b.innerHTML = '<b>' + c.k + '</b> · ' + c.h;
+      b.addEventListener('click', function(){ runOp(c.k); });
+      chipsWrap.appendChild(b);
+    });
+  }
+
+  function renderTabs(){
+    tabsWrap.innerHTML = '';
+    Object.keys(OPS).forEach(function(id){
+      var b = document.createElement('div');
+      b.className = 'tab' + (id === op ? ' active' : '');
+      b.textContent = OPS[id].label;
+      b.addEventListener('click', function(){ switchOp(id); });
+      tabsWrap.appendChild(b);
+    });
+  }
+
+  function switchOp(id){
+    stopPlay();
+    baseTree = currentBase();
+    frames = [];
+    op = id;
+    badge.textContent = 'REVEAL';
+    badge.classList.remove('revealed');
+    document.getElementById('btnRun').textContent = OPS[op].btn;
+    renderTabs(); renderChips();
+    showFrame(0);
+  }
+
+  document.getElementById('btnRun').addEventListener('click', function(){ runOp(); });
+  keyInput.addEventListener('keydown', function(e){ if (e.key === 'Enter') runOp(); });
+  document.getElementById('btnResetTree').addEventListener('click', function(){
+    stopPlay();
+    baseTree = seedTree();
+    frames = [];
+    showFrame(0);
+  });
+  document.getElementById('btnNext').addEventListener('click', function(){ stopPlay(); showFrame(fIdx + 1); });
+  document.getElementById('btnPrev').addEventListener('click', function(){ stopPlay(); showFrame(fIdx - 1); });
+  document.getElementById('btnPlay').addEventListener('click', function(){
+    if (playing){ stopPlay(); return; }
+    if (fIdx >= frames.length - 1) showFrame(0);
+    startPlay();
+  });
+  badge.addEventListener('click', function(){
+    if (badge.classList.contains('revealed')) return;
+    badge.textContent = OPS[op].badge;
+    badge.classList.add('revealed');
+  });
+
+  var resizeTimer = null;
+  window.addEventListener('resize', function(){
+    if (resizeTimer) clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(function(){ showFrame(fIdx); }, 150);
+  });
+
+  /* ---------- init ---------- */
+  renderTabs(); renderChips();
+  document.getElementById('btnRun').textContent = OPS[op].btn;
+  showFrame(0);
+
+  /*__TEST_HOOK__*/
+})();
+</script>
+</body>
+</html>
