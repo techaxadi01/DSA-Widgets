@@ -1,8 +1,31 @@
 // DSA Interactive Hub - Widgets Data Manifest
-// Generated on: 2026-11-19 20:26:16
+// Generated on: 2026-11-25 23:26:19
 // DO NOT EDIT DIRECTLY: Run 'update_widgets.py' or 'update-widgets.bat' to re-index!
 
 const DSA_WIDGETS = [
+  {
+    "id": "0__me_dsa_visualizer",
+    "filename": "widgets/0. Me/dsa_visualizer.html",
+    "title": "DSA CIA3 Interactive Visualizer (Python)",
+    "subtitle": "DSA CIA3 Interactive Visualizer Python Code Stepper",
+    "stamp": "GENERAL DSA",
+    "category": "General DSA",
+    "categoryIcon": "📚",
+    "categoryColor": "#c89b3c",
+    "description": "Interactive visualizer and field study exploring DSA CIA3 Interactive Visualizer (Python).",
+    "tags": [
+      "Dynamic Memory",
+      "General DSA",
+      "Pointers",
+      "Sorting"
+    ],
+    "sizeKb": 63.1,
+    "linesCount": 1455,
+    "estimatedMinutes": 15,
+    "lastModified": "Nov 25, 2026",
+    "timestamp": 1795614039,
+    "subfolder": "0. Me"
+  },
   {
     "id": "priority_queue_visualizer",
     "filename": "widgets/priority_queue_visualizer.html",

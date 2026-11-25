@@ -1,0 +1,1455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>DSA CIA3 Interactive Visualizer (Python)</title>
+<style>
+  :root {
+    --bg: #0f172a;
+    --panel: #1e293b;
+    --panel-2: #162032;
+    --border: #334155;
+    --text: #f1f5f9;
+    --muted: #94a3b8;
+    --indigo: #6366f1;
+    --indigo-soft: rgba(99,102,241,0.18);
+    --teal: #14b8a6;
+    --teal-soft: rgba(20,184,166,0.18);
+    --amber: #f59e0b;
+    --amber-soft: rgba(245,158,11,0.2);
+    --rose: #f43f5e;
+    --rose-soft: rgba(244,63,94,0.2);
+    --green: #22c55e;
+    --green-soft: rgba(34,197,94,0.2);
+    --mono: 'Consolas', 'Courier New', monospace;
+    --sans: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; font-family: var(--sans); background: var(--bg); color: var(--text);
+    display: flex; flex-direction: column; min-height: 100vh;
+  }
+  header {
+    background: linear-gradient(90deg, #1e1b4b, #0f172a 60%, #0f292a);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 20px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px;
+  }
+  header h1 { margin: 0; font-size: 1.15rem; letter-spacing: 0.2px; }
+  header .sub { font-size: 0.8rem; color: var(--muted); }
+  .tabs {
+    display: flex; flex-wrap: wrap; gap: 6px; padding: 10px 20px;
+    background: var(--panel-2); border-bottom: 1px solid var(--border);
+  }
+  .tab-btn {
+    background: transparent; color: var(--muted); border: 1px solid var(--border);
+    padding: 7px 13px; border-radius: 8px; cursor: pointer; font-size: 0.85rem; font-weight: 600;
+    transition: all 0.15s;
+  }
+  .tab-btn:hover { color: var(--text); border-color: var(--indigo); }
+  .tab-btn.active {
+    background: var(--indigo); color: #fff; border-color: var(--indigo);
+    box-shadow: 0 2px 10px rgba(99,102,241,0.35);
+  }
+  .main {
+    display: grid; grid-template-columns: 1.35fr 1fr; gap: 14px;
+    padding: 14px 20px; flex: 1;
+  }
+  @media (max-width: 1050px) { .main { grid-template-columns: 1fr; } }
+  .card {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
+    display: flex; flex-direction: column; overflow: hidden;
+  }
+  .card-hdr {
+    padding: 10px 14px; background: var(--panel-2); border-bottom: 1px solid var(--border);
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px;
+  }
+  .card-hdr h2 { margin: 0; font-size: 0.95rem; }
+  .controls {
+    padding: 10px 14px; border-bottom: 1px solid var(--border);
+    display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+  }
+  button, select, input {
+    font-family: var(--sans); font-size: 0.83rem; border-radius: 7px;
+    border: 1px solid var(--border); background: var(--panel-2); color: var(--text);
+    padding: 6px 10px;
+  }
+  input[type="number"], input[type="text"] { width: 82px; }
+  button { cursor: pointer; font-weight: 600; transition: 0.15s; }
+  button:hover:not(:disabled) { border-color: var(--indigo); background: #26334d; }
+  button:disabled { opacity: 0.45; cursor: not-allowed; }
+  .btn-primary { background: var(--indigo); border-color: var(--indigo); color: #fff; }
+  .btn-primary:hover:not(:disabled) { background: #4f46e5; }
+  .btn-teal { background: #0f766e; border-color: var(--teal); color: #fff; }
+  .btn-rose { background: #be123c; border-color: var(--rose); color: #fff; }
+  .btn-amber { background: #b45309; border-color: var(--amber); color: #fff; }
+
+  .playback {
+    padding: 9px 14px; background: #131c2e; border-bottom: 1px solid var(--border);
+    display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+  }
+  .step-pill {
+    margin-left: auto; font-size: 0.8rem; color: var(--muted);
+    background: var(--panel); padding: 4px 10px; border-radius: 999px; border: 1px solid var(--border);
+  }
+  .narrator {
+    padding: 10px 14px; background: rgba(99,102,241,0.12); border-bottom: 1px solid var(--border);
+    font-size: 0.9rem; line-height: 1.4; min-height: 44px; display: flex; align-items: center;
+  }
+  .narrator strong { color: #a5b4fc; margin-right: 6px; }
+  .canvas-wrap {
+    flex: 1; min-height: 360px; position: relative; background: radial-gradient(circle at top, #17233a, #0f172a);
+    display: flex; align-items: center; justify-content: center; overflow: auto;
+  }
+  svg { width: 100%; height: 100%; min-height: 360px; display: block; }
+  .state-bar {
+    padding: 10px 14px; border-top: 1px solid var(--border); background: var(--panel-2);
+    display: flex; flex-wrap: wrap; gap: 14px; font-size: 0.83rem;
+  }
+  .state-box { display: flex; flex-direction: column; gap: 4px; }
+  .state-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.6px; color: var(--muted); font-weight: 700; }
+  .chips { display: flex; flex-wrap: wrap; gap: 5px; }
+  .chip {
+    background: var(--panel); border: 1px solid var(--border); padding: 3px 8px;
+    border-radius: 6px; font-family: var(--mono); font-size: 0.8rem;
+  }
+  .chip.active { background: var(--amber-soft); border-color: var(--amber); color: #fde68a; }
+  .chip.done { background: var(--green-soft); border-color: var(--green); color: #bbf7d0; }
+
+  .code-toggle { display: flex; gap: 5px; }
+  .toggle-btn { padding: 4px 9px; font-size: 0.76rem; }
+  .toggle-btn.active { background: var(--teal); border-color: var(--teal); color: #fff; }
+  .code-panel {
+    flex: 1; overflow: auto; padding: 10px 0; font-family: var(--mono); font-size: 0.8rem;
+    line-height: 1.48; background: #0b1120;
+  }
+  .code-line {
+    padding: 1px 14px; white-space: pre; display: flex; gap: 10px;
+    border-left: 3px solid transparent;
+  }
+  .code-line.hl {
+    background: rgba(245,158,11,0.18); border-left-color: var(--amber); color: #fef3c7;
+  }
+  .ln { color: #475569; user-select: none; min-width: 22px; text-align: right; }
+
+  .table-wrap {
+    max-height: 210px; overflow: auto; border-top: 1px solid var(--border); background: var(--panel-2);
+  }
+  table { width: 100%; border-collapse: collapse; font-size: 0.8rem; font-family: var(--mono); }
+  th, td { padding: 6px 10px; border-bottom: 1px solid var(--border); text-align: left; }
+  th { background: #0f172a; color: var(--muted); font-family: var(--sans); font-size: 0.75rem; text-transform: uppercase; }
+  tr.row-hl { background: rgba(99,102,241,0.22); }
+
+  .legend {
+    display: flex; flex-wrap: wrap; gap: 10px; font-size: 0.75rem; color: var(--muted); align-items: center;
+  }
+  .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 4px; }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>DSA CIA3 Interactive Visualizer &amp; Python Code Stepper</h1>
+    <div class="sub">Step forward &amp; backward through Trees, BST, B-Tree, BFS, DFS, Topological Sort, Prim's &amp; Dijkstra's — With &amp; Without Built-in Libraries</div>
+  </div>
+  <div class="legend">
+    <span><span class="dot" style="background:#64748b"></span>Unvisited</span>
+    <span><span class="dot" style="background:#f59e0b"></span>Current / Active</span>
+    <span><span class="dot" style="background:#6366f1"></span>In Queue / Stack / Heap</span>
+    <span><span class="dot" style="background:#22c55e"></span>Visited / Done / MST</span>
+    <span><span class="dot" style="background:#f43f5e"></span>Splitting / Deleting</span>
+  </div>
+</header>
+
+<div class="tabs" id="tabs">
+  <button class="tab-btn active" data-topic="tree">1. Tree Traversals</button>
+  <button class="tab-btn" data-topic="bst">2. BST (Insert / Search / Delete)</button>
+  <button class="tab-btn" data-topic="btree">3. B-Tree (Split &amp; Insert)</button>
+  <button class="tab-btn" data-topic="graph">4. Graph BFS &amp; DFS</button>
+  <button class="tab-btn" data-topic="topo">5. Topological Sort</button>
+  <button class="tab-btn" data-topic="prims">6. Prim's MST</button>
+  <button class="tab-btn" data-topic="dijkstra">7. Dijkstra's Shortest Path</button>
+</div>
+
+<div class="main">
+  <!-- LEFT: VISUALIZER -->
+  <div class="card">
+    <div class="card-hdr">
+      <h2 id="viz-title">1. Binary Tree Traversals</h2>
+      <div id="topic-info" style="font-size:0.78rem; color:var(--muted);"></div>
+    </div>
+
+    <div class="controls" id="controls"></div>
+
+    <div class="playback">
+      <button id="btn-reset" title="Jump to step 0">|&lt; Reset</button>
+      <button id="btn-prev">&lt; Prev</button>
+      <button id="btn-play" class="btn-primary">Play</button>
+      <button id="btn-next">Next &gt;</button>
+      <label style="font-size:0.78rem; color:var(--muted); display:flex; align-items:center; gap:5px; margin-left:6px;">
+        Speed <input type="range" id="speed" min="150" max="1500" step="50" value="750" style="width:85px; padding:0;" />
+      </label>
+      <span class="step-pill" id="step-counter">Step 0 / 0</span>
+    </div>
+
+    <div class="narrator" id="narrator">Select an operation or press Next / Play to begin!</div>
+
+    <div class="canvas-wrap">
+      <svg id="svg" viewBox="0 0 720 380" preserveAspectRatio="xMidYMid meet"></svg>
+    </div>
+
+    <div class="state-bar" id="state-bar"></div>
+  </div>
+
+  <!-- RIGHT: SYNCHRONIZED PYTHON CODE & DATA TABLE -->
+  <div class="card">
+    <div class="card-hdr">
+      <h2>Python Code (Synchronized)</h2>
+      <div class="code-toggle" id="lib-toggle">
+        <button class="toggle-btn active" data-mode="lib">With Built-in Libs</button>
+        <button class="toggle-btn" data-mode="nolib">Without Libs (Pure Python)</button>
+      </div>
+    </div>
+    <div class="code-panel" id="code-panel"></div>
+    <div class="table-wrap" id="table-wrap" style="display:none;"></div>
+  </div>
+</div>
+
+<script>
+// ============================================================================
+// CORE ENGINE STATE
+// ============================================================================
+const S = {
+  topic: "tree",
+  libMode: "lib", // 'lib' or 'nolib'
+  steps: [],
+  idx: 0,
+  timer: null,
+  // Persistent structures for interactive BST & B-Tree
+  bstRoot: null,
+  btreeT: 2,
+  btreeRoot: null,
+  // Graph settings
+  graphPreset: "default",
+  graphStart: "A",
+  graphAlgo: "bfs",
+  topoAlgo: "kahn",
+  primsAlgo: "heap",
+  dijkAlgo: "heap",
+  dijkTarget: "D",
+  treeAlgo: "inorder",
+};
+
+const svgEl = document.getElementById("svg");
+const narratorEl = document.getElementById("narrator");
+const stepCounterEl = document.getElementById("step-counter");
+const stateBarEl = document.getElementById("state-bar");
+const codePanelEl = document.getElementById("code-panel");
+const tableWrapEl = document.getElementById("table-wrap");
+const controlsEl = document.getElementById("controls");
+const libToggleEl = document.getElementById("lib-toggle");
+
+// ============================================================================
+// PYTHON CODE SNIPPETS (WITH & WITHOUT BUILT-IN LIBRARIES)
+// ============================================================================
+const CODES = {
+  tree_preorder: {
+    lib: [
+      "def preorder(root):",
+      "    if not root: return []",
+      "    res = []",
+      "    def dfs(node):",
+      "        if not node: return",
+      "        res.append(node.val)    # 1. Visit Root",
+      "        dfs(node.left)          # 2. Go Left",
+      "        dfs(node.right)         # 3. Go Right",
+      "    dfs(root)",
+      "    return res"
+    ],
+    nolib: [
+      "def preorder_iterative(root):",
+      "    if not root: return []",
+      "    stack, res = [root], []",
+      "    while stack:",
+      "        node = stack.pop()",
+      "        res.append(node.val)          # Visit Root",
+      "        if node.right: stack.append(node.right)",
+      "        if node.left:  stack.append(node.left)  # Pops first",
+      "    return res"
+    ]
+  },
+  tree_inorder: {
+    lib: [
+      "def inorder(root):",
+      "    res = []",
+      "    def dfs(node):",
+      "        if not node: return",
+      "        dfs(node.left)          # 1. Go Left",
+      "        res.append(node.val)    # 2. Visit Root",
+      "        dfs(node.right)         # 3. Go Right",
+      "    dfs(root)",
+      "    return res"
+    ],
+    nolib: [
+      "def inorder_iterative(root):",
+      "    stack, res, curr = [], [], root",
+      "    while curr or stack:",
+      "        while curr:",
+      "            stack.append(curr)",
+      "            curr = curr.left     # Push all lefts",
+      "        curr = stack.pop()",
+      "        res.append(curr.val)     # Visit Root",
+      "        curr = curr.right        # Move Right",
+      "    return res"
+    ]
+  },
+  tree_postorder: {
+    lib: [
+      "def postorder(root):",
+      "    res = []",
+      "    def dfs(node):",
+      "        if not node: return",
+      "        dfs(node.left)          # 1. Go Left",
+      "        dfs(node.right)         # 2. Go Right",
+      "        res.append(node.val)    # 3. Visit Root",
+      "    dfs(root)",
+      "    return res"
+    ],
+    nolib: [
+      "def postorder_iterative(root):",
+      "    if not root: return []",
+      "    stack, res = [root], []",
+      "    while stack:",
+      "        node = stack.pop()",
+      "        res.append(node.val)",
+      "        if node.left:  stack.append(node.left)",
+      "        if node.right: stack.append(node.right)",
+      "    return res[::-1]             # Reverse -> L, R, Root"
+    ]
+  },
+  tree_level: {
+    lib: [
+      "from collections import deque",
+      "def level_order_deque(root):",
+      "    if not root: return []",
+      "    q, res = deque([root]), []",
+      "    while q:",
+      "        node = q.popleft()",
+      "        res.append(node.val)",
+      "        if node.left:  q.append(node.left)",
+      "        if node.right: q.append(node.right)",
+      "    return res"
+    ],
+    nolib: [
+      "def level_order_no_lib(root):",
+      "    if not root: return []",
+      "    queue, front, res = [root], 0, []",
+      "    while front < len(queue):",
+      "        node = queue[front]",
+      "        front += 1               # Pure Python O(1) dequeue",
+      "        res.append(node.val)",
+      "        if node.left:  queue.append(node.left)",
+      "        if node.right: queue.append(node.right)",
+      "    return res"
+    ]
+  },
+  bst: {
+    lib: [
+      "# BST uses Pure Python (no built-in libs needed)",
+      "def insert(node, key):",
+      "    if node is None: return TreeNode(key)",
+      "    if key < node.val: node.left = insert(node.left, key)",
+      "    elif key > node.val: node.right = insert(node.right, key)",
+      "    return node",
+      "",
+      "def delete(node, key):",
+      "    if node is None: return None",
+      "    if key < node.val: node.left = delete(node.left, key)",
+      "    elif key > node.val: node.right = delete(node.right, key)",
+      "    else:",
+      "        if not node.left: return node.right   # 0 or 1 child",
+      "        if not node.right: return node.left",
+      "        succ = node.right                    # 2 children:",
+      "        while succ.left: succ = succ.left    # Inorder successor",
+      "        node.val = succ.val",
+      "        node.right = delete(node.right, succ.val)",
+      "    return node"
+    ],
+    nolib: null
+  },
+  btree: {
+    lib: [
+      "# B-Tree uses Pure Python (no built-in libs needed)",
+      "def insert(self, k):",
+      "    if len(self.root.keys) == 2*self.t - 1:",
+      "        new_root = BTreeNode(self.t, leaf=False)",
+      "        new_root.children.append(self.root)",
+      "        self._split_child(new_root, 0)",
+      "        self.root = new_root",
+      "    self._insert_non_full(self.root, k)",
+      "",
+      "def _split_child(self, parent, i):",
+      "    full = parent.children[i]",
+      "    parent.keys.insert(i, full.keys[t - 1])  # Promote median",
+      "    right = BTreeNode(t, leaf=full.leaf)",
+      "    right.keys = full.keys[t:]               # Right half",
+      "    full.keys = full.keys[:t - 1]            # Left half",
+      "    parent.children.insert(i + 1, right)",
+      "",
+      "def _insert_non_full(self, node, k):",
+      "    if node.leaf: insert k in sorted order",
+      "    else: split full child if needed, then recurse"
+    ],
+    nolib: null
+  },
+  graph_bfs: {
+    lib: [
+      "from collections import deque",
+      "def bfs_deque(graph, start):",
+      "    visited = {start}",
+      "    q = deque([start])",
+      "    order = []",
+      "    while q:",
+      "        u = q.popleft()",
+      "        order.append(u)",
+      "        for v in graph[u]:",
+      "            if v not in visited:",
+      "                visited.add(v)",
+      "                q.append(v)",
+      "    return order"
+    ],
+    nolib: [
+      "def bfs_no_lib(graph, start):",
+      "    visited = {start}",
+      "    queue, front, order = [start], 0, []",
+      "    while front < len(queue):",
+      "        u = queue[front]",
+      "        front += 1               # Avoids slow pop(0)",
+      "        order.append(u)",
+      "        for v in graph[u]:",
+      "            if v not in visited:",
+      "                visited.add(v)",
+      "                queue.append(v)",
+      "    return order"
+    ]
+  },
+  graph_dfs: {
+    lib: [
+      "def dfs_recursive(graph, u, visited, order):",
+      "    visited.add(u)",
+      "    order.append(u)",
+      "    for v in graph[u]:",
+      "        if v not in visited:",
+      "            dfs_recursive(graph, v, visited, order)"
+    ],
+    nolib: [
+      "def dfs_iterative(graph, start):",
+      "    visited, stack, order = set(), [start], []",
+      "    while stack:",
+      "        u = stack.pop()",
+      "        if u in visited: continue",
+      "        visited.add(u)",
+      "        order.append(u)",
+      "        for v in reversed(graph[u]):",
+      "            if v not in visited:",
+      "                stack.append(v)",
+      "    return order"
+    ]
+  },
+  topo_kahn: {
+    lib: [
+      "from collections import deque",
+      "def topo_kahn_deque(vertices, adj):",
+      "    in_deg = count incoming edges for each v",
+      "    q = deque([v for v in vertices if in_deg[v] == 0])",
+      "    order = []",
+      "    while q:",
+      "        u = q.popleft()",
+      "        order.append(u)",
+      "        for v in adj[u]:",
+      "            in_deg[v] -= 1",
+      "            if in_deg[v] == 0: q.append(v)",
+      "    return order"
+    ],
+    nolib: [
+      "def topo_kahn_no_lib(vertices, adj):",
+      "    in_deg = count incoming edges for each v",
+      "    queue = [v for v in vertices if in_deg[v] == 0]",
+      "    front, order = 0, []",
+      "    while front < len(queue):",
+      "        u = queue[front]; front += 1",
+      "        order.append(u)",
+      "        for v in adj[u]:",
+      "            in_deg[v] -= 1",
+      "            if in_deg[v] == 0: queue.append(v)",
+      "    return order"
+    ]
+  },
+  topo_dfs: {
+    lib: [
+      "def topo_sort_dfs(vertices, adj):",
+      "    visited, stack = set(), []",
+      "    def dfs(u):",
+      "        visited.add(u)",
+      "        for v in adj[u]:",
+      "            if v not in visited: dfs(v)",
+      "        stack.append(u)      # Post-order push",
+      "    for v in vertices:",
+      "        if v not in visited: dfs(v)",
+      "    return stack[::-1]       # Reverse stack"
+    ],
+    nolib: null
+  },
+  prims_heap: {
+    lib: [
+      "import heapq",
+      "def prims_heapq(vertices, adj, start):",
+      "    visited, pq, mst, cost = set(), [(0, start, None)], [], 0",
+      "    while pq and len(visited) < len(vertices):",
+      "        w, u, parent = heapq.heappop(pq)",
+      "        if u in visited: continue",
+      "        visited.add(u); cost += w",
+      "        if parent: mst.append((parent, u, w))",
+      "        for v, wt in adj[u]:",
+      "            if v not in visited:",
+      "                heapq.heappush(pq, (wt, v, u))",
+      "    return cost, mst"
+    ],
+    nolib: [
+      "# Using custom MinHeap class (no heapq import)",
+      "def prims_custom_heap(vertices, adj, start):",
+      "    visited, pq, mst, cost = set(), MinHeap(), [], 0",
+      "    pq.push((0, start, None))",
+      "    while len(pq) > 0 and len(visited) < len(vertices):",
+      "        w, u, parent = pq.pop()",
+      "        if u in visited: continue",
+      "        visited.add(u); cost += w",
+      "        if parent: mst.append((parent, u, w))",
+      "        for v, wt in adj[u]:",
+      "            if v not in visited: pq.push((wt, v, u))",
+      "    return cost, mst"
+    ]
+  },
+  prims_array: {
+    lib: [
+      "# Pure Python O(V^2) Array Scan (No heapq needed!)",
+      "def prims_array(vertices, adj, start):",
+      "    key = {v: inf for v in vertices}; key[start] = 0",
+      "    parent = {v: None for v in vertices}; in_mst = set()",
+      "    for _ in range(len(vertices)):",
+      "        u = min((v for v in vertices if v not in in_mst), key=key.get)",
+      "        in_mst.add(u)",
+      "        for v, wt in adj[u]:",
+      "            if v not in in_mst and wt < key[v]:",
+      "                key[v] = wt; parent[v] = u",
+      "    return sum(key.values()), parent"
+    ],
+    nolib: null
+  },
+  dijkstra_heap: {
+    lib: [
+      "import heapq",
+      "def dijkstra_heapq(vertices, adj, start):",
+      "    dist = {v: inf for v in vertices}; dist[start] = 0",
+      "    parent = {v: None for v in vertices}; pq = [(0, start)]",
+      "    while pq:",
+      "        d, u = heapq.heappop(pq)",
+      "        if d > dist[u]: continue          # Skip stale",
+      "        for v, w in adj[u]:",
+      "            if dist[u] + w < dist[v]:     # Relax edge",
+      "                dist[v] = dist[u] + w",
+      "                parent[v] = u",
+      "                heapq.heappush(pq, (dist[v], v))",
+      "    return dist, parent"
+    ],
+    nolib: [
+      "# Using custom MinHeap class (no heapq import)",
+      "def dijkstra_custom_heap(vertices, adj, start):",
+      "    dist = {v: inf for v in vertices}; dist[start] = 0",
+      "    parent = {v: None for v in vertices}; pq = MinHeap()",
+      "    pq.push((0, start))",
+      "    while len(pq) > 0:",
+      "        d, u = pq.pop()",
+      "        if d > dist[u]: continue",
+      "        for v, w in adj[u]:",
+      "            if dist[u] + w < dist[v]:",
+      "                dist[v] = dist[u] + w; parent[v] = u",
+      "                pq.push((dist[v], v))",
+      "    return dist, parent"
+    ]
+  },
+  dijkstra_array: {
+    lib: [
+      "# Pure Python O(V^2) Array Scan (No heapq needed!)",
+      "def dijkstra_array(vertices, adj, start):",
+      "    dist = {v: inf for v in vertices}; dist[start] = 0",
+      "    parent = {v: None for v in vertices}; visited = set()",
+      "    for _ in range(len(vertices)):",
+      "        u = min((v for v in vertices if v not in visited), key=dist.get)",
+      "        visited.add(u)",
+      "        for v, w in adj[u]:",
+      "            if v not in visited and dist[u] + w < dist[v]:",
+      "                dist[v] = dist[u] + w; parent[v] = u",
+      "    return dist, parent"
+    ],
+    nolib: null
+  }
+};
+
+// ============================================================================
+// SVG HELPERS
+// ============================================================================
+function svgNode(tag, attrs, text) {
+  const el = document.createElementNS("http://www.w3.org/2000/svg", tag);
+  for (const [k, v] of Object.entries(attrs || {})) el.setAttribute(k, v);
+  if (text !== undefined) el.textContent = text;
+  return el;
+}
+
+function drawTreeSVG(root, step) {
+  svgEl.innerHTML = "";
+  if (!root) {
+    svgEl.appendChild(svgNode("text", { x: 360, y: 190, fill: "#94a3b8", "text-anchor": "middle", "font-size": 16 }, "Tree is empty"));
+    return;
+  }
+  // Compute positions via inorder x-rank & depth y
+  const pos = new Map();
+  let xCounter = 0;
+  function countWidth(n) { return n ? 1 + countWidth(n.left) + countWidth(n.right) : 0; }
+  const total = Math.max(countWidth(root), 1);
+  function layout(n, depth) {
+    if (!n) return;
+    layout(n.left, depth + 1);
+    const x = 60 + ((xCounter + 0.5) / total) * 600;
+    const y = 52 + depth * 66;
+    xCounter++;
+    pos.set(n.id, { x, y, node: n });
+    layout(n.right, depth + 1);
+  }
+  layout(root, 0);
+
+  // Edges
+  pos.forEach(({ x, y, node }) => {
+    [node.left, node.right].forEach(ch => {
+      if (ch && pos.has(ch.id)) {
+        const cp = pos.get(ch.id);
+        svgEl.appendChild(svgNode("line", {
+          x1: x, y1: y, x2: cp.x, y2: cp.y, stroke: "#475569", "stroke-width": 2.2
+        }));
+      }
+    });
+  });
+
+  // Nodes
+  const hl = step.hl || {};
+  pos.forEach(({ x, y, node }) => {
+    let fill = "#1e293b", stroke = "#64748b", textCol = "#f1f5f9";
+    if (hl[node.id] === "visited" || hl[node.val] === "visited") { fill = "#14532d"; stroke = "#22c55e"; }
+    if (hl[node.id] === "queued" || hl[node.val] === "queued") { fill = "#312e81"; stroke = "#6366f1"; }
+    if (hl[node.id] === "successor") { fill = "#115e59"; stroke = "#14b8a6"; }
+    if (hl[node.id] === "delete") { fill = "#881337"; stroke = "#f43f5e"; }
+    if (hl[node.id] === "active" || hl[node.val] === "active") { fill = "#78350f"; stroke = "#f59e0b"; }
+
+    svgEl.appendChild(svgNode("circle", { cx: x, cy: y, r: 21, fill, stroke, "stroke-width": 2.8 }));
+    svgEl.appendChild(svgNode("text", {
+      x, y: y + 5, fill: textCol, "text-anchor": "middle", "font-size": 14, "font-weight": "700"
+    }, String(node.val)));
+  });
+}
+
+// ============================================================================
+// 1. TREE TRAVERSALS
+// ============================================================================
+function makeSampleTree() {
+  let id = 1;
+  const N = (val, l = null, r = null) => ({ id: id++, val, left: l, right: r });
+  return N(1, N(2, N(4), N(5)), N(3, null, N(6)));
+}
+
+function buildTreeSteps(algo, libMode) {
+  const root = makeSampleTree();
+  const steps = [];
+  const hl = {};
+  const output = [];
+
+  if (algo === "level") {
+    const q = [root];
+    hl[root.id] = "queued";
+    steps.push({ root, hl: { ...hl }, structLabel: libMode === "lib" ? "deque" : "queue[front:]", struct: [root.val], output: [], line: 3, msg: "Push root (1) into the queue." });
+    while (q.length) {
+      const curr = q.shift();
+      hl[curr.id] = "active";
+      steps.push({ root, hl: { ...hl }, structLabel: libMode === "lib" ? "deque" : "queue[front:]", struct: q.map(n => n.val), output: [...output], line: 5, msg: `Dequeue node ${curr.val} from front of queue.` });
+      output.push(curr.val);
+      hl[curr.id] = "visited";
+      if (curr.left) { q.push(curr.left); hl[curr.left.id] = "queued"; }
+      if (curr.right) { q.push(curr.right); hl[curr.right.id] = "queued"; }
+      steps.push({ root, hl: { ...hl }, structLabel: libMode === "lib" ? "deque" : "queue[front:]", struct: q.map(n => n.val), output: [...output], line: 7, msg: `Output ${curr.val} and enqueue its children: [${[curr.left?.val, curr.right?.val].filter(Boolean).join(", ") || "none"}].` });
+    }
+    return steps;
+  }
+
+  // Recursive Pre/In/Post (and stack display)
+  const callStack = [];
+  function rec(node) {
+    if (!node) return;
+    callStack.push(node.val);
+    hl[node.id] = "active";
+    steps.push({ root, hl: { ...hl }, structLabel: "Call Stack", struct: [...callStack], output: [...output], line: 4, msg: `Enter node ${node.val}.` });
+
+    if (algo === "preorder") {
+      output.push(node.val);
+      hl[node.id] = "visited";
+      steps.push({ root, hl: { ...hl }, structLabel: "Call Stack", struct: [...callStack], output: [...output], line: 5, msg: `PREORDER: Visit Root (${node.val}) BEFORE children.` });
+    }
+    if (node.left) {
+      hl[node.id] = "queued";
+      rec(node.left);
+    }
+    if (algo === "inorder") {
+      output.push(node.val);
+      hl[node.id] = "visited";
+      steps.push({ root, hl: { ...hl }, structLabel: "Call Stack", struct: [...callStack], output: [...output], line: 5, msg: `INORDER: Left done! Now visit Root (${node.val}).` });
+    }
+    if (node.right) {
+      hl[node.id] = "queued";
+      rec(node.right);
+    }
+    if (algo === "postorder") {
+      output.push(node.val);
+      hl[node.id] = "visited";
+      steps.push({ root, hl: { ...hl }, structLabel: "Call Stack", struct: [...callStack], output: [...output], line: 6, msg: `POSTORDER: Both children done! Now visit Root (${node.val}).` });
+    }
+    callStack.pop();
+  }
+  rec(root);
+  steps.push({ root, hl: { ...hl }, structLabel: "Call Stack", struct: [], output: [...output], line: 9, msg: `Traversal complete! Result: [${output.join(", ")}]` });
+  return steps;
+}
+
+// ============================================================================
+// 2. BST (PERSISTENT INTERACTIVE TREE)
+// ============================================================================
+let bstIdSeq = 100;
+function cloneTree(n) {
+  if (!n) return null;
+  return { id: n.id, val: n.val, left: cloneTree(n.left), right: cloneTree(n.right) };
+}
+function initDefaultBST() {
+  S.bstRoot = null;
+  [50, 30, 70, 20, 40, 60, 80].forEach(k => {
+    const ins = (n) => {
+      if (!n) return { id: bstIdSeq++, val: k, left: null, right: null };
+      if (k < n.val) n.left = ins(n.left);
+      else if (k > n.val) n.right = ins(n.right);
+      return n;
+    };
+    S.bstRoot = ins(S.bstRoot);
+  });
+}
+
+function runBSTOp(op, key) {
+  const steps = [];
+  if (op === "insert") {
+    let curr = S.bstRoot;
+    const path = [];
+    while (curr) {
+      path.push(curr);
+      const hl = {}; path.forEach(p => hl[p.id] = "queued"); hl[curr.id] = "active";
+      if (key === curr.val) {
+        steps.push({ root: cloneTree(S.bstRoot), hl, line: 2, msg: `Key ${key} already exists in BST! Duplicates skipped.` });
+        setSteps(steps); return;
+      }
+      steps.push({
+        root: cloneTree(S.bstRoot), hl, line: key < curr.val ? 3 : 4,
+        msg: `Compare ${key} with ${curr.val}: ${key} ${key < curr.val ? "<" : ">"} ${curr.val}, go ${key < curr.val ? "LEFT" : "RIGHT"}.`
+      });
+      curr = key < curr.val ? curr.left : curr.right;
+    }
+    const ins = (n) => {
+      if (!n) return { id: bstIdSeq++, val: key, left: null, right: null };
+      if (key < n.val) n.left = ins(n.left);
+      else if (key > n.val) n.right = ins(n.right);
+      return n;
+    };
+    S.bstRoot = ins(S.bstRoot);
+    const hl = {};
+    (function findNew(n){ if(!n) return; if(n.val===key) hl[n.id]="visited"; findNew(n.left); findNew(n.right); })(S.bstRoot);
+    steps.push({ root: cloneTree(S.bstRoot), hl, line: 2, msg: `Inserted ${key} as a new leaf node!` });
+  } else if (op === "search") {
+    let curr = S.bstRoot;
+    while (curr) {
+      const hl = { [curr.id]: curr.val === key ? "visited" : "active" };
+      if (curr.val === key) {
+        steps.push({ root: cloneTree(S.bstRoot), hl, line: 2, msg: `FOUND ${key}!` });
+        setSteps(steps); return;
+      }
+      steps.push({
+        root: cloneTree(S.bstRoot), hl, line: key < curr.val ? 3 : 4,
+        msg: `At ${curr.val}: ${key} ${key < curr.val ? "<" : ">"} ${curr.val}, move ${key < curr.val ? "left" : "right"}.`
+      });
+      curr = key < curr.val ? curr.left : curr.right;
+    }
+    steps.push({ root: cloneTree(S.bstRoot), hl: {}, line: 2, msg: `Reached None — ${key} is NOT in the BST.` });
+  } else if (op === "delete") {
+    let curr = S.bstRoot;
+    while (curr && curr.val !== key) {
+      steps.push({
+        root: cloneTree(S.bstRoot), hl: { [curr.id]: "active" }, line: key < curr.val ? 9 : 10,
+        msg: `Searching for ${key}: at ${curr.val}, go ${key < curr.val ? "left" : "right"}.`
+      });
+      curr = key < curr.val ? curr.left : curr.right;
+    }
+    if (!curr) {
+      steps.push({ root: cloneTree(S.bstRoot), hl: {}, line: 8, msg: `${key} not found — nothing to delete.` });
+      setSteps(steps); return;
+    }
+    if (!curr.left && !curr.right) {
+      steps.push({ root: cloneTree(S.bstRoot), hl: { [curr.id]: "delete" }, line: 12, msg: `Case 1 (Leaf): ${key} has 0 children — remove it directly.` });
+    } else if (!curr.left || !curr.right) {
+      steps.push({ root: cloneTree(S.bstRoot), hl: { [curr.id]: "delete" }, line: 12, msg: `Case 2 (1 Child): Bypass ${key} and link its single child.` });
+    } else {
+      let succ = curr.right;
+      while (succ.left) succ = succ.left;
+      steps.push({
+        root: cloneTree(S.bstRoot), hl: { [curr.id]: "delete", [succ.id]: "successor" }, line: 15,
+        msg: `Case 3 (2 Children): ${key} is replaced by its Inorder Successor (${succ.val}, smallest in right subtree).`
+      });
+    }
+    const del = (n, k) => {
+      if (!n) return null;
+      if (k < n.val) n.left = del(n.left, k);
+      else if (k > n.val) n.right = del(n.right, k);
+      else {
+        if (!n.left) return n.right;
+        if (!n.right) return n.left;
+        let s = n.right; while (s.left) s = s.left;
+        n.val = s.val;
+        n.right = del(n.right, s.val);
+      }
+      return n;
+    };
+    S.bstRoot = del(S.bstRoot, key);
+    steps.push({ root: cloneTree(S.bstRoot), hl: {}, line: 18, msg: `Deleted ${key} cleanly. BST property preserved!` });
+  }
+  setSteps(steps);
+}
+
+// ============================================================================
+// 3. B-TREE (CLRS PROACTIVE SPLIT)
+// ============================================================================
+function cloneBNode(n) {
+  return { keys: [...n.keys], leaf: n.leaf, children: n.children.map(cloneBNode), state: n.state || "" };
+}
+function initBTree(t = 2) {
+  S.btreeT = t;
+  S.btreeRoot = { keys: [], leaf: true, children: [] };
+}
+
+function btreeInsertWithSteps(k) {
+  const t = S.btreeT;
+  const steps = [];
+  const snap = (msg, line, markFn) => {
+    const c = cloneBNode(S.btreeRoot);
+    if (markFn) markFn(c);
+    steps.push({ broot: c, msg, line });
+  };
+
+  if (S.btreeRoot.keys.length === 2 * t - 1) {
+    snap(`Root [${S.btreeRoot.keys.join(", ")}] is FULL (2t-1 = ${2*t-1} keys)! Must split before inserting ${k}.`, 2, n => { n.state = "split"; });
+    const newRoot = { keys: [], leaf: false, children: [S.btreeRoot] };
+    splitBChild(newRoot, 0, t);
+    S.btreeRoot = newRoot;
+    snap(`Root split! Median ${newRoot.keys[0]} promoted to new root.`, 5, n => { n.state = "visited"; });
+  }
+
+  function splitBChild(parent, i, t) {
+    const full = parent.children[i];
+    const right = { keys: full.keys.slice(t), leaf: full.leaf, children: full.leaf ? [] : full.children.slice(t) };
+    const med = full.keys[t - 1];
+    full.keys = full.keys.slice(0, t - 1);
+    if (!full.leaf) full.children = full.children.slice(0, t);
+    parent.keys.splice(i, 0, med);
+    parent.children.splice(i + 1, 0, right);
+  }
+
+  function insNonFull(node, key) {
+    let i = node.keys.length - 1;
+    if (node.leaf) {
+      while (i >= 0 && key < node.keys[i]) i--;
+      if (i >= 0 && node.keys[i] === key) {
+        snap(`Key ${key} already exists.`, 18);
+        return;
+      }
+      node.keys.splice(i + 1, 0, key);
+      snap(`Inserted ${key} into leaf [${node.keys.join(", ")}].`, 18, () => { node.state = "visited"; });
+    } else {
+      while (i >= 0 && key < node.keys[i]) i--;
+      i++;
+      if (node.children[i].keys.length === 2 * t - 1) {
+        snap(`Child [${node.children[i].keys.join(", ")}] is FULL! Splitting it proactively.`, 10);
+        splitBChild(node, i, t);
+        snap(`Split complete: median ${node.keys[i]} promoted up.`, 11);
+        if (key > node.keys[i]) i++;
+      }
+      insNonFull(node.children[i], key);
+    }
+  }
+  insNonFull(S.btreeRoot, k);
+  return steps;
+}
+
+function drawBTreeSVG(broot) {
+  svgEl.innerHTML = "";
+  if (!broot || broot.keys.length === 0) {
+    svgEl.appendChild(svgNode("text", { x: 360, y: 190, fill: "#94a3b8", "text-anchor": "middle", "font-size": 15 }, "B-Tree is empty — insert keys or click Preset!"));
+    return;
+  }
+  // Compute levels
+  const levels = [];
+  function collect(n, d) {
+    if (!levels[d]) levels[d] = [];
+    levels[d].push(n);
+    n.children.forEach(c => collect(c, d + 1));
+  }
+  collect(broot, 0);
+
+  const coords = new Map();
+  levels.forEach((nodes, d) => {
+    const y = 55 + d * 90;
+    const widths = nodes.map(n => Math.max(44, n.keys.length * 34 + 12));
+    const gap = 18;
+    const totalW = widths.reduce((a, b) => a + b, 0) + gap * (nodes.length - 1);
+    let curX = (720 - totalW) / 2;
+    nodes.forEach((n, idx) => {
+      const w = widths[idx];
+      coords.set(n, { x: curX, y, w, h: 32 });
+      curX += w + gap;
+    });
+  });
+
+  // Edges
+  levels.forEach(nodes => {
+    nodes.forEach(p => {
+      const pp = coords.get(p);
+      p.children.forEach((ch, ci) => {
+        const cp = coords.get(ch);
+        const px = pp.x + (pp.w * (ci + 0.5)) / (p.children.length);
+        svgEl.appendChild(svgNode("line", {
+          x1: px, y1: pp.y + pp.h, x2: cp.x + cp.w / 2, y2: cp.y, stroke: "#64748b", "stroke-width": 2
+        }));
+      });
+    });
+  });
+
+  // Boxes
+  levels.forEach(nodes => {
+    nodes.forEach(n => {
+      const { x, y, w, h } = coords.get(n);
+      let fill = "#1e293b", stroke = "#6366f1";
+      if (n.state === "split") { fill = "#881337"; stroke = "#f43f5e"; }
+      else if (n.state === "visited") { fill = "#14532d"; stroke = "#22c55e"; }
+      svgEl.appendChild(svgNode("rect", { x, y, width: w, height: h, rx: 7, fill, stroke, "stroke-width": 2.3 }));
+      const cellW = w / n.keys.length;
+      n.keys.forEach((k, idx) => {
+        if (idx > 0) {
+          svgEl.appendChild(svgNode("line", { x1: x + idx * cellW, y1: y, x2: x + idx * cellW, y2: y + h, stroke, "stroke-width": 1.2 }));
+        }
+        svgEl.appendChild(svgNode("text", {
+          x: x + idx * cellW + cellW / 2, y: y + 21, fill: "#f8fafc", "text-anchor": "middle", "font-size": 13, "font-weight": "700"
+        }, String(k)));
+      });
+    });
+  });
+}
+
+// ============================================================================
+// 4-7. GRAPH DATA & ALGORITHMS
+// ============================================================================
+const GRAPH_DATA = {
+  undirected: {
+    verts: ["A", "B", "C", "D", "E", "F"],
+    pos: { A: [110, 190], B: [270, 90], C: [270, 290], D: [460, 75], E: [460, 200], F: [460, 310] },
+    edges: [["A","B"],["A","C"],["B","D"],["B","E"],["C","F"],["E","F"]],
+    directed: false
+  },
+  dag: {
+    verts: ["5", "4", "2", "0", "3", "1"],
+    pos: { "5": [140, 110], "4": [140, 270], "2": [340, 110], "0": [340, 270], "3": [540, 110], "1": [540, 270] },
+    edges: [["5","2"],["5","0"],["4","0"],["4","1"],["2","3"],["3","1"]],
+    directed: true
+  },
+  prims: {
+    verts: ["A", "B", "C", "D", "E"],
+    pos: { A: [110, 190], B: [290, 85], C: [290, 295], D: [510, 85], E: [510, 295] },
+    edges: [["A","B",2],["A","C",3],["B","C",1],["B","D",4],["C","D",5],["C","E",6],["D","E",2]],
+    directed: false, weighted: true
+  },
+  dijkstra: {
+    verts: ["A", "B", "C", "D", "E"],
+    pos: { A: [100, 190], B: [275, 85], C: [275, 295], E: [455, 295], D: [600, 190] },
+    edges: [["A","B",4],["A","C",2],["B","C",5],["B","D",10],["C","E",3],["E","D",4]],
+    directed: true, weighted: true
+  }
+};
+
+function drawGraphSVG(g, step) {
+  svgEl.innerHTML = "";
+  if (g.directed) {
+    const defs = svgNode("defs");
+    [["arr", "#64748b"], ["arr-hl", "#f59e0b"], ["arr-ok", "#22c55e"]].forEach(([id, col]) => {
+      const m = svgNode("marker", { id, markerWidth: 8, markerHeight: 8, refX: 7, refY: 4, orient: "auto" });
+      m.appendChild(svgNode("path", { d: "M0,0 L8,4 L0,8 Z", fill: col }));
+      defs.appendChild(m);
+    });
+    svgEl.appendChild(defs);
+  }
+
+  const edgeHl = step.edgeHl || {};
+  g.edges.forEach(e => {
+    const [u, v, w] = e;
+    const [x1, y1] = g.pos[u], [x2, y2] = g.pos[v];
+    const dx = x2 - x1, dy = y2 - y1, d = Math.hypot(dx, dy) || 1;
+    const ux = dx / d, uy = dy / d;
+    const sx = x1 + ux * 23, sy = y1 + uy * 23, ex = x2 - ux * 25, ey = y2 - uy * 25;
+    const key1 = `${u}-${v}`, key2 = `${v}-${u}`;
+    const st = edgeHl[key1] || (!g.directed ? edgeHl[key2] : null);
+    let stroke = "#475569", width = 2.4, marker = g.directed ? "url(#arr)" : "";
+    if (st === "active") { stroke = "#f59e0b"; width = 3.8; if (g.directed) marker = "url(#arr-hl)"; }
+    if (st === "ok") { stroke = "#22c55e"; width = 4.0; if (g.directed) marker = "url(#arr-ok)"; }
+    const lineAttrs = { x1: sx, y1: sy, x2: ex, y2: ey, stroke, "stroke-width": width };
+    if (marker) lineAttrs["marker-end"] = marker;
+    svgEl.appendChild(svgNode("line", lineAttrs));
+
+    if (g.weighted) {
+      const mx = (x1 + x2) / 2 - uy * 12, my = (y1 + y2) / 2 + ux * 12;
+      svgEl.appendChild(svgNode("rect", { x: mx - 11, y: my - 9, width: 22, height: 18, rx: 4, fill: "#0f172a", stroke: "#334155" }));
+      svgEl.appendChild(svgNode("text", { x: mx, y: my + 4, fill: st === "ok" ? "#86efac" : "#e2e8f0", "text-anchor": "middle", "font-size": 12, "font-weight": "700" }, String(w)));
+    }
+  });
+
+  const hl = step.hl || {};
+  g.verts.forEach(v => {
+    const [x, y] = g.pos[v];
+    let fill = "#1e293b", stroke = "#64748b";
+    if (hl[v] === "visited") { fill = "#14532d"; stroke = "#22c55e"; }
+    if (hl[v] === "queued") { fill = "#312e81"; stroke = "#6366f1"; }
+    if (hl[v] === "active") { fill = "#78350f"; stroke = "#f59e0b"; }
+    svgEl.appendChild(svgNode("circle", { cx: x, cy: y, r: 23, fill, stroke, "stroke-width": 3 }));
+    svgEl.appendChild(svgNode("text", { x, y: y + 5, fill: "#f8fafc", "text-anchor": "middle", "font-size": 15, "font-weight": "700" }, v));
+    if (step.badges && step.badges[v] !== undefined) {
+      svgEl.appendChild(svgNode("rect", { x: x - 24, y: y - 40, width: 48, height: 16, rx: 4, fill: "#0b1120", stroke: "#475569" }));
+      svgEl.appendChild(svgNode("text", { x, y: y - 29, fill: "#fde68a", "text-anchor": "middle", "font-size": 10.5, "font-weight": "700" }, step.badges[v]));
+    }
+  });
+}
+
+function buildAdj(g) {
+  const adj = {};
+  g.verts.forEach(v => adj[v] = []);
+  g.edges.forEach(([u, v, w]) => {
+    adj[u].push(g.weighted ? [v, w] : v);
+    if (!g.directed) adj[v].push(g.weighted ? [u, w] : u);
+  });
+  return adj;
+}
+
+function buildGraphSteps(algo, start) {
+  const g = GRAPH_DATA.undirected;
+  const adj = buildAdj(g);
+  const steps = [], hl = {}, order = [];
+
+  if (algo === "bfs") {
+    const visited = new Set([start]);
+    const q = [start];
+    hl[start] = "queued";
+    steps.push({ g, hl: { ...hl }, structLabel: S.libMode === "lib" ? "deque" : "queue[front:]", struct: [...q], output: [], line: 3, msg: `Mark ${start} visited & push into Queue.` });
+    while (q.length) {
+      const u = q.shift();
+      hl[u] = "active";
+      steps.push({ g, hl: { ...hl }, structLabel: S.libMode === "lib" ? "deque" : "queue[front:]", struct: [...q], output: [...order], line: 6, msg: `Pop ${u} from front of Queue.` });
+      order.push(u);
+      hl[u] = "visited";
+      for (const v of adj[u]) {
+        if (!visited.has(v)) {
+          visited.add(v);
+          q.push(v);
+          hl[v] = "queued";
+          steps.push({ g, hl: { ...hl }, edgeHl: { [`${u}-${v}`]: "active" }, structLabel: S.libMode === "lib" ? "deque" : "queue[front:]", struct: [...q], output: [...order], line: 10, msg: `Discover unvisited neighbor ${v} from ${u} -> mark visited & enqueue.` });
+        }
+      }
+    }
+    steps.push({ g, hl: { ...hl }, structLabel: "Queue", struct: [], output: [...order], line: 12, msg: `BFS Complete! Order: [${order.join(", ")}]` });
+  } else {
+    const visited = new Set();
+    const stack = [start];
+    steps.push({ g, hl: { [start]: "queued" }, structLabel: "Stack", struct: [...stack], output: [], line: 1, msg: `Push start node ${start} onto Stack.` });
+    while (stack.length) {
+      const u = stack.pop();
+      if (visited.has(u)) {
+        steps.push({ g, hl: { ...hl }, structLabel: "Stack", struct: [...stack], output: [...order], line: 4, msg: `${u} was already visited — skip it.` });
+        continue;
+      }
+      visited.add(u);
+      order.push(u);
+      hl[u] = "active";
+      steps.push({ g, hl: { ...hl }, structLabel: "Stack", struct: [...stack], output: [...order], line: 6, msg: `Pop & visit ${u}.` });
+      hl[u] = "visited";
+      for (const v of [...adj[u]].reverse()) {
+        if (!visited.has(v)) {
+          stack.push(v);
+          if (!hl[v]) hl[v] = "queued";
+        }
+      }
+      steps.push({ g, hl: { ...hl }, structLabel: "Stack", struct: [...stack], output: [...order], line: 8, msg: `Pushed unvisited neighbors of ${u} onto Stack.` });
+    }
+    steps.push({ g, hl: { ...hl }, structLabel: "Stack", struct: [], output: [...order], line: 10, msg: `DFS Complete! Order: [${order.join(", ")}]` });
+  }
+  return steps;
+}
+
+function buildTopoSteps(algo) {
+  const g = GRAPH_DATA.dag;
+  const adj = buildAdj(g);
+  const steps = [], hl = {}, order = [];
+
+  if (algo === "kahn") {
+    const inDeg = {}; g.verts.forEach(v => inDeg[v] = 0);
+    g.edges.forEach(([u, v]) => inDeg[v]++);
+    const q = g.verts.filter(v => inDeg[v] === 0);
+    q.forEach(v => hl[v] = "queued");
+    const badges = () => Object.fromEntries(g.verts.map(v => [v, `in=${inDeg[v]}`]));
+
+    steps.push({ g, hl: { ...hl }, badges: badges(), structLabel: "Zero In-Degree Queue", struct: [...q], output: [], line: 3, msg: `Nodes with in-degree 0 have no prerequisites -> enqueue [${q.join(", ")}].` });
+    while (q.length) {
+      const u = q.shift();
+      hl[u] = "active";
+      steps.push({ g, hl: { ...hl }, badges: badges(), structLabel: "Queue", struct: [...q], output: [...order], line: 6, msg: `Pop ${u} (in-degree is 0).` });
+      order.push(u);
+      hl[u] = "visited";
+      for (const v of adj[u]) {
+        inDeg[v]--;
+        if (inDeg[v] === 0) { q.push(v); hl[v] = "queued"; }
+        steps.push({ g, hl: { ...hl }, edgeHl: { [`${u}-${v}`]: "active" }, badges: badges(), structLabel: "Queue", struct: [...q], output: [...order], line: 9, msg: `Remove edge ${u}->${v}: in-degree(${v}) becomes ${inDeg[v]}${inDeg[v]===0 ? " -> push to Queue!" : ""}.` });
+      }
+    }
+    steps.push({ g, hl: { ...hl }, badges: badges(), structLabel: "Queue", struct: [], output: [...order], line: 11, msg: `Topological Sort (Kahn's) Complete: [${order.join(", ")}]` });
+  } else {
+    const visited = new Set(), stack = [];
+    function dfs(u) {
+      visited.add(u);
+      hl[u] = "active";
+      steps.push({ g, hl: { ...hl }, structLabel: "Post-Order Stack", struct: [...stack], output: [], line: 3, msg: `Visit ${u} via DFS.` });
+      for (const v of adj[u]) {
+        if (!visited.has(v)) { hl[u] = "queued"; dfs(v); }
+      }
+      stack.push(u);
+      hl[u] = "visited";
+      steps.push({ g, hl: { ...hl }, structLabel: "Post-Order Stack", struct: [...stack], output: [], line: 6, msg: `All dependents of ${u} finished! Push ${u} to stack.` });
+    }
+    for (const v of g.verts) if (!visited.has(v)) dfs(v);
+    steps.push({ g, hl: { ...hl }, structLabel: "Post-Order Stack", struct: [...stack], output: [...stack].reverse(), line: 9, msg: `Reverse stack to get Topological Order: [${[...stack].reverse().join(", ")}]` });
+  }
+  return steps;
+}
+
+function buildPrimsSteps(start = "A") {
+  const g = GRAPH_DATA.prims;
+  const adj = buildAdj(g);
+  const steps = [], hl = {}, edgeHl = {};
+  const key = {}, parent = {}, inMst = new Set();
+  g.verts.forEach(v => { key[v] = Infinity; parent[v] = null; });
+  key[start] = 0;
+
+  const mkRows = () => g.verts.map(v => ({ v, k: key[v] === Infinity ? "inf" : key[v], p: parent[v] || "-", ok: inMst.has(v) ? "YES" : "no" }));
+  const mkBadges = () => Object.fromEntries(g.verts.map(v => [v, `k=${key[v]===Infinity?"inf":key[v]}`]));
+
+  steps.push({ g, hl: { [start]: "queued" }, badges: mkBadges(), tableHeaders: ["Vertex", "Key (Min Edge)", "Parent", "In MST"], tableRows: mkRows(), structLabel: "MST Cost", struct: [0], output: [], line: 2, msg: `Start Prim's at ${start}: set key[${start}] = 0, all others = inf.` });
+
+  let cost = 0;
+  const mstEdges = [];
+  for (let i = 0; i < g.verts.length; i++) {
+    let u = null, best = Infinity;
+    for (const v of g.verts) if (!inMst.has(v) && key[v] < best) { best = key[v]; u = v; }
+    if (!u) break;
+    inMst.add(u);
+    cost += key[u];
+    if (parent[u]) {
+      edgeHl[`${parent[u]}-${u}`] = "ok";
+      mstEdges.push(`${parent[u]}-${u}(${key[u]})`);
+    }
+    hl[u] = "visited";
+    steps.push({ g, hl: { ...hl, [u]: "active" }, edgeHl: { ...edgeHl }, badges: mkBadges(), tableHeaders: ["Vertex", "Key (Min Edge)", "Parent", "In MST"], tableRows: mkRows(), activeRow: u, structLabel: "Total MST Cost", struct: [cost], output: [...mstEdges], line: 5, msg: `Pick unvisited node ${u} with smallest key (${key[u]}).${parent[u] ? ` Add edge ${parent[u]}-${u} to MST!` : ""}` });
+
+    for (const [v, wt] of adj[u]) {
+      if (!inMst.has(v) && wt < key[v]) {
+        key[v] = wt; parent[v] = u; hl[v] = "queued";
+        steps.push({ g, hl: { ...hl }, edgeHl: { ...edgeHl, [`${u}-${v}`]: "active" }, badges: mkBadges(), tableHeaders: ["Vertex", "Key (Min Edge)", "Parent", "In MST"], tableRows: mkRows(), activeRow: v, structLabel: "Total MST Cost", struct: [cost], output: [...mstEdges], line: 8, msg: `Edge ${u}-${v} has weight ${wt} < key[${v}]. Update key[${v}] = ${wt}, parent = ${u}.` });
+      }
+    }
+  }
+  steps.push({ g, hl: { ...hl }, edgeHl: { ...edgeHl }, badges: mkBadges(), tableHeaders: ["Vertex", "Key (Min Edge)", "Parent", "In MST"], tableRows: mkRows(), structLabel: "Final MST Cost", struct: [cost], output: [...mstEdges], line: 10, msg: `Prim's Complete! MST edges: [${mstEdges.join(", ")}] | Total Cost = ${cost}` });
+  return steps;
+}
+
+function buildDijkstraSteps(start = "A", target = "D") {
+  const g = GRAPH_DATA.dijkstra;
+  const adj = buildAdj(g);
+  const steps = [], hl = {}, edgeHl = {};
+  const dist = {}, parent = {}, visited = new Set();
+  g.verts.forEach(v => { dist[v] = Infinity; parent[v] = null; });
+  dist[start] = 0;
+
+  const mkRows = () => g.verts.map(v => ({ v, k: dist[v] === Infinity ? "inf" : dist[v], p: parent[v] || "-", ok: visited.has(v) ? "YES" : "no" }));
+  const mkBadges = () => Object.fromEntries(g.verts.map(v => [v, `d=${dist[v]===Infinity?"inf":dist[v]}`]));
+
+  steps.push({ g, hl: { [start]: "queued" }, badges: mkBadges(), tableHeaders: ["Vertex", "dist[v]", "Parent", "Finalized"], tableRows: mkRows(), structLabel: "Source", struct: [start], output: [], line: 2, msg: `Initialize dist[${start}] = 0, all other vertices = inf.` });
+
+  for (let i = 0; i < g.verts.length; i++) {
+    let u = null, best = Infinity;
+    for (const v of g.verts) if (!visited.has(v) && dist[v] < best) { best = dist[v]; u = v; }
+    if (!u) break;
+    visited.add(u);
+    hl[u] = "visited";
+    steps.push({ g, hl: { ...hl, [u]: "active" }, edgeHl: { ...edgeHl }, badges: mkBadges(), tableHeaders: ["Vertex", "dist[v]", "Parent", "Finalized"], tableRows: mkRows(), activeRow: u, structLabel: "Finalized", struct: [...visited], output: [], line: 5, msg: `Pick unvisited node ${u} with smallest dist (${dist[u]}).` });
+
+    for (const [v, w] of adj[u]) {
+      const cand = dist[u] + w;
+      if (!visited.has(v) && cand < dist[v]) {
+        dist[v] = cand; parent[v] = u; hl[v] = "queued";
+        steps.push({ g, hl: { ...hl }, edgeHl: { ...edgeHl, [`${u}-${v}`]: "active" }, badges: mkBadges(), tableHeaders: ["Vertex", "dist[v]", "Parent", "Finalized"], tableRows: mkRows(), activeRow: v, structLabel: "Finalized", struct: [...visited], output: [], line: 8, msg: `Relax ${u}->${v}: dist[${u}](${dist[u]}) + ${w} = ${cand} < old dist. Update dist[${v}] = ${cand}!` });
+      } else {
+        steps.push({ g, hl: { ...hl }, edgeHl: { ...edgeHl, [`${u}-${v}`]: "active" }, badges: mkBadges(), tableHeaders: ["Vertex", "dist[v]", "Parent", "Finalized"], tableRows: mkRows(), structLabel: "Finalized", struct: [...visited], output: [], line: 7, msg: `Check ${u}->${v}: ${cand} is not better than dist[${v}]=${dist[v]===Infinity?"inf":dist[v]}. No change.` });
+      }
+    }
+  }
+  // Highlight shortest path to target
+  const path = [];
+  let cur = target;
+  while (cur) {
+    path.unshift(cur);
+    if (parent[cur]) edgeHl[`${parent[cur]}-${cur}`] = "ok";
+    cur = parent[cur];
+  }
+  steps.push({ g, hl: { ...hl }, edgeHl: { ...edgeHl }, badges: mkBadges(), tableHeaders: ["Vertex", "dist[v]", "Parent", "Finalized"], tableRows: mkRows(), structLabel: `Shortest Path to ${target}`, struct: path, output: [`Cost = ${dist[target]}`], line: 10, msg: `Dijkstra Complete! Shortest path ${start} -> ${target}: ${path.join(" -> ")} (Cost = ${dist[target]})` });
+  return steps;
+}
+
+// ============================================================================
+// RENDERING & PLAYBACK
+// ============================================================================
+function setSteps(steps) {
+  stopPlay();
+  S.steps = steps;
+  S.idx = 0;
+  renderStep();
+}
+
+function getCurrentCodeKey() {
+  if (S.topic === "tree") return "tree_" + S.treeAlgo;
+  if (S.topic === "bst") return "bst";
+  if (S.topic === "btree") return "btree";
+  if (S.topic === "graph") return "graph_" + S.graphAlgo;
+  if (S.topic === "topo") return "topo_" + S.topoAlgo;
+  if (S.topic === "prims") return S.primsAlgo === "heap" ? "prims_heap" : "prims_array";
+  if (S.topic === "dijkstra") return S.dijkAlgo === "heap" ? "dijkstra_heap" : "dijkstra_array";
+  return "tree_inorder";
+}
+
+function renderCode(hlLine) {
+  const key = getCurrentCodeKey();
+  const entry = CODES[key];
+  const lines = (S.libMode === "nolib" && entry.nolib) ? entry.nolib : entry.lib;
+  codePanelEl.innerHTML = lines.map((txt, i) => `
+    <div class="code-line ${i === hlLine ? "hl" : ""}">
+      <span class="ln">${i + 1}</span><span>${txt.replace(/&/g,"&amp;").replace(/</g,"&lt;")}</span>
+    </div>`).join("");
+}
+
+function renderStep() {
+  const step = S.steps[S.idx] || {};
+  stepCounterEl.textContent = `Step ${S.steps.length ? S.idx + 1 : 0} / ${S.steps.length}`;
+  narratorEl.innerHTML = `<strong>Step ${S.idx + 1}:</strong> ${step.msg || "Ready."}`;
+
+  if (S.topic === "tree" || S.topic === "bst") {
+    drawTreeSVG(step.root || (S.topic === "bst" ? S.bstRoot : makeSampleTree()), step);
+  } else if (S.topic === "btree") {
+    drawBTreeSVG(step.broot || S.btreeRoot);
+  } else {
+    drawGraphSVG(step.g || GRAPH_DATA.prims, step);
+  }
+
+  // State bar
+  let html = "";
+  if (step.structLabel) {
+    html += `<div class="state-box"><div class="state-label">${step.structLabel}</div><div class="chips">${
+      (step.struct && step.struct.length ? step.struct : ["(empty)"]).map(x => `<span class="chip active">${x}</span>`).join("")
+    }</div></div>`;
+  }
+  if (step.output) {
+    html += `<div class="state-box"><div class="state-label">Output / Result</div><div class="chips">${
+      (step.output.length ? step.output : ["(none yet)"]).map(x => `<span class="chip done">${x}</span>`).join("")
+    }</div></div>`;
+  }
+  if (!html) html = `<div class="state-box"><div class="state-label">Tip</div><div>Use Next &gt; or Play to step through the algorithm slowly.</div></div>`;
+  stateBarEl.innerHTML = html;
+
+  // Table for Prim's / Dijkstra's
+  if (step.tableHeaders && step.tableRows) {
+    tableWrapEl.style.display = "block";
+    tableWrapEl.innerHTML = `<table><thead><tr>${step.tableHeaders.map(h => `<th>${h}</th>`).join("")}</tr></thead><tbody>${
+      step.tableRows.map(r => `<tr class="${step.activeRow === r.v ? "row-hl" : ""}"><td>${r.v}</td><td>${r.k}</td><td>${r.p}</td><td>${r.ok}</td></tr>`).join("")
+    }</tbody></table>`;
+  } else {
+    tableWrapEl.style.display = "none";
+  }
+
+  renderCode(step.line);
+  document.getElementById("btn-prev").disabled = S.idx <= 0;
+  document.getElementById("btn-next").disabled = S.idx >= S.steps.length - 1;
+}
+
+function stopPlay() {
+  if (S.timer) { clearInterval(S.timer); S.timer = null; }
+  document.getElementById("btn-play").textContent = "Play";
+}
+
+function togglePlay() {
+  if (S.timer) { stopPlay(); return; }
+  if (S.idx >= S.steps.length - 1) S.idx = 0;
+  document.getElementById("btn-play").textContent = "Pause";
+  const delay = 1650 - Number(document.getElementById("speed").value);
+  S.timer = setInterval(() => {
+    if (S.idx < S.steps.length - 1) { S.idx++; renderStep(); }
+    else stopPlay();
+  }, delay);
+}
+
+// ============================================================================
+// TOPIC SWITCHING & CONTROLS
+// ============================================================================
+function loadTopic(topic) {
+  stopPlay();
+  S.topic = topic;
+  document.querySelectorAll(".tab-btn").forEach(b => b.classList.toggle("active", b.dataset.topic === topic));
+
+  const titles = {
+    tree: ["1. Binary Tree Traversals", "Visit every node systematically"],
+    bst: ["2. Binary Search Tree (BST)", "Left < Root < Right"],
+    btree: ["3. B-Tree (Self-Balancing)", "Proactive node splitting & median promotion"],
+    graph: ["4. Graph BFS & DFS", "Level-by-level (Queue) vs Deep-first (Stack)"],
+    topo: ["5. Topological Sort (DAG)", "Dependency ordering (Kahn's & DFS)"],
+    prims: ["6. Greedy: Prim's MST", "Minimum cost to connect all vertices"],
+    dijkstra: ["7. Greedy: Dijkstra's Shortest Path", "Minimum distance from source to all vertices"]
+  };
+  document.getElementById("viz-title").textContent = titles[topic][0];
+  document.getElementById("topic-info").textContent = titles[topic][1];
+
+  if (topic === "tree") {
+    controlsEl.innerHTML = `
+      <label>Traversal: <select id="sel-tree">
+        <option value="preorder">Preorder (Root-L-R)</option>
+        <option value="inorder" selected>Inorder (L-Root-R)</option>
+        <option value="postorder">Postorder (L-R-Root)</option>
+        <option value="level">Level Order (BFS)</option>
+      </select></label>`;
+    document.getElementById("sel-tree").value = S.treeAlgo;
+    document.getElementById("sel-tree").onchange = e => { S.treeAlgo = e.target.value; setSteps(buildTreeSteps(S.treeAlgo, S.libMode)); };
+    setSteps(buildTreeSteps(S.treeAlgo, S.libMode));
+  } else if (topic === "bst") {
+    if (!S.bstRoot) initDefaultBST();
+    controlsEl.innerHTML = `
+      <input type="number" id="bst-val" value="25" />
+      <button class="btn-primary" id="bst-ins">Insert</button>
+      <button class="btn-teal" id="bst-srch">Search</button>
+      <button class="btn-rose" id="bst-del">Delete</button>
+      <button id="bst-preset">Reset Sample [50,30,70,20,40,60,80]</button>`;
+    document.getElementById("bst-ins").onclick = () => runBSTOp("insert", Number(document.getElementById("bst-val").value));
+    document.getElementById("bst-srch").onclick = () => runBSTOp("search", Number(document.getElementById("bst-val").value));
+    document.getElementById("bst-del").onclick = () => runBSTOp("delete", Number(document.getElementById("bst-val").value));
+    document.getElementById("bst-preset").onclick = () => { initDefaultBST(); setSteps([{ root: cloneTree(S.bstRoot), hl: {}, line: 0, msg: "Reset sample BST. Try Delete 50 (2 children) or Insert 25!" }]); };
+    setSteps([{ root: cloneTree(S.bstRoot), hl: {}, line: 0, msg: "Enter a number and click Insert, Search, or Delete (try deleting 50!)." }]);
+  } else if (topic === "btree") {
+    if (!S.btreeRoot) initBTree(2);
+    controlsEl.innerHTML = `
+      <label>Min Degree t: <select id="bt-t"><option value="2">t=2 (Max 3 keys)</option><option value="3">t=3 (Max 5 keys)</option></select></label>
+      <input type="number" id="bt-val" value="15" />
+      <button class="btn-primary" id="bt-ins">Insert Key</button>
+      <button class="btn-amber" id="bt-demo">Demo Split [10,20,5,6,12,30,7,17]</button>
+      <button id="bt-clr">Clear</button>`;
+    document.getElementById("bt-t").value = String(S.btreeT);
+    document.getElementById("bt-t").onchange = e => { initBTree(Number(e.target.value)); setSteps([{ broot: cloneBNode(S.btreeRoot), line: 0, msg: `Reset B-Tree with t=${S.btreeT} (max ${2*S.btreeT-1} keys per node).` }]); };
+    document.getElementById("bt-ins").onclick = () => { const v = Number(document.getElementById("bt-val").value); setSteps(btreeInsertWithSteps(v)); };
+    document.getElementById("bt-demo").onclick = () => {
+      initBTree(S.btreeT);
+      let all = [];
+      [10, 20, 5, 6, 12, 30, 7, 17].forEach(k => { all = all.concat(btreeInsertWithSteps(k)); });
+      setSteps(all);
+    };
+    document.getElementById("bt-clr").onclick = () => { initBTree(S.btreeT); setSteps([{ broot: cloneBNode(S.btreeRoot), line: 0, msg: "Cleared B-Tree." }]); };
+    if (S.btreeRoot.keys.length === 0) {
+      let all = [];
+      [10, 20, 5, 6, 12, 30, 7, 17].forEach(k => { all = all.concat(btreeInsertWithSteps(k)); });
+      setSteps(all);
+    } else {
+      setSteps([{ broot: cloneBNode(S.btreeRoot), line: 0, msg: "Insert a key or click Demo Split to watch splits step-by-step!" }]);
+    }
+  } else if (topic === "graph") {
+    controlsEl.innerHTML = `
+      <label>Algorithm: <select id="g-algo"><option value="bfs">BFS (Queue)</option><option value="dfs">DFS (Stack)</option></select></label>
+      <label>Start: <select id="g-start">${GRAPH_DATA.undirected.verts.map(v => `<option value="${v}">${v}</option>`).join("")}</select></label>`;
+    document.getElementById("g-algo").value = S.graphAlgo;
+    document.getElementById("g-start").value = S.graphStart;
+    document.getElementById("g-algo").onchange = e => { S.graphAlgo = e.target.value; setSteps(buildGraphSteps(S.graphAlgo, S.graphStart)); };
+    document.getElementById("g-start").onchange = e => { S.graphStart = e.target.value; setSteps(buildGraphSteps(S.graphAlgo, S.graphStart)); };
+    setSteps(buildGraphSteps(S.graphAlgo, S.graphStart));
+  } else if (topic === "topo") {
+    controlsEl.innerHTML = `
+      <label>Method: <select id="t-algo"><option value="kahn">Kahn's Algorithm (In-Degree + Queue)</option><option value="dfs">DFS Post-Order Stack</option></select></label>`;
+    document.getElementById("t-algo").value = S.topoAlgo;
+    document.getElementById("t-algo").onchange = e => { S.topoAlgo = e.target.value; setSteps(buildTopoSteps(S.topoAlgo)); };
+    setSteps(buildTopoSteps(S.topoAlgo));
+  } else if (topic === "prims") {
+    controlsEl.innerHTML = `
+      <label>Code Style: <select id="p-algo"><option value="heap">Heap (heapq / MinHeap)</option><option value="array">Pure Python O(V^2) Array</option></select></label>
+      <label>Start: <select id="p-start">${GRAPH_DATA.prims.verts.map(v => `<option value="${v}">${v}</option>`).join("")}</select></label>`;
+    document.getElementById("p-algo").value = S.primsAlgo;
+    document.getElementById("p-algo").onchange = e => { S.primsAlgo = e.target.value; renderCode(S.steps[S.idx]?.line); };
+    document.getElementById("p-start").onchange = e => setSteps(buildPrimsSteps(e.target.value));
+    setSteps(buildPrimsSteps("A"));
+  } else if (topic === "dijkstra") {
+    controlsEl.innerHTML = `
+      <label>Code Style: <select id="d-algo"><option value="heap">Heap (heapq / MinHeap)</option><option value="array">Pure Python O(V^2) Array</option></select></label>
+      <label>Target: <select id="d-target">${GRAPH_DATA.dijkstra.verts.map(v => `<option value="${v}">${v}</option>`).join("")}</select></label>`;
+    document.getElementById("d-algo").value = S.dijkAlgo;
+    document.getElementById("d-target").value = S.dijkTarget;
+    document.getElementById("d-algo").onchange = e => { S.dijkAlgo = e.target.value; renderCode(S.steps[S.idx]?.line); };
+    document.getElementById("d-target").onchange = e => { S.dijkTarget = e.target.value; setSteps(buildDijkstraSteps("A", S.dijkTarget)); };
+    setSteps(buildDijkstraSteps("A", S.dijkTarget));
+  }
+}
+
+// ============================================================================
+// WIRE EVENTS
+// ============================================================================
+document.getElementById("tabs").onclick = e => {
+  if (e.target.dataset.topic) loadTopic(e.target.dataset.topic);
+};
+libToggleEl.onclick = e => {
+  if (e.target.dataset.mode) {
+    S.libMode = e.target.dataset.mode;
+    libToggleEl.querySelectorAll(".toggle-btn").forEach(b => b.classList.toggle("active", b.dataset.mode === S.libMode));
+    if (S.topic === "tree") setSteps(buildTreeSteps(S.treeAlgo, S.libMode));
+    else if (S.topic === "graph") setSteps(buildGraphSteps(S.graphAlgo, S.graphStart));
+    else renderCode(S.steps[S.idx]?.line);
+  }
+};
+document.getElementById("btn-reset").onclick = () => { stopPlay(); S.idx = 0; renderStep(); };
+document.getElementById("btn-prev").onclick = () => { stopPlay(); if (S.idx > 0) { S.idx--; renderStep(); } };
+document.getElementById("btn-next").onclick = () => { stopPlay(); if (S.idx < S.steps.length - 1) { S.idx++; renderStep(); } };
+document.getElementById("btn-play").onclick = togglePlay;
+
+loadTopic("tree");
+</script>
+</body>
+</html>
